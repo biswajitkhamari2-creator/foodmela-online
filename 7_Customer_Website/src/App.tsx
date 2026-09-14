@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ShopProvider } from './store';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { ShopProvider, useShop } from './store';
 import { DeliveryLocationProvider } from './components/location-context';
 import Header from './components/Header';
 import Footer, { BottomNav } from './components/Footer';
@@ -20,7 +20,17 @@ import Track from './pages/Track';
 // Only the chrome (top strip, footer, bottom nav, location modal) is new.
 function Shell() {
   const [cartOpen, setCartOpen] = useState(false);
-  const openCart = () => setCartOpen(true);
+  const { user } = useShop();
+  const nav = useNavigate();
+  // Cart requires login — guests are sent to the OTP login page instead
+  // of opening the drawer (matches the pre-redesign behaviour).
+  const openCart = () => {
+    if (!user) {
+      nav('/login');
+      return;
+    }
+    setCartOpen(true);
+  };
 
   return (
     <>
