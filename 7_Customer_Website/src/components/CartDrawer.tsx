@@ -7,6 +7,9 @@ import { useShop } from '../store';
 // backend endpoint + Firestore mirror (inside api.placeOrder) — untouched.
 const FREE_DELIVERY_OVER = 299;
 const DELIVERY_FEE = 39;
+// Platform fee (₹7) — charged to the customer on every non-empty order,
+// shown as its own bill row and included in the placed totalAmount.
+const PLATFORM_FEE = 7;
 
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { cart, addToCart, removeFromCart, clearCart, priceOf, mrpOf, cartTotal, cartCount, user, allItems } = useShop();
@@ -27,7 +30,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   }, 0);
   const savings = Math.max(0, mrpTotal - cartTotal);
   const deliveryFee = cartTotal >= FREE_DELIVERY_OVER || cartTotal === 0 ? 0 : DELIVERY_FEE;
-  const grand = cartTotal + deliveryFee;
+  const platformFee = cartTotal === 0 ? 0 : PLATFORM_FEE;
+  const grand = cartTotal + deliveryFee + platformFee;
   const awayFromFree = Math.max(0, FREE_DELIVERY_OVER - cartTotal);
   const progress = Math.min(100, Math.round((cartTotal / FREE_DELIVERY_OVER) * 100));
 
@@ -121,6 +125,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                   <span>Delivery {deliveryFee === 0 ? '(FREE over ₹299)' : ''}</span>
                   <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
                 </div>
+                <div className="bill-row"><span>Platform Fee</span><span>₹{platformFee}</span></div>
                 <div className="bill-row total"><span>Total</span><span>₹{grand}</span></div>
               </div>
             </>
