@@ -1,0 +1,28 @@
+# Dependencies (lock files ARE committed for reproducible Vercel builds)
+node_modules/
+
+# Build output
+dist/
+7_Customer_Website/dist/
+6_Admin_Website/dist/
+
+# Vercel
+.vercel/
+
+# Env & secrets (values live in Vercel dashboard, never in git)
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+*.local
+.vscode/
+
+# Nested git repos (each sub-project pushes to its own repo)
+7_Customer_Website/.git/
+6_Admin_Website/.git/
+3_Backend_API/.git/
+
+# Local tooling
+.claude/

@@ -1,0 +1,12 @@
+{
+  "name": "food-mela-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Single-domain build for foodmela.online — customer site at / and admin dashboard at /admin.",
+  "scripts": {
+    "install:all": "npm --prefix 7_Customer_Website install && npm --prefix 6_Admin_Website install && npm --prefix 3_Backend_API install",
+    "build:all": "npm --prefix 7_Customer_Website run build && npm --prefix 6_Admin_Website run build && node scripts/merge-dist.mjs",
+    "dev:customer": "npm --prefix 7_Customer_Website run dev",
+    "dev:admin": "npm --prefix 6_Admin_Website run dev"
+  }
+}
