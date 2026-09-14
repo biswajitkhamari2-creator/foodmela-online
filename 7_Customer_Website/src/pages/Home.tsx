@@ -30,7 +30,7 @@ function scrollToMenu() {
 }
 
 export default function Home() {
-  const { cartCount, allItems, customs, priceOf, mrpOf } = useShop();
+  const { cartCount, allItems, customs, priceOf, mrpOf, user } = useShop();
   const { city, area, setLocOpen } = useDeliveryLocation();
   const nav = useNavigate();
   const [cat, setCat] = useState('all');
@@ -137,7 +137,7 @@ export default function Home() {
               <span className="fc-ico" aria-hidden="true">🛵</span>
               <span>
                 <strong>Live rider tracking</strong>
-                <small>{cartCount > 0 ? `${cartCount} item(s) in your cart` : 'Riders reach your exact address'}</small>
+                <small>{user && cartCount > 0 ? `${cartCount} item(s) in your cart` : 'Riders reach your exact address'}</small>
               </span>
             </div>
             <div className="float-card float-2">

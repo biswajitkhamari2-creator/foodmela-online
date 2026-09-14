@@ -85,7 +85,7 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
           ) : (
             <button className="login-btn" onClick={() => nav('/login')}>Login</button>
           )}
-          {!hideCart && (
+          {Boolean(user) && !hideCart && (
             <button className={`cart-btn ${bump ? 'bump' : ''}`} onClick={onCartOpen} aria-label={`Open cart, ${cartCount} items`}>
               🛒 Cart <span className="cart-count">{cartCount}</span>
             </button>

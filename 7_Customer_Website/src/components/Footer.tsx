@@ -3,7 +3,7 @@ import { useShop } from '../store';
 
 /** Mobile bottom tab bar (CSS shows it only on small screens). */
 export function BottomNav({ onCartOpen }: { onCartOpen: () => void }) {
-  const { cartCount } = useShop();
+  const { cartCount, user } = useShop();
   const loc = useRouteLocation();
   const isActive = (p: string) => (loc.pathname === p ? 'active' : '');
 
@@ -16,18 +16,20 @@ export function BottomNav({ onCartOpen }: { onCartOpen: () => void }) {
         <Link to="/food" className={isActive('/food')}>
           <span className="t-ico" aria-hidden="true">🍛</span>Food
         </Link>
-        <a
-          href="#cart"
-          className=""
-          onClick={(e) => {
-            e.preventDefault();
-            onCartOpen();
-          }}
-          aria-label={`Open cart, ${cartCount} items`}
-        >
-          <span className="t-ico" aria-hidden="true">🛒</span>Cart
-          {cartCount > 0 && <span className="t-badge">{cartCount}</span>}
-        </a>
+        {Boolean(user) && (
+          <a
+            href="#cart"
+            className=""
+            onClick={(e) => {
+              e.preventDefault();
+              onCartOpen();
+            }}
+            aria-label={`Open cart, ${cartCount} items`}
+          >
+            <span className="t-ico" aria-hidden="true">🛒</span>Cart
+            {cartCount > 0 && <span className="t-badge">{cartCount}</span>}
+          </a>
+        )}
         <Link to="/grocery" className={isActive('/grocery')}>
           <span className="t-ico" aria-hidden="true">🥬</span>Grocery
         </Link>
