@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { api } from '../api';
+import InvoiceModal from '../components/InvoiceModal';
 
 // ── LIVE TRACKING — LOGIC 100% PRESERVED ──
 // Same Firestore listener + backend poll fallback, same cancel flow.
@@ -37,6 +38,7 @@ export default function Track() {
   const [order, setOrder] = useState<LiveOrder | null>(null);
   const [err, setErr] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [showInvoice, setShowInvoice] = useState(false);
 
   useEffect(() => {
     if (!orderId) return;
@@ -179,10 +181,18 @@ export default function Track() {
                 </div>
               </>
             )}
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ marginTop: 14, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 13.5 }}
+              onClick={() => setShowInvoice(true)}
+            >
+              🧾 View Official Bill / Tax Invoice
+            </button>
             {canCancel && (
               <button
                 className="btn-ghost"
-                style={{ marginTop: 16, color: '#C4271F', width: '100%' }}
+                style={{ marginTop: 10, color: '#C4271F', width: '100%' }}
                 disabled={cancelling}
                 onClick={cancelOrder}
               >
@@ -204,6 +214,7 @@ export default function Track() {
         <button className="btn-ghost" style={{ fontSize: 13 }} onClick={() => nav('/')}>← Back to Home</button>
         <button className="btn-primary" style={{ fontSize: 13 }} onClick={() => nav('/orders')}>All Orders</button>
       </div>
+      <InvoiceModal order={showInvoice && order ? { ...order, oid: orderId } : null} onClose={() => setShowInvoice(false)} />
     </div>
   );
 }

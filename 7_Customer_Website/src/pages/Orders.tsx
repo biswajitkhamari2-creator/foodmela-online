@@ -4,6 +4,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { api, type BackendOrder } from '../api';
 import { useShop } from '../store';
+import InvoiceModal from '../components/InvoiceModal';
 
 // ── ORDER LIST — LOGIC 100% PRESERVED ──
 // Same backend history + Firestore listeners, same merge/dedupe, same
@@ -107,6 +108,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [reordered, setReordered] = useState<string | null>(null);
+  const [invoiceOrder, setInvoiceOrder] = useState<UnifiedOrder | null>(null);
 
   useEffect(() => {
     if (!user) { nav('/login'); return; }
@@ -276,8 +278,16 @@ export default function Orders() {
               )}
               <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                 <Link to={`/track/${encodeURIComponent(o.oid)}`} className="btn-ghost" style={{ padding: '9px 16px', fontSize: 13, textDecoration: 'none' }}>
-                  {cancelled || stage >= 3 ? 'View Receipt' : 'Follow Journey →'}
+                  {cancelled || stage >= 3 ? 'Follow Journey →' : 'Follow Journey →'}
                 </Link>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  style={{ padding: '9px 16px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                  onClick={() => setInvoiceOrder(o)}
+                >
+                  🧾 Invoice
+                </button>
                 {canCancel && (
                   <button
                     className="btn-ghost"
@@ -302,6 +312,7 @@ export default function Orders() {
           );
         })
       )}
+      <InvoiceModal order={invoiceOrder} onClose={() => setInvoiceOrder(null)} />
     </div>
   );
 }
