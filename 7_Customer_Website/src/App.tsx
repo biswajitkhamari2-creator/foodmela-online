@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ShopProvider, useShop } from './store';
 import { DeliveryLocationProvider } from './components/location-context';
 import Header from './components/Header';
@@ -21,8 +21,9 @@ import Profile from './pages/Profile';
 // Only the chrome (top strip, footer, bottom nav, location modal) is new.
 function Shell() {
   const [cartOpen, setCartOpen] = useState(false);
-  const { user } = useShop();
+  const { user, cartCount, cartTotal } = useShop();
   const nav = useNavigate();
+  const loc = useLocation();
   // Cart requires login — guests are sent to the OTP login page instead
   // of opening the drawer (matches the pre-redesign behaviour).
   const openCart = () => {
@@ -32,6 +33,8 @@ function Shell() {
     }
     setCartOpen(true);
   };
+
+  const showFloatingCart = cartCount > 0 && !cartOpen && loc.pathname !== '/login';
 
   return (
     <>
@@ -56,6 +59,25 @@ function Shell() {
       </main>
       <Footer />
       {Boolean(user) && <BottomNav onCartOpen={openCart} />}
+      {showFloatingCart && (
+        <aside
+          className="fm-floating-cart"
+          onClick={openCart}
+          role="button"
+          tabIndex={0}
+          aria-label={`View cart with ${cartCount} items totaling ₹${cartTotal}`}
+        >
+          <div className="floating-cart-info">
+            <span className="floating-cart-count">🛒 {cartCount} {cartCount === 1 ? 'ITEM' : 'ITEMS'}</span>
+            <span className="floating-cart-dot">•</span>
+            <span className="floating-cart-total">₹{cartTotal}</span>
+          </div>
+          <div className="floating-cart-btn">
+            <span>View Cart</span>
+            <span className="floating-cart-arrow">→</span>
+          </div>
+        </aside>
+      )}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <LocationModal />
     </>

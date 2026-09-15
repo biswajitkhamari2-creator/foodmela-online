@@ -46,9 +46,9 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
 
         <button className="fm-loc" onClick={() => setLocOpen(true)} aria-label={`Delivery location: ${area}, ${city}. Change location`}>
           <span className="pin" aria-hidden="true">📍</span>
-          <span>
+          <span className="fm-loc-text">
             <small>Delivering to</small>
-            {area}, {city}
+            <span className="fm-loc-addr">{area}, {city}</span>
           </span>
           <span aria-hidden="true">▾</span>
         </button>
@@ -75,9 +75,8 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="What are you craving today?"
-                aria-label="What are you craving today?"
-                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: 150, fontFamily: 'inherit' }}
+                placeholder="Craving something?"
+                aria-label="Search food"
               />
             </form>
           )}
@@ -97,7 +96,7 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
           ) : (
             <button className="fm-login" onClick={() => nav('/login')}>Login</button>
           )}
-          {Boolean(user) && !hideCart && (
+          {!hideCart && (
             <button className={`fm-cart ${bump ? 'bump' : ''}`} onClick={onCartOpen} aria-label={`Open cart, ${cartCount} items`}>
               🛒 Cart <span className="n">{cartCount}</span>
             </button>
