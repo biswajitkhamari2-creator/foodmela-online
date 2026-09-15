@@ -41,13 +41,29 @@ const PAGES: Record<string, InfoPage> = {
     cta: { label: 'Call Support: 8144503650 →', to: 'tel:8144503650' },
   },
   terms: {
-    title: 'Terms of Service',
+    title: 'Terms of Service & Legal Framework',
     emoji: '📜',
     body: [
-      'By ordering on foodmela.online you agree to provide accurate delivery details and a reachable phone number.',
-      'Prices shown are live store prices inclusive of applicable charges; delivery is free on orders over ₹299.',
-      'Orders can be cancelled while in Placed or Accepted stage. Once out for delivery, cancellation is at the store\'s discretion.',
+      '1. INTERMEDIARY STATUS (Section 79, Information Technology Act, 2000): FoodMela (foodmela.online) operates strictly as a digital technology intermediary and delivery service aggregator within the meaning of Section 79 of the Information Technology Act, 2000. FoodMela provides a technology platform connecting customers with independent local merchants and logistics services.',
+      '2. NO FOOD PREPARATION OR RESTAURANT OPERATIONS: FoodMela does not prepare, cook, package, store, or alter any food items. All food products, grocery items, and beverages available on the platform are prepared, cooked, and packaged solely and independently by third-party restaurant and store partners.',
+      '3. FSSAI COMPLIANCE (Food Safety and Standards Act, 2006): All partnered food business operators (FBOs) listed on FoodMela are required to hold a valid license/registration issued by the Food Safety and Standards Authority of India (FSSAI) under the Food Safety and Standards Act, 2006. FoodMela strictly partners with licensed merchants.',
+      '4. PRODUCT LIABILITY & HEALTH DISCLAIMER (Consumer Protection Act, 2019): Under the Consumer Protection Act, 2019 and the Consumer Protection (E-Commerce) Rules, 2020, product liability for food quality, hygiene, freshness, taste, contamination, foreign objects, adulteration, allergic reactions, or foodborne illness lies exclusively and solely with the respective merchant/restaurant FBO. FoodMela shall not be held liable or responsible for any illness or injury resulting from the consumption of food prepared by independent merchant kitchens.',
+      '5. SCOPE OF LOGISTICS & TRANSIT DAMAGE: FoodMela’s sole responsibility is restricted to the safe transit and delivery of sealed packages from the merchant to the customer. We inspect package seal integrity upon pickup. Any external transit damage, spillage, or missing items must be reported within 2 hours of delivery for prompt refund or replacement under our Refund Policy.',
+      '6. PRICING & CANCELLATION: Prices displayed on the platform are live store prices provided by merchants. Orders can be cancelled while in Placed or Accepted stage; once dispatched for delivery, cancellations are subject to merchant terms. Free delivery applies on orders above ₹299.',
     ],
+    cta: { label: 'Explore Legal Disclaimer →', to: '/page/disclaimer' },
+  },
+  disclaimer: {
+    title: 'Food Safety & Intermediary Disclaimer',
+    emoji: '⚖️',
+    body: [
+      'INTERMEDIARY SAFE HARBOR (IT ACT, 2000, SECTION 79): FoodMela functions solely as an online technology intermediary and delivery logistics network. Under Section 79 of the Information Technology Act, 2000, FoodMela is not the manufacturer, seller, or preparer of food products.',
+      'FSSAI REGISTRATION & INDEPENDENT VENDORS: In accordance with FSSAI regulations for E-Commerce Food Business Operators (2018) under the Food Safety and Standards Act, 2006, all food business partners listed on FoodMela are required to possess valid FSSAI licenses. Each merchant is solely responsible for maintaining food hygiene, temperature control, and safety during food preparation.',
+      'FOOD QUALITY & CONTAMINATION EXCLUSION: FoodMela riders transport food packages in sealed condition directly from the restaurant to your address. FoodMela does not open, inspect internal ingredients, or alter food. FoodMela expressly disclaims all liability for food taste, undercooking, spoiled ingredients, chemical contamination, or food poisoning. All such claims are strictly between the consumer and the cooking restaurant.',
+      'TRANSIT DEFICIENCY vs. FOOD DEFECT: As recognized under the Consumer Protection Act, 2019, FoodMela is accountable solely for transit deficiency (transit spill, outer package tamper, or delivery delays). Deficiencies in food quality or preparation are the legal liability of the respective restaurant.',
+      'NEED ASSISTANCE? For transit damage or missing items, contact our Birmaharajpur support team at +91 8144503650.',
+    ],
+    cta: { label: 'Call Support: 8144503650 →', to: 'tel:8144503650' },
   },
   privacy: {
     title: 'Privacy Policy',

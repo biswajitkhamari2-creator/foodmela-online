@@ -87,6 +87,7 @@ export default function Footer() {
           <a href="tel:8144503650">📞 8144503650</a>
           <Link to="/page/help">Help &amp; Support</Link>
           <Link to="/page/terms">Terms of Service</Link>
+          <Link to="/page/disclaimer">Food Safety &amp; Disclaimer</Link>
           <Link to="/page/privacy">Privacy Policy</Link>
           <Link to="/page/refund">Refund Policy</Link>
         </div>
