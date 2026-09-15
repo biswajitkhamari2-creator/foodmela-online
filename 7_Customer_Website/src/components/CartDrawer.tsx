@@ -15,6 +15,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const { cart, addToCart, removeFromCart, clearCart, priceOf, mrpOf, cartTotal, cartCount, user, allItems } = useShop();
   const nav = useNavigate();
   const [address, setAddress] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'cod' | 'prepaid'>('prepaid');
   const [placing, setPlacing] = useState(false);
   const [err, setErr] = useState('');
 
@@ -35,6 +36,9 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const awayFromFree = Math.max(0, FREE_DELIVERY_OVER - cartTotal);
   const progress = Math.min(100, Math.round((cartTotal / FREE_DELIVERY_OVER) * 100));
 
+  const isCodAllowed = grand <= 100;
+  const effectiveMode = isCodAllowed && paymentMode === 'cod' ? 'COD' : 'PREPAID';
+
   const placeOrder = async () => {
     if (!user) { onClose(); nav('/login'); return; }
     const addr = (address || user.address).trim();
@@ -46,7 +50,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       const res = await api.placeOrder({
         customerName: user.name,
         phone: user.phone,
-        address: addr,
+        address: `${addr} [${effectiveMode}]`,
         items: lines.map((l) => ({
           itemId: l.item.id,
           name: l.item.name,
@@ -141,9 +145,70 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               onChange={(e) => setAddress(e.target.value)}
               aria-label="Delivery address"
             />
+            <div className="pay-opt-box" style={{ margin: '10px 0 10px', background: '#f7f9f6', padding: '10px 12px', borderRadius: '14px', border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#66707D', marginBottom: '8px' }}>
+                Payment Method
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => isCodAllowed && setPaymentMode('cod')}
+                  disabled={!isCodAllowed}
+                  style={{
+                    padding: '8px 6px',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${paymentMode === 'cod' && isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
+                    background: paymentMode === 'cod' && isCodAllowed ? 'var(--green-tint)' : isCodAllowed ? '#fff' : '#f1f3f0',
+                    color: !isCodAllowed ? '#9AA3AF' : paymentMode === 'cod' ? 'var(--green-ink)' : '#2B323B',
+                    cursor: isCodAllowed ? 'pointer' : 'not-allowed',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  💵 Cash on Delivery
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: isCodAllowed ? 'var(--green-ink)' : '#C4271F', marginTop: '2px' }}>
+                    {isCodAllowed ? 'Available (≤ ₹100)' : 'Unavailable (> ₹100)'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPaymentMode('prepaid')}
+                  style={{
+                    padding: '8px 6px',
+                    borderRadius: '10px',
+                    border: `1.5px solid ${paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
+                    background: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-tint)' : '#fff',
+                    color: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-ink)' : '#2B323B',
+                    cursor: 'pointer',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  📱 Online / Prepaid
+                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: 'var(--green-ink)', marginTop: '2px' }}>
+                    UPI / QR Transfer
+                  </span>
+                </button>
+              </div>
+
+              {!isCodAllowed && (
+                <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '8px', background: '#FEF2F2', padding: '6px 8px', borderRadius: '8px', lineHeight: '1.4' }}>
+                  ℹ️ Orders above ₹100 must be Prepaid. COD is capped at ₹100.
+                </div>
+              )}
+
+              <div style={{ fontSize: '11px', color: '#66707D', marginTop: '6px', textAlign: 'center' }}>
+                Questions? Call/WhatsApp: <a href="tel:8144503650" style={{ color: 'var(--green)', fontWeight: 700 }}>8144503650</a>
+              </div>
+            </div>
             {err && <p style={{ color: '#DC2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
             <button className="btn-primary" style={{ width: '100%' }} disabled={placing} onClick={placeOrder}>
-              {placing ? 'Placing...' : user ? `Place Order • ₹${grand}` : 'Login to Order →'}
+              {placing ? 'Placing...' : user ? `Place Order (${effectiveMode}) • ₹${grand}` : 'Login to Order →'}
             </button>
           </div>
         )}
