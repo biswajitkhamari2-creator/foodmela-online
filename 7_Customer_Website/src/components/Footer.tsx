@@ -69,6 +69,9 @@ export default function Footer() {
             Your trusted local delivery app — fresh restaurant food, sweets, groceries &amp;
             daily essentials, delivered fast across Birmaharajpur.
           </p>
+          <p style={{ marginTop: 8, fontSize: 13, color: '#c6cfc8' }}>
+            Helpline: <a href="tel:8144503650" style={{ color: '#ffc531', fontWeight: 700 }}>8144503650</a>
+          </p>
           <div className="social-row">
             <button className="social-btn" aria-label="FoodMela on Instagram" title="Instagram" onClick={() => nav('/page/contact')}>📸</button>
             <button className="social-btn" aria-label="FoodMela on Facebook" title="Facebook" onClick={() => nav('/page/contact')}>👍</button>
@@ -81,6 +84,7 @@ export default function Footer() {
           <h4>Company</h4>
           <Link to="/page/about">About FoodMela</Link>
           <Link to="/page/contact">Contact Us</Link>
+          <a href="tel:8144503650">📞 8144503650</a>
           <Link to="/page/help">Help &amp; Support</Link>
           <Link to="/page/terms">Terms of Service</Link>
           <Link to="/page/privacy">Privacy Policy</Link>

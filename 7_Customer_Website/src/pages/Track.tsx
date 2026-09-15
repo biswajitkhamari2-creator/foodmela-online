@@ -182,6 +182,12 @@ export default function Track() {
                 {cancelling ? 'Cancelling…' : 'Cancel Order'}
               </button>
             )}
+            <div style={{ marginTop: 14, fontSize: 13, color: '#66707D', textAlign: 'center' }}>
+              Need help? Call support at{' '}
+              <a href="tel:8144503650" style={{ color: '#0e9f4e', fontWeight: 700 }}>
+                8144503650
+              </a>
+            </div>
             {err && <p style={{ color: '#9AA3AF', fontSize: 12, marginTop: 10 }}>{err}</p>}
           </>
         )}

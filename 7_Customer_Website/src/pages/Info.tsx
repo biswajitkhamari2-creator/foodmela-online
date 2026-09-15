@@ -22,11 +22,12 @@ const PAGES: Record<string, InfoPage> = {
     title: 'Contact Us',
     emoji: '📞',
     body: [
-      'Need help with an order? Reach out — a real human from Birmaharajpur will respond.',
+      'Need help with an order? Reach out — our local Birmaharajpur team is ready to assist you.',
+      '📞 Phone / WhatsApp: +91 8144503650',
       'Support hours: 9:00 AM – 10:00 PM, all days.',
-      'For order issues, open My Orders, tap your order and use Track Live to see the latest status first.',
+      'For immediate order assistance, tap the button below to call us directly.',
     ],
-    cta: { label: 'My Orders →', to: '/orders' },
+    cta: { label: 'Call 8144503650 →', to: 'tel:8144503650' },
   },
   help: {
     title: 'Help & Support',
@@ -35,9 +36,9 @@ const PAGES: Record<string, InfoPage> = {
       'Track your order live from My Orders — status updates instantly, no refresh needed.',
       'Share the delivery OTP shown on the tracking page with your rider at the door.',
       'You can cancel an order from the tracking page while it is still placed or accepted.',
-      'For refunds or payment questions, contact support with your order ID.',
+      'For refunds, payment issues or urgent help, call or WhatsApp our helpline at +91 8144503650.',
     ],
-    cta: { label: 'Track My Order →', to: '/orders' },
+    cta: { label: 'Call Support: 8144503650 →', to: 'tel:8144503650' },
   },
   terms: {
     title: 'Terms of Service',
@@ -135,9 +136,19 @@ export default function Info() {
           <p key={i} style={{ fontSize: 14.5, color: '#2B323B', lineHeight: 1.75, marginBottom: 12 }}>{p}</p>
         ))}
         {page.cta && (
-          <button className="btn-primary" style={{ marginTop: 8 }} onClick={() => nav(page.cta!.to)}>
-            {page.cta.label}
-          </button>
+          page.cta.to.startsWith('tel:') ? (
+            <a
+              className="btn-primary"
+              style={{ marginTop: 8, display: 'inline-flex', textDecoration: 'none' }}
+              href={page.cta.to}
+            >
+              {page.cta.label}
+            </a>
+          ) : (
+            <button className="btn-primary" style={{ marginTop: 8 }} onClick={() => nav(page.cta!.to)}>
+              {page.cta.label}
+            </button>
+          )
         )}
       </div>
     </div>
