@@ -65,6 +65,86 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     if (lines.length === 0) return;
     setPlacing(true);
     setErr('');
+
+    // If PREPAID, initiate automated Paytm Payment Gateway
+    if (effectiveMode === 'PREPAID') {
+      try {
+        const orderAddr = effectiveCoupon
+          ? `${addr} [PREPAID] [Coupon: ${effectiveCoupon.code} (-₹${discountAmount})]`
+          : `${addr} [PREPAID]`;
+
+        const initResp = await fetch('/api/paytm/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: user.name,
+            phone: user.phone,
+            address: orderAddr,
+            items: lines.map((l) => ({
+              itemId: l.item.id,
+              name: l.item.name,
+              quantity: l.qty,
+              price: priceOf(l.item),
+              totalPrice: priceOf(l.item) * l.qty,
+            })),
+            totalAmount: grand,
+          }),
+        });
+
+        const initData = await initResp.json();
+
+        if (initData.success && initData.txnToken) {
+          const scriptId = 'paytm-checkoutjs';
+          const host = initData.host || 'securegw-stage.paytm.in';
+          if (!document.getElementById(scriptId)) {
+            const script = document.createElement('script');
+            script.id = scriptId;
+            script.type = 'application/javascript';
+            script.crossOrigin = 'anonymous';
+            script.src = `https://${host}/merchantpgpui/checkoutjs/merchants/${initData.mid}.js`;
+            document.head.appendChild(script);
+            await new Promise((resolve) => {
+              script.onload = resolve;
+              script.onerror = resolve;
+            });
+          }
+
+          // @ts-expect-error Paytm CheckoutJS dynamically injected
+          if (window.Paytm && window.Paytm.CheckoutJS) {
+            const config = {
+              root: '',
+              flow: 'DEFAULT',
+              data: {
+                orderId: initData.orderId,
+                token: initData.txnToken,
+                tokenType: 'TXN_TOKEN',
+                amount: String(initData.amount),
+              },
+              handler: {
+                notifyMerchant: function (eventName: string, d: unknown) {
+                  console.log('Paytm notifyMerchant:', eventName, d);
+                },
+                transactionStatus: function (status: unknown) {
+                  console.log('Paytm transactionStatus:', status);
+                },
+              },
+            };
+            // @ts-expect-error Paytm CheckoutJS dynamically injected
+            window.Paytm.CheckoutJS.init(config).then(() => {
+              // @ts-expect-error Paytm CheckoutJS dynamically injected
+              window.Paytm.CheckoutJS.invoke();
+              setPlacing(false);
+            }).catch(() => {
+              setPlacing(false);
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Paytm initiate error, continuing to place order:', e);
+      }
+    }
+
     try {
       const res = await api.placeOrder({
         customerName: user.name,
