@@ -26,10 +26,10 @@ export default function Offers() {
 
   return (
     <div className="page-enter">
-      <div className="page-hero">
-        <div className="page-hero-inner">
-          <h1>Offers <span className="accent">&amp; deals</span></h1>
-          <p>Festival specials plus live store discounts — updated in real time.</p>
+      <div className="mela-pagehead">
+        <div className="mela-pagehead-inner">
+          <h1>Today&apos;s FoodMela <span className="accent">picks</span></h1>
+          <p>Local love deals + festival specials + live store discounts.</p>
         </div>
       </div>
 
@@ -38,10 +38,10 @@ export default function Offers() {
       <div className="section">
         <div className="section-head">
           <div>
-            <h2>Featured <span className="accent">promotions</span></h2>
+            <h2>Local love <span className="accent">deals</span></h2>
           </div>
         </div>
-        <div className="offer-grid">
+        <div className="ticket-grid">
           {PROMO_OFFERS.map((o) => (
             <OfferCard key={o.code} offer={o} />
           ))}
@@ -51,15 +51,15 @@ export default function Offers() {
       <div className="section">
         <div className="section-head">
           <div>
-            <h2>Live <span className="accent">discounts</span></h2>
+            <h2>Fresh <span className="accent-chili">savings</span></h2>
             <p>{deals.length > 0 ? `${deals.length} items on offer right now` : 'Store discounts appear here automatically'}</p>
           </div>
         </div>
         {deals.length === 0 ? (
-          <div className="empty">
-            <div className="empty-icon">🎁</div>
-            <h3>No live discounts yet</h3>
-            <p>Check back soon — the store updates prices in real time.</p>
+          <div className="mela-empty">
+            <div className="mela-empty-icon">🎁</div>
+            <h3>No fresh savings right now</h3>
+            <p>The mela restocks deals often — check back soon.</p>
           </div>
         ) : (
           <div className="food-grid">

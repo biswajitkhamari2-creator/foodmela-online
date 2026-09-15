@@ -129,3 +129,85 @@ export const PROMO_OFFERS: PromoOffer[] = [
 
 /** Search suggestions — plain strings that feed the existing local filter. */
 export const SEARCH_SUGGESTIONS = ['biryani', 'pizza', 'burger', 'paneer', 'samosa', 'rasgulla', 'milk', 'eggs', 'rice', 'fish curry'];
+
+// ── "What's Your Mood?" — signature discovery (frontend only). ──
+// Each mood maps to REAL catalog categories; counts computed at render time.
+export interface Mood {
+  key: string;
+  title: string;
+  emoji: string;
+  blurb: string;
+  cats: string[];
+}
+
+export const MOODS: Mood[] = [
+  { key: 'comfort', title: 'Comfort Food', emoji: '🍕', blurb: 'Warm, hearty plates', cats: ['cooked_food', 'non_veg'] },
+  { key: 'spicy', title: 'Spicy Cravings', emoji: '🌶️', blurb: 'Biryani & curries', cats: ['cooked_food', 'non_veg'] },
+  { key: 'fresh', title: 'Light & Fresh', emoji: '🥗', blurb: 'Veggies & fruits', cats: ['vegetables', 'fruits'] },
+  { key: 'sweet', title: 'Sweet Moments', emoji: '🍰', blurb: 'Mithaas & desserts', cats: ['sweets'] },
+  { key: 'chai', title: 'Chai Time', emoji: '☕', blurb: 'Snacks & sips', cats: ['snacks', 'dairy'] },
+  { key: 'quick', title: 'Quick Bites', emoji: '🍔', blurb: 'Ready in minutes', cats: ['snacks'] },
+  { key: 'family', title: 'Family Meals', emoji: '🥘', blurb: 'Rice, staples & more', cats: ['cooked_food', 'grocery', 'dairy', 'eggs_meat'] },
+];
+
+// ── Short descriptions for product cards (presentation copy only). ──
+export const ITEM_DESCRIPTIONS: Record<string, string> = {
+  cf1: 'Fragrant dum-style biryani with tender chicken pieces.',
+  cf2: 'Creamy tomato gravy with soft paneer cubes.',
+  cf3: 'Slow-cooked black dal, rich and homely.',
+  cf4: 'Hearty mutton curry, village-style spices.',
+  cf5: 'Tangy Odia-style fish curry, fresh catch.',
+  sw1: 'Spongy, syrupy — the pride of Odisha & Bengal.',
+  sw2: 'Warm, soft dumplings in rose syrup.',
+  sw3: 'Slow-simmered rice pudding, served fresh.',
+  sn1: 'Crispy, golden, stuffed with spiced aloo.',
+  sn2: 'Crisp outside, soft inside — chaat-style.',
+  vg1: 'Firm, ripe tomatoes for curries & salads.',
+  vg2: 'Everyday potatoes, farm-fresh stock.',
+  vg3: 'Sharp, juicy onions for tadka & salads.',
+  vg4: 'Glossy brinjals, perfect for bharta.',
+  vg5: 'Crunchy cabbage for sabzi & rolls.',
+  vg6: 'Tight white florets, farm-picked.',
+  vg7: 'Tender bhindi, no strings attached.',
+  fr1: 'Sweet, energy-packed — a dozen full.',
+  fr2: 'Crisp, juicy apples, hand-picked.',
+  gr1: 'Long-grain basmati for perfect pulao.',
+  gr2: 'Light refined oil for everyday cooking.',
+  da1: 'Thick, creamy full-cream milk.',
+  da2: 'Soft fresh paneer, made daily.',
+  em1: 'Protein-rich farm eggs.',
+  em2: 'Tender boneless chicken, cleaned fresh.',
+};
+
+// ── Favourites (frontend-only, localStorage). ──
+// No backend wishlist exists, so favourites live on-device per user.
+const FAV_KEY = 'fm_favs';
+export function readFavs(): Set<string> {
+  try {
+    const raw = localStorage.getItem(FAV_KEY);
+    if (raw) return new Set(JSON.parse(raw) as string[]);
+  } catch { /* ignore */ }
+  return new Set();
+}
+export function writeFavs(favs: Set<string>) {
+  try {
+    localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
+  } catch { /* ignore */ }
+}
+
+// ── Recent views (frontend-only, localStorage) for "Because You Ordered". ──
+const SEEN_KEY = 'fm_seen';
+export function readSeen(): string[] {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY);
+    if (raw) return JSON.parse(raw) as string[];
+  } catch { /* ignore */ }
+  return [];
+}
+export function pushSeen(id: string) {
+  try {
+    const list = readSeen().filter((x) => x !== id);
+    list.unshift(id);
+    localStorage.setItem(SEEN_KEY, JSON.stringify(list.slice(0, 24)));
+  } catch { /* ignore */ }
+}

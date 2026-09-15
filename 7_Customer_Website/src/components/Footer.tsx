@@ -1,40 +1,43 @@
 import { Link, useLocation as useRouteLocation, useNavigate } from 'react-router-dom';
 import { useShop } from '../store';
 
-/** Mobile bottom tab bar (CSS shows it only on small screens). */
+/**
+ * Mobile bottom tabs — Home / Explore / Cart(FAB) / Orders / Profile.
+ * Cart tab + FAB appear ONLY when logged in (existing visibility rule).
+ */
 export function BottomNav({ onCartOpen }: { onCartOpen: () => void }) {
   const { cartCount, user } = useShop();
   const loc = useRouteLocation();
   const isActive = (p: string) => (loc.pathname === p ? 'active' : '');
 
   return (
-    <nav className="tabbar" aria-label="Mobile navigation">
-      <div className="tabbar-inner">
-        <Link to="/" className={isActive('/')}>
+    <nav className="fm-tabs" aria-label="Mobile navigation">
+      <div className="fm-tabs-inner">
+        <Link to="/" className={`tab ${isActive('/')}`}>
           <span className="t-ico" aria-hidden="true">🏠</span>Home
         </Link>
-        <Link to="/food" className={isActive('/food')}>
-          <span className="t-ico" aria-hidden="true">🍛</span>Food
+        <Link to="/food" className={`tab ${isActive('/food') || isActive('/grocery') || isActive('/restaurants') ? 'active' : ''}`}>
+          <span className="t-ico" aria-hidden="true">🧭</span>Explore
         </Link>
         {Boolean(user) && (
           <a
             href="#cart"
-            className=""
+            className="tab tab-fab"
             onClick={(e) => {
               e.preventDefault();
               onCartOpen();
             }}
             aria-label={`Open cart, ${cartCount} items`}
           >
-            <span className="t-ico" aria-hidden="true">🛒</span>Cart
+            <span className="t-ico" aria-hidden="true">🛒</span>
             {cartCount > 0 && <span className="t-badge">{cartCount}</span>}
           </a>
         )}
-        <Link to="/grocery" className={isActive('/grocery')}>
-          <span className="t-ico" aria-hidden="true">🥬</span>Grocery
-        </Link>
-        <Link to="/orders" className={isActive('/orders')}>
+        <Link to="/orders" className={`tab ${isActive('/orders')}`}>
           <span className="t-ico" aria-hidden="true">🧾</span>Orders
+        </Link>
+        <Link to={user ? '/profile' : '/login'} className={`tab ${isActive('/profile') || isActive('/login') ? 'active' : ''}`}>
+          <span className="t-ico" aria-hidden="true">{user ? '👤' : '🔑'}</span>{user ? 'Profile' : 'Login'}
         </Link>
       </div>
     </nav>
@@ -46,10 +49,10 @@ export default function Footer() {
   const nav = useNavigate();
 
   return (
-    <footer className="footer">
+    <footer className="fm-footer">
       <div className="footer-cta">
         <h3>
-          Hungry? Good food is <span className="accent">minutes away.</span>
+          Craving something? The mela is <span className="accent">always on.</span>
         </h3>
         <button className="btn-primary" onClick={() => nav(user ? '/food' : '/login')}>
           Order Now →
@@ -58,16 +61,16 @@ export default function Footer() {
 
       <div className="footer-grid">
         <div className="footer-brand">
-          <Link to="/" className="brand" style={{ color: '#fff' }} aria-label="FoodMela home">
-            <span className="brand-mark" aria-hidden="true">F</span>
+          <Link to="/" className="fm-brand" style={{ color: '#fff' }} aria-label="FoodMela home">
+            <span className="fm-mark" aria-hidden="true">F</span>
             <span>
               FoodMela
-              <small style={{ color: '#8a948d' }}>YOUR TRUSTED LOCAL DELIVERY</small>
+              <small style={{ color: '#8a948d' }}>LOCAL · FRESH · FAST</small>
             </span>
           </Link>
           <p>
-            Your trusted local delivery app — fresh restaurant food, sweets, groceries &amp;
-            daily essentials, delivered fast across Birmaharajpur.
+            Your neighbourhood mela of food — fresh restaurant dishes, sweets,
+            groceries &amp; daily essentials, delivered fast across Birmaharajpur.
           </p>
           <p style={{ marginTop: 8, fontSize: 13, color: '#c6cfc8' }}>
             Helpline: <a href="tel:8144503650" style={{ color: '#ffc531', fontWeight: 700 }}>8144503650</a>
@@ -87,7 +90,6 @@ export default function Footer() {
           <a href="tel:8144503650">📞 8144503650</a>
           <Link to="/page/help">Help &amp; Support</Link>
           <Link to="/page/terms">Terms of Service</Link>
-          <Link to="/page/disclaimer">Food Safety &amp; Disclaimer</Link>
           <Link to="/page/privacy">Privacy Policy</Link>
           <Link to="/page/refund">Refund Policy</Link>
         </div>
@@ -110,7 +112,7 @@ export default function Footer() {
 
         <div className="footer-col">
           <h4>Account</h4>
-          <Link to="/login">Login</Link>
+          <Link to={user ? '/profile' : '/login'}>{user ? 'My Profile' : 'Login'}</Link>
           <Link to="/orders">My Orders</Link>
           <Link to="/orders">Track Order</Link>
           <Link to="/#app">App Download</Link>

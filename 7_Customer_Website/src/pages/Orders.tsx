@@ -80,6 +80,24 @@ function statusMeta(stage: number, cancelled: boolean): { label: string; cls: st
   return { label: 'PLACED', cls: 'st-placed', icon: '🧾' };
 }
 
+// Journey nodes derived from the EXISTING stage (presentation only).
+// Order Confirmed → Restaurant Preparing → Picked Up → On The Way → Delivered.
+function journeyNodes(stage: number, cancelled: boolean): { label: string; icon: string; state: 'done' | 'now' | '' }[] {
+  if (cancelled) return [{ label: 'Order Cancelled', icon: '🚨', state: 'now' }];
+  const idx = Math.min(4, Math.max(0, stage >= 3 ? 4 : stage === 2 ? 3 : stage));
+  const labels = [
+    { label: 'Order Confirmed', icon: '🧾' },
+    { label: 'Restaurant Preparing', icon: '👨‍🍳' },
+    { label: 'Picked Up', icon: '🛍️' },
+    { label: 'On The Way', icon: '🛵' },
+    { label: 'Delivered', icon: '🏁' },
+  ];
+  return labels.map((l, i) => ({
+    ...l,
+    state: (i < idx ? 'done' : i === idx ? 'now' : '') as 'done' | 'now' | '',
+  }));
+}
+
 export default function Orders() {
   const { user, addManyToCart, allItems } = useShop();
   const nav = useNavigate();
@@ -208,10 +226,10 @@ export default function Orders() {
       </div>
 
       {shown.length === 0 ? (
-        <div className="empty">
-          <div className="empty-icon">{tab === 'active' ? '🛵' : '🧾'}</div>
-          <h3>{tab === 'active' ? 'No active orders' : 'No past orders yet'}</h3>
-          <p>{tab === 'active' ? 'Place a new order from the menu and track it live here.' : 'Your completed orders will appear here.'}</p>
+        <div className="mela-empty">
+          <div className="mela-empty-icon">{tab === 'active' ? '🛵' : '🧾'}</div>
+          <h3>{tab === 'active' ? 'Nothing cooking right now' : 'No mela memories yet'}</h3>
+          <p>{tab === 'active' ? 'Place a new order from the menu and follow its journey live here.' : 'Your completed orders will live here — reorder in one tap.'}</p>
           {tab === 'active' && (
             <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => nav('/food')}>
               Order Food →
@@ -225,30 +243,40 @@ export default function Orders() {
           const canCancel = !cancelled && stage < 2;
           const canReorder = (stage === 3 || cancelled) && Array.isArray(o.items) && (o.items as unknown[]).length > 0;
           const meta = statusMeta(stage, cancelled);
+          const journey = journeyNodes(stage, cancelled);
           return (
-            <div key={o.oid} className="order-card">
+            <div key={o.oid} className="journey-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <Link to={`/track/${encodeURIComponent(o.oid)}`} style={{ fontWeight: 800, color: '#14181D', fontSize: 15 }}>
+                <Link to={`/track/${encodeURIComponent(o.oid)}`} style={{ fontWeight: 800, color: '#1E2A24', fontSize: 15 }}>
                   #{o.oid.replace(/^FM-/, '')}
                 </Link>
                 <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   {o.source === 'app' && (
-                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 8px', borderRadius: 20, background: '#F1F3F0', color: '#66707D' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 8px', borderRadius: 20, background: '#F1F3F0', color: '#68756E' }}>
                       APP
                     </span>
                   )}
                   <span className={`status-pill ${meta.cls}`}>{meta.icon} {meta.label}</span>
                 </span>
               </div>
-              <div style={{ fontSize: 13, color: '#66707D', marginTop: 8 }}>
+              {/* Mini journey timeline (existing stage — presentation only) */}
+              <div className="journey" style={{ marginTop: 14 }} aria-label={`Order progress: ${meta.label}`}>
+                {journey.map((n) => (
+                  <div key={n.label} className={`j-node ${n.state}`}>
+                    <span className="j-dot" aria-hidden="true">{n.state === 'done' ? '✓' : n.icon}</span>
+                    <strong>{n.label}</strong>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontSize: 13, color: '#68756E', marginTop: 4 }}>
                 {itemsText(o)} • <strong style={{ color: '#0a5c2f' }}>{totalOf(o)}</strong>
               </div>
               {(o.acceptedByName || o.riderName) && !cancelled && (
-                <div style={{ fontSize: 12, color: '#66707D', marginTop: 5 }}>🛵 {o.acceptedByName ?? o.riderName}</div>
+                <div style={{ fontSize: 12, color: '#68756E', marginTop: 5 }}>🛵 {o.acceptedByName ?? o.riderName}</div>
               )}
               <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                 <Link to={`/track/${encodeURIComponent(o.oid)}`} className="btn-ghost" style={{ padding: '9px 16px', fontSize: 13, textDecoration: 'none' }}>
-                  {cancelled || stage >= 3 ? 'View Details' : 'Track Live →'}
+                  {cancelled || stage >= 3 ? 'View Receipt' : 'Follow Journey →'}
                 </Link>
                 {canCancel && (
                   <button

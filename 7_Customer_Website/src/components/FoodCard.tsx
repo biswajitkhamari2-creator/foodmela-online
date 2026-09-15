@@ -1,5 +1,5 @@
 import { useShop } from '../store';
-import type { CatalogItem } from '../data/catalog';
+import { ITEM_DESCRIPTIONS, pushSeen, type CatalogItem } from '../data/catalog';
 
 // Presentation-only delivery hints per category (frontend copy, not backend data).
 const ETA: Record<string, string> = {
@@ -14,16 +14,28 @@ const ETA: Record<string, string> = {
   eggs_meat: '25–35 min',
 };
 
+/**
+ * Signature "Thali" plate card — circular dish portrait, veg mark,
+ * favourite heart, rating, price + ADD stepper.
+ * ADD uses the EXISTING cart (addToCart/removeFromCart) — logic untouched.
+ */
 export default function FoodCard({ item }: { item: CatalogItem }) {
-  const { cart, addToCart, removeFromCart, priceOf, mrpOf } = useShop();
+  const { cart, addToCart, removeFromCart, priceOf, mrpOf, isFav, toggleFav } = useShop();
   const qty = cart.get(item.id) ?? 0;
   const price = priceOf(item);
   const mrp = mrpOf(item);
   const off = mrp ? Math.round(((mrp - price) / mrp) * 100) : 0;
+  const fav = isFav(item.id);
+  const desc = ITEM_DESCRIPTIONS[item.id];
+
+  const add = () => {
+    pushSeen(item.id);
+    addToCart(item.id);
+  };
 
   return (
-    <article className="food-card">
-      <div className="food-img">
+    <article className="thali">
+      <div className="thali-plate">
         <img src={item.image} alt={item.name} loading="lazy" />
         <span
           className={`veg-mark ${item.isVeg ? '' : 'nonveg'}`}
@@ -32,16 +44,24 @@ export default function FoodCard({ item }: { item: CatalogItem }) {
         >
           <i aria-hidden="true" />
         </span>
-        <span className={`rating-pill ${item.rating < 4.5 ? 'low' : ''}`}>
-          <span aria-hidden="true">★</span> {item.rating.toFixed(1)}
-        </span>
-        {off > 0 && <span className="off-ribbon">{off}% OFF</span>}
+        <button
+          className={`thali-fav ${fav ? 'on' : ''}`}
+          onClick={() => toggleFav(item.id)}
+          aria-label={fav ? `Remove ${item.name} from favourites` : `Save ${item.name} to favourites`}
+          aria-pressed={fav}
+          title="Your FoodMela Favourites"
+        >
+          {fav ? '❤️' : '🤍'}
+        </button>
+        {off > 0 && <span className="thali-off">{off}% OFF</span>}
       </div>
-      <div className="food-body">
-        <div className="food-cat">{item.categoryLabel}</div>
+      <div className="thali-body">
+        <div className="thali-cat">{item.categoryLabel}</div>
         <h3>{item.name}</h3>
-        <div className="food-meta">
-          🛵 {ETA[item.category] ?? '~30 min'} · Free delivery over ₹299
+        {desc && <p className="thali-desc">{desc}</p>}
+        <div className="thali-rate">
+          <span className={`stars ${item.rating < 4.5 ? 'low' : ''}`}>★ {item.rating.toFixed(1)}</span>
+          <span>🛵 {ETA[item.category] ?? '~30 min'}</span>
         </div>
         <div className="price-row">
           <span className="price">₹{price}</span>
@@ -50,14 +70,14 @@ export default function FoodCard({ item }: { item: CatalogItem }) {
         </div>
         <div className="add-row">
           {qty === 0 ? (
-            <button className="add-btn" onClick={() => addToCart(item.id)} aria-label={`Add ${item.name} to cart`}>
+            <button className="add-btn" onClick={add} aria-label={`Add ${item.name} to cart`}>
               ADD +
             </button>
           ) : (
             <div className="qty-ctl">
               <button onClick={() => removeFromCart(item.id)} aria-label={`Remove one ${item.name}`}>−</button>
-              <strong aria-live="polite">{qty}</strong>
-              <button onClick={() => addToCart(item.id)} aria-label={`Add one more ${item.name}`}>+</button>
+              <strong aria-live="polite" key={qty}>{qty}</strong>
+              <button onClick={add} aria-label={`Add one more ${item.name}`}>+</button>
             </div>
           )}
         </div>

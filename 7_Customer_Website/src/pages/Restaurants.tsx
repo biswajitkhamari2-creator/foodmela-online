@@ -7,22 +7,22 @@ export default function Restaurants() {
 
   return (
     <div className="page-enter">
-      <div className="page-hero">
-        <div className="page-hero-inner">
-          <h1>Top restaurants <span className="accent">&amp; stores</span></h1>
-          <p>Local kitchens &amp; shops serving {city} — live menus, honest prices.</p>
+      <div className="mela-pagehead">
+        <div className="mela-pagehead-inner">
+          <h1>Made <span className="accent">around you</span></h1>
+          <p>Local kitchens &amp; shops serving {city} — live menus, community favourites, honest prices.</p>
         </div>
       </div>
       <div className="section">
-        <div className="food-grid">
+        <div className="post-grid">
           {STOREFRONTS.map((s) => (
             <StorefrontCard key={s.key} store={s} />
           ))}
         </div>
-        <div className="empty" style={{ paddingTop: 40 }}>
-          <div className="empty-icon">🏪</div>
-          <h3>Own a restaurant or store in {city}?</h3>
-          <p>Join FoodMela and reach thousands of hungry locals.</p>
+        <div className="mela-empty" style={{ paddingTop: 40 }}>
+          <div className="mela-empty-icon">🏪</div>
+          <h3>Own a kitchen or store in {city}?</h3>
+          <p>Join the mela and reach thousands of hungry locals.</p>
         </div>
       </div>
     </div>

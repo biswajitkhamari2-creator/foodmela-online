@@ -1,27 +1,32 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  CATEGORIES,
-  SHOWCASE_CATEGORIES,
-  GROCERY_AISLES,
+  MOODS,
   STOREFRONTS,
   PROMO_OFFERS,
   SEARCH_SUGGESTIONS,
+  readSeen,
 } from '../data/catalog';
 import { useShop } from '../store';
 import { useDeliveryLocation } from '../components/location-context';
 import FoodCard from '../components/FoodCard';
 import FestBanner from '../components/FestBanner';
 import OfferCard from '../components/OfferCard';
-import StorefrontCard from '../components/StorefrontCard';
 
 const GROCERY_CATS = new Set(['vegetables', 'fruits', 'grocery', 'dairy', 'eggs_meat']);
+
+// Rotating hero plate images (presentation only).
+const PLATE_IMAGES = [
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&h=800&fit=crop',
+  'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&h=800&fit=crop',
+];
 
 const BENEFITS = [
   { emoji: '⚡', bg: '#FFF4D6', title: 'Fast Delivery', text: 'Hot & fresh at your door in minutes' },
   { emoji: '🛡️', bg: '#E7F6EC', title: 'Safe & Secure', text: 'Trusted payments, every single order' },
   { emoji: '🥬', bg: '#E7F6EC', title: 'Fresh & Quality', text: 'Picked daily, quality-checked' },
-  { emoji: '💰', bg: '#FFF4D6', title: 'Great Prices', text: 'Local rates, no platform markup' },
+  { emoji: '💰', bg: '#FFF4D6', title: 'Great Prices', text: 'Local rates, honest bills' },
   { emoji: '❤️', bg: '#FDECEA', title: 'Support Local', text: 'Every order helps your community' },
 ];
 
@@ -30,19 +35,23 @@ function scrollToMenu() {
 }
 
 export default function Home() {
-  const { cartCount, allItems, customs, priceOf, mrpOf, user } = useShop();
+  const { cartCount, allItems, customs, priceOf, mrpOf, user, favs } = useShop();
   const { city, area, setLocOpen } = useDeliveryLocation();
   const nav = useNavigate();
-  const [cat, setCat] = useState('all');
   const [q, setQ] = useState('');
-  const [vegOnly, setVegOnly] = useState(false);
+  const [plateIdx, setPlateIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setPlateIdx((i) => (i + 1) % PLATE_IMAGES.length), 4000);
+    return () => clearInterval(t);
+  }, []);
 
   // ── Discovery rails — all computed from REAL catalog + live prices ──
   const popular = useMemo(
     () => [...allItems].sort((a, b) => b.rating - a.rating).slice(0, 10),
     [allItems],
   );
-  const bestSellers = useMemo(
+  const bestValue = useMemo(
     () =>
       allItems
         .map((c) => {
@@ -61,143 +70,133 @@ export default function Home() {
     () => allItems.filter((c) => GROCERY_CATS.has(c.category)).sort((a, b) => b.rating - a.rating).slice(0, 8),
     [allItems],
   );
-  const trending = useMemo(
+  const freshAdded = useMemo(
     () => (customs.length > 0 ? customs : [...allItems].sort((a, b) => b.rating - a.rating)).slice(0, 8),
     [allItems, customs],
   );
-  const recommended = useMemo(
-    () => allItems.filter((c) => c.rating >= 4.6 && c.isVeg).slice(0, 8),
+  // Hidden gems = rated well but not top-10 (real data, second tier).
+  const hiddenGems = useMemo(
+    () => [...allItems].sort((a, b) => b.rating - a.rating).slice(10, 18),
     [allItems],
   );
-
-  const items = useMemo(() => {
-    const s = q.toLowerCase().trim();
-    return allItems.filter((c) => {
-      if (cat !== 'all' && c.category !== cat) return false;
-      if (vegOnly && !c.isVeg) return false;
-      if (s && !c.name.toLowerCase().includes(s)) return false;
-      return true;
-    });
-  }, [cat, q, vegOnly, allItems]);
+  const favItems = useMemo(
+    () => allItems.filter((c) => favs.has(c.id)),
+    [allItems, favs],
+  );
+  const becauseYouOrdered = useMemo(() => {
+    const seen = readSeen();
+    if (seen.length === 0) return [];
+    const seenCats = new Set(
+      seen
+        .map((id) => allItems.find((c) => c.id === id)?.category)
+        .filter((c): c is string => Boolean(c)),
+    );
+    return allItems
+      .filter((c) => seenCats.has(c.category) && !seen.includes(c.id))
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 8);
+  }, [allItems]);
+  const moodCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const mood of MOODS) {
+      m.set(mood.key, allItems.filter((c) => mood.cats.includes(c.category)).length);
+    }
+    return m;
+  }, [allItems]);
 
   const avgRating = useMemo(() => {
     if (allItems.length === 0) return '4.6';
     return (allItems.reduce((s, c) => s + c.rating, 0) / allItems.length).toFixed(1);
   }, [allItems]);
 
-  const pickCategory = (key: string) => {
+  const requireLogin = (fn: () => void) => {
     if (!user) {
       nav('/login');
       return;
     }
-    setCat(key);
-    setQ('');
-    scrollToMenu();
+    fn();
   };
 
   const submitHeroSearch = (e: FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      nav('/login');
-      return;
-    }
     const query = q.trim();
     if (!query) {
-      scrollToMenu();
+      requireLogin(scrollToMenu);
       return;
     }
-    nav(`/food?q=${encodeURIComponent(query)}`);
-  };
-
-  const handleOrderNow = () => {
-    if (!user) {
-      nav('/login');
-      return;
-    }
-    scrollToMenu();
+    requireLogin(() => nav(`/food?q=${encodeURIComponent(query)}`));
   };
 
   return (
     <div className="page-enter">
-      {/* ── 1. HERO ── */}
-      <div className="hero-band">
-        <div className="hero">
+      {/* ── HERO ── */}
+      <div className="mela-hero">
+        <div className="mela-hero-grid">
           <div>
-            <span className="hero-eyebrow">
+            <span className="mela-eyebrow">
               <span className="pulse" aria-hidden="true" /> Now serving {city}
             </span>
             <h1>
               Good Food.
               <br />
-              <span className="hl-green">Delivered</span> <span className="hl-yellow">Happier.</span>
+              <span className="w-leaf">Made</span> <span className="w-chili">Local.</span>
             </h1>
-            <p className="hero-sub">
-              Food, groceries &amp; more — delivered fresh to your doorstep.
+            <p className="mela-sub">
+              Discover amazing food, fresh groceries and local favourites delivered to your doorstep.
             </p>
-            <div className="hero-cta">
-              <button className="btn-primary" onClick={handleOrderNow}>Order Now →</button>
-              <button className="btn-ghost" onClick={() => nav(user ? '/food' : '/login')}>Explore Food</button>
+            <div className="mela-cta">
+              <button className="btn-primary" onClick={() => requireLogin(scrollToMenu)}>Order Now →</button>
+              <button className="btn-ghost" onClick={() => requireLogin(() => nav('/food'))}>Explore Nearby</button>
             </div>
-            <button className="hero-serve" onClick={() => setLocOpen(true)} aria-label={`Change delivery location, currently ${area}`}>
+            <button className="mela-serve" onClick={() => setLocOpen(true)} aria-label={`Change delivery location, currently ${area}`}>
               📍 Delivering to <strong>&nbsp;{area}, {city}&nbsp;</strong> · Change ▾
             </button>
-            <div className="hero-stats">
+            <div className="mela-stats">
               <div><strong>{allItems.length}+</strong><span>Dishes &amp; essentials</span></div>
-              <div><strong>{avgRating}★</strong><span>Avg. rating</span></div>
+              <div><strong>{avgRating}★</strong><span>Loved by locals</span></div>
               <div><strong>~30 min</strong><span>Avg. delivery</span></div>
             </div>
           </div>
-          <div className="hero-art">
-            <div className="plate">
-              <img
-                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&h=760&fit=crop"
-                alt="Freshly cooked FoodMela meal"
-              />
+          <div className="mela-plate-wrap">
+            <div className="mela-plate-ring" aria-hidden="true" />
+            <div className="mela-plate">
+              {PLATE_IMAGES.map((src, i) => (
+                <img key={src} src={src} alt="" aria-hidden={i !== plateIdx} className={i === plateIdx ? 'on' : ''} loading={i === 0 ? 'eager' : 'lazy'} />
+              ))}
             </div>
-            <div className="float-card float-1">
-              <span className="fc-ico" aria-hidden="true">🛵</span>
+            <div className="mela-chip mela-chip-1">
+              <span className="ci" aria-hidden="true">🛵</span>
               <span>
                 <strong>Live rider tracking</strong>
-                <small>{user && cartCount > 0 ? `${cartCount} item(s) in your cart` : 'Riders reach your exact address'}</small>
+                <small>{user && cartCount > 0 ? `${cartCount} item(s) in your thali` : 'Riders reach your exact address'}</small>
               </span>
             </div>
-            <div className="float-card float-2">
-              <span className="fc-ico" aria-hidden="true">⭐</span>
+            <div className="mela-chip mela-chip-2">
+              <span className="ci" aria-hidden="true">⭐</span>
               <span>
                 <strong>{avgRating} rated by locals</strong>
-                <small>Your trusted local delivery app</small>
+                <small>Your trusted neighbourhood mela</small>
               </span>
             </div>
           </div>
         </div>
 
-        {/* ── 2. SEARCH ── */}
-        <div className="hero-search">
-          <form className="hero-search-box" onSubmit={submitHeroSearch} role="search">
+        {/* ── CRAVING SEARCH ── */}
+        <div className="mela-search-zone">
+          <form className="mela-search-box" onSubmit={submitHeroSearch} role="search">
             <span className="s-ico" aria-hidden="true">🔍</span>
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search for biryani, pizza, burgers, groceries..."
-              aria-label="Search for biryani, pizza, burgers, groceries"
+              placeholder="Search biryani... find your favourite food..."
+              aria-label="Search biryani, find your favourite food"
             />
             <button type="submit" className="btn-primary">Search</button>
           </form>
-          <div className="hero-search-hints">
-            <span>Popular:</span>
+          <div className="mela-hints">
+            <span>Craving something?</span>
             {SEARCH_SUGGESTIONS.slice(0, 6).map((s) => (
-              <button
-                key={s}
-                className="hint-chip"
-                onClick={() => {
-                  if (!user) {
-                    nav('/login');
-                    return;
-                  }
-                  setQ(s);
-                  scrollToMenu();
-                }}
-              >
+              <button key={s} className="hint-pill" onClick={() => requireLogin(() => nav(`/food?q=${encodeURIComponent(s)}`))}>
                 {s}
               </button>
             ))}
@@ -209,166 +208,201 @@ export default function Home() {
 
       {user ? (
         <>
-          {/* ── 3. CATEGORIES ── */}
+          {/* ── WHAT'S YOUR MOOD? ── */}
           <div className="section">
-        <div className="section-head">
-          <div>
-            <h2>What&apos;s on your <span className="accent">mind?</span></h2>
-            <p>Live prices — admin updates reflect instantly, no refresh needed</p>
-          </div>
-          <span className="link-more" onClick={() => nav('/food')}>View all →</span>
-        </div>
-        <div className="cat-circle-row" role="list">
-          {SHOWCASE_CATEGORIES.map((c, i) => (
-            <button
-              key={c.key}
-              role="listitem"
-              className={`cat-circle reveal reveal-${Math.min(i, 4)} ${cat === c.key ? 'on' : ''}`}
-              onClick={() => pickCategory(c.key)}
-              aria-label={`Browse ${c.label}`}
-              title={c.blurb}
-            >
-              <span className="cc-img"><img src={c.image} alt={c.label} loading="lazy" /></span>
-              <span>{c.emoji} {c.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 4. POPULAR NEAR YOU ── */}
-      <div className="section">
-        <div className="section-head">
-          <div>
-            <h2>Popular <span className="accent">near you</span></h2>
-            <p>Top-rated dishes loved across {city}</p>
-          </div>
-          <span className="link-more" onClick={() => nav('/food')}>View all →</span>
-        </div>
-        <div className="h-scroll">
-          {popular.map((item) => (
-            <FoodCard key={item.id} item={item} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── 5. TOP RESTAURANTS / STORES ── */}
-      <div className="section">
-        <div className="section-head">
-          <div>
-            <h2>Top <span className="accent">restaurants &amp; stores</span></h2>
-            <p>Local kitchens &amp; shops, live item counts</p>
-          </div>
-          <span className="link-more" onClick={() => nav('/restaurants')}>View all →</span>
-        </div>
-        <div className="food-grid">
-          {STOREFRONTS.slice(0, 3).map((s) => (
-            <StorefrontCard key={s.key} store={s} />
-          ))}
-        </div>
-      </div>
-
-      {/* ── 6. FULL MENU (existing filter logic, premium skin) ── */}
-      <div className="section" id="menu">
-        <div className="section-head">
-          <div>
-            <h2>Explore the <span className="accent">full menu</span></h2>
-            <p>{items.length} items · search, filter &amp; add to cart</p>
-          </div>
-        </div>
-        <div className="filter-bar">
-          <div className="search-bar">
-            <span aria-hidden="true">🔍</span>
-            <input placeholder="Search dishes..." value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search dishes" />
-          </div>
-          <button className={`cat-chip ${vegOnly ? 'veg-on' : ''}`} onClick={() => setVegOnly(!vegOnly)} aria-pressed={vegOnly}>
-            🟢 Veg only
-          </button>
-        </div>
-        <div className="cat-row">
-          {CATEGORIES.map((c) => (
-            <button key={c.key} className={`cat-chip ${cat === c.key ? 'on' : ''}`} onClick={() => setCat(c.key)}>
-              {c.icon} {c.label}
-            </button>
-          ))}
-        </div>
-        {items.length === 0 ? (
-          <div className="empty">
-            <div className="empty-icon">🔍</div>
-            <h3>No dishes found</h3>
-            <p>Try a different search or category.</p>
-          </div>
-        ) : (
-          <div className="food-grid">
-            {items.map((item) => (
-              <FoodCard key={item.id} item={item} />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── 7. BEST SELLERS (live discounts) ── */}
-      {bestSellers.length > 0 && (
-        <div className="section">
-          <div className="section-head">
-            <div>
-              <h2>Best <span className="accent">sellers</span></h2>
-              <p>Biggest live discounts, updated by the store</p>
+            <div className="section-head">
+              <div>
+                <h2>What&apos;s your <span className="accent">mood?</span></h2>
+                <p>Seven cravings, one neighbourhood — pick yours</p>
+              </div>
+              <span className="link-more" onClick={() => nav('/food')}>View all →</span>
             </div>
-            <span className="link-more" onClick={() => nav('/offers')}>All offers →</span>
+            <div className="mood-grid" role="list">
+              {MOODS.map((m, i) => (
+                <button
+                  key={m.key}
+                  role="listitem"
+                  className={`mood-card mood-${i} reveal reveal-${Math.min(i, 4)}`}
+                  onClick={() => nav(`/food?mood=${m.key}`)}
+                  aria-label={`${m.title} — ${moodCounts.get(m.key) ?? 0} dishes`}
+                >
+                  <span className="m-count">{moodCounts.get(m.key) ?? 0} dishes</span>
+                  <span className="m-emoji" aria-hidden="true">{m.emoji}</span>
+                  <strong>{m.title}</strong>
+                  <small>{m.blurb}</small>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="h-scroll">
-            {bestSellers.map((item) => (
-              <FoodCard key={item.id} item={item} />
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* ── 8. GROCERY ── */}
-      <div className="section" id="grocery">
-        <div className="section-head">
-          <div>
-            <h2>Fresh groceries, <span className="accent">delivered fast</span></h2>
-            <p>Vegetables, fruits, dairy &amp; staples — picked fresh daily</p>
+          {/* ── MADE AROUND YOU ── */}
+          <div className="section">
+            <div className="local-band">
+              <h2>Made <span className="accent">around you</span></h2>
+              <p>Nearby kitchens &amp; stores in {city} — live menus, community favourites, honest prices.</p>
+              <div className="local-scroll" role="list">
+                {STOREFRONTS.map((s) => {
+                  const items = allItems.filter((c) => c.category === s.key);
+                  const top = items.reduce((m, c) => Math.max(m, c.rating), 0);
+                  return (
+                    <div key={s.key} role="listitem" className="local-card" onClick={() => nav(`/food?cat=${s.key}`)} tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/food?cat=${s.key}`); }}
+                      aria-label={`${s.name} — order now`}>
+                      <img src={s.image} alt={s.name} loading="lazy" />
+                      <div className="lc-body">
+                        <h3>{s.name}</h3>
+                        <p>{s.cuisine}</p>
+                        <div className="lc-meta">
+                          <span className="rate">★ {top > 0 ? top.toFixed(1) : '4.5'}</span>
+                          <span className="eta">🛵 {s.eta}</span>
+                          <span className="eta">{items.length} items</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-          <span className="link-more" onClick={() => nav('/grocery')}>Open grocery →</span>
-        </div>
-        <div className="cat-circle-row" role="list">
-          {GROCERY_AISLES.map((c) => (
-            <button key={c.key} role="listitem" className="cat-circle" onClick={() => nav(`/grocery?cat=${c.key}`)} aria-label={`Shop ${c.label}`} title={c.blurb}>
-              <span className="cc-img"><img src={c.image} alt={c.label} loading="lazy" /></span>
-              <span>{c.emoji} {c.label}</span>
-            </button>
-          ))}
-        </div>
-        <div className="h-scroll" style={{ marginTop: 8 }}>
-          {freshToday.map((item) => (
-            <FoodCard key={item.id} item={item} />
-          ))}
-        </div>
-      </div>
 
-      {/* ── 9. OFFERS ── */}
-      <div className="section" id="offers">
-        <div className="section-head">
-          <div>
-            <h2>Offers <span className="accent">for you</span></h2>
-            <p>Festival specials + everyday local deals</p>
+          {/* ── POPULAR RIGHT NOW ── */}
+          <div className="section">
+            <div className="section-head">
+              <div>
+                <h2>Popular <span className="accent">right now</span></h2>
+                <p>Top-rated dishes people around you love</p>
+              </div>
+              <span className="link-more" onClick={() => nav('/food')}>View all →</span>
+            </div>
+            <div className="h-scroll">
+              {popular.map((item) => (
+                <FoodCard key={item.id} item={item} />
+              ))}
+            </div>
           </div>
-          <span className="link-more" onClick={() => nav('/offers')}>All offers →</span>
-        </div>
-        <div className="offer-grid">
-          {PROMO_OFFERS.map((o) => (
-            <OfferCard key={o.code} offer={o} />
-          ))}
-        </div>
-      </div>
+
+          {/* ── BEST VALUE TODAY ── */}
+          {bestValue.length > 0 && (
+            <div className="section">
+              <div className="section-head">
+                <div>
+                  <h2>Best value <span className="accent-chili">today</span></h2>
+                  <p>Biggest live discounts, updated by the store</p>
+                </div>
+                <span className="link-more" onClick={() => nav('/offers')}>All offers →</span>
+              </div>
+              <div className="h-scroll">
+                {bestValue.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── FRESH FOR YOUR HOME ── */}
+          <div className="section" id="grocery">
+            <div className="section-head">
+              <div>
+                <h2>Fresh for <span className="accent">your home</span></h2>
+                <p>Vegetables, fruits, dairy &amp; staples — one mela, everything fresh</p>
+              </div>
+              <span className="link-more" onClick={() => nav('/grocery')}>Open grocery →</span>
+            </div>
+            <div className="h-scroll">
+              {freshToday.map((item) => (
+                <FoodCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+
+          {/* ── TODAY'S MELa PICKS (offers) ── */}
+          <div className="section" id="offers">
+            <div className="section-head">
+              <div>
+                <h2>Today&apos;s FoodMela <span className="accent">picks</span></h2>
+                <p>Local love deals + festival specials</p>
+              </div>
+              <span className="link-more" onClick={() => nav('/offers')}>All offers →</span>
+            </div>
+            <div className="ticket-grid">
+              {PROMO_OFFERS.map((o) => (
+                <OfferCard key={o.code} offer={o} />
+              ))}
+            </div>
+          </div>
+
+          {/* ── FRESHLY ADDED ── */}
+          <div className="section">
+            <div className="section-head">
+              <div>
+                <h2>Freshly <span className="accent">added</span></h2>
+                <p>{customs.length > 0 ? 'Just added by your local stores' : 'New to the mela this week'}</p>
+              </div>
+            </div>
+            <div className="h-scroll">
+              {freshAdded.map((item) => (
+                <FoodCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+
+          {/* ── HIDDEN LOCAL GEMS ── */}
+          {hiddenGems.length > 0 && (
+            <div className="section">
+              <div className="section-head">
+                <div>
+                  <h2>Hidden local <span className="accent">gems</span></h2>
+                  <p>Quiet favourites worth discovering</p>
+                </div>
+              </div>
+              <div className="h-scroll">
+                {hiddenGems.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── YOUR FOODMELA FAVOURITES ── */}
+          {favItems.length > 0 && (
+            <div className="section">
+              <div className="section-head">
+                <div>
+                  <h2>Your FoodMela <span className="accent-chili">favourites</span></h2>
+                  <p>Your saved collection, one tap away</p>
+                </div>
+                <span className="link-more" onClick={() => nav('/profile')}>Manage →</span>
+              </div>
+              <div className="h-scroll">
+                {favItems.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── BECAUSE YOU ORDERED ── */}
+          {becauseYouOrdered.length > 0 && (
+            <div className="section">
+              <div className="section-head">
+                <div>
+                  <h2>Because you <span className="accent">ordered…</span></h2>
+                  <p>More from the kitchens you love</p>
+                </div>
+              </div>
+              <div className="h-scroll">
+                {becauseYouOrdered.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <div className="section" id="menu">
           <div className="menu-lock-card">
             <span className="lock-badge">🔒 Members Only Menu</span>
-            <h2>Log in to view our <span className="accent">Delicious Menu</span></h2>
+            <h2>Log in to enter the <span className="accent">food mela</span></h2>
             <p>Sign in with your mobile number to explore fresh dishes, live prices, and order online in Birmaharajpur.</p>
             <button className="btn-primary" onClick={() => nav('/login')}>
               Login with Phone to View Menu →
@@ -377,71 +411,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── 10. SUPPORT LOCAL (dark band) ── */}
-      <div className="section">
-        <div className="dark-band">
-          <div>
-            <h2>Support Local. <span className="accent">Eat Local.</span></h2>
-            <p>
-              Discover amazing restaurants and stores in your community. Every FoodMela
-              order supports kitchens, shops and riders right here in {city}.
-            </p>
-            <div className="db-points">
-              <div className="db-point"><span className="tick">✓</span>Local kitchens, honest prices</div>
-              <div className="db-point"><span className="tick">✓</span>Riders from your own town</div>
-              <div className="db-point"><span className="tick">✓</span>Fresh stock, updated daily</div>
-              <div className="db-point"><span className="tick">✓</span>Support that knows your name</div>
-            </div>
-            <div style={{ marginTop: 24 }}>
-              <button className="btn-primary" onClick={() => nav(user ? '/restaurants' : '/login')}>Meet Local Stores →</button>
-            </div>
-          </div>
-          <div className="db-img">
-            <img
-              src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop"
-              alt="Local restaurant serving fresh food"
-              loading="lazy"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── 11. TRENDING + RECOMMENDED ── */}
-      {user && (
-        <>
-          <div className="section">
-            <div className="section-head">
-              <div>
-                <h2>Trending <span className="accent">now</span></h2>
-                <p>{customs.length > 0 ? 'Just added by your local stores' : 'What everyone is ordering this week'}</p>
-              </div>
-            </div>
-            <div className="h-scroll">
-              {trending.map((item) => (
-                <FoodCard key={item.id} item={item} />
-              ))}
-            </div>
-          </div>
-
-          {recommended.length > 0 && (
-            <div className="section">
-              <div className="section-head">
-                <div>
-                  <h2>Recommended <span className="accent">for you</span></h2>
-                  <p>Top-rated vegetarian picks</p>
-                </div>
-              </div>
-              <div className="h-scroll">
-                {recommended.map((item) => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
-              </div>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* ── 12. BENEFITS ── */}
+      {/* ── WHY FOODMELA ── */}
       <div className="section">
         <div className="section-head">
           <div>
@@ -459,7 +429,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── 13. APP DOWNLOAD ── */}
+      {/* ── APP ── */}
       <div className="section" id="app">
         <div className="app-band">
           <div>

@@ -15,6 +15,7 @@ import Info from './pages/Info';
 import Login from './pages/Login';
 import Orders from './pages/Orders';
 import Track from './pages/Track';
+import Profile from './pages/Profile';
 
 // Routes, providers, cart state, auth flow — all unchanged.
 // Only the chrome (top strip, footer, bottom nav, location modal) is new.
@@ -49,6 +50,7 @@ function Shell() {
           <Route path="/login" element={<Login />} />
           <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" replace />} />
           <Route path="/track/:orderId" element={<Track />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<Info />} />
         </Routes>
       </main>

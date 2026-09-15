@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
-import { CATALOG, type CatalogItem } from './data/catalog';
+import { CATALOG, readFavs, writeFavs, type CatalogItem } from './data/catalog';
 
 export interface Banner {
   id: string;
@@ -34,6 +34,9 @@ interface ShopState {
   cartTotal: number;
   user: { name: string; phone: string; address: string } | null;
   setUser: (u: { name: string; phone: string; address: string } | null) => void;
+  favs: Set<string>;
+  toggleFav: (id: string) => void;
+  isFav: (id: string) => boolean;
 }
 
 const Ctx = createContext<ShopState>(null!);
@@ -66,6 +69,17 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     } catch { /* ignore */ }
     return null;
   });
+  // Favourites — on-device only (no backend wishlist exists).
+  const [favs, setFavs] = useState<Set<string>>(() => readFavs());
+  const toggleFav = (id: string) => {
+    setFavs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      writeFavs(next);
+      return next;
+    });
+  };
 
   // Live prices + MRP from the SAME Firestore the admin edits
   useEffect(() => {
@@ -162,7 +176,8 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       cartTotal += priceOf(item) * qty;
     });
     return {
-      prices, mrps, banner, cart, customs, allItems,
+      prices, mrps, banner, cart, customs, allItems, favs, toggleFav,
+      isFav: (id: string) => favs.has(id),
       addToCart: (id) => setCart((c) => new Map(c).set(id, (c.get(id) ?? 0) + 1)),
       addManyToCart: (entries) => setCart((c) => {
         const n = new Map(c);
@@ -178,7 +193,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       clearCart: () => setCart(new Map()),
       priceOf, mrpOf, cartCount, cartTotal, user, setUser,
     };
-  }, [prices, mrps, banner, cart, user, customs, allItems]);
+  }, [prices, mrps, banner, cart, user, customs, allItems, favs]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

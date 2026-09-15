@@ -9,10 +9,11 @@ import { api } from '../api';
 // Only the progress UI was redesigned.
 
 const STEPS = [
-  { label: 'Order Placed', icon: '🧾' },
-  { label: 'Accepted', icon: '👨‍🍳' },
-  { label: 'On the Way', icon: '🛵' },
-  { label: 'Delivered', icon: '🏁' },
+  { label: 'Order Confirmed', icon: '🧾', sub: 'Kitchen has your order' },
+  { label: 'Restaurant Preparing', icon: '👨‍🍳', sub: 'Fresh on the flame' },
+  { label: 'Picked Up', icon: '🛍️', sub: 'Packed & handed over' },
+  { label: 'On The Way', icon: '🛵', sub: 'Rider is nearby' },
+  { label: 'Delivered', icon: '🏁', sub: 'Enjoy your meal!' },
 ];
 
 interface LiveOrder {
@@ -74,11 +75,12 @@ export default function Track() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  if (!orderId) return <div className="section"><div className="empty"><h3>No order ID</h3></div></div>;
+  if (!orderId) return <div className="section"><div className="mela-empty"><h3>No order ID</h3></div></div>;
 
   const stage = typeof order?.stage === 'number' ? order.stage : 0;
   const cancelled = stage === -1;
-  const stepIdx = cancelled ? 0 : Math.min(3, Math.max(0, stage));
+  // Map existing stage → 5-node journey (presentation only, same stage).
+  const stepIdx = cancelled ? 0 : stage >= 3 ? 4 : stage === 2 ? 3 : Math.min(2, Math.max(0, stage));
   const otp = order?.deliveryOtp ?? '';
   const canCancel = !cancelled && stage < 2;
 
@@ -119,16 +121,16 @@ export default function Track() {
 
       <div className="track-card" style={{ marginTop: 18 }}>
         {cancelled ? (
-          <div className="empty" style={{ padding: '30px 10px' }}>
-            <div className="empty-icon">🚨</div>
+          <div className="mela-empty" style={{ padding: '30px 10px' }}>
+            <div className="mela-empty-icon">🚨</div>
             <h3>Order Cancelled</h3>
             <p>{order?.status ?? ''}</p>
           </div>
         ) : !order ? (
           <div>
             <div className="skel" style={{ height: 64, borderRadius: 32 }} />
-            <div className="empty" style={{ padding: '26px 10px 10px' }}>
-              <div className="empty-icon">⏳</div>
+            <div className="mela-empty" style={{ padding: '26px 10px 10px' }}>
+              <div className="mela-empty-icon">⏳</div>
               <h3>Finding your order…</h3>
               <p>{err || 'Connecting to live updates.'}</p>
             </div>

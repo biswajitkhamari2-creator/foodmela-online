@@ -130,8 +130,8 @@ export default function Info() {
   if (!page) {
     return (
       <div className="section page-enter" style={{ maxWidth: 720 }}>
-        <div className="empty">
-          <div className="empty-icon">🔍</div>
+        <div className="mela-empty">
+          <div className="mela-empty-icon">🔍</div>
           <h3>Page not found</h3>
           <p>The page you&apos;re looking for doesn&apos;t exist.</p>
           <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => nav('/')}>

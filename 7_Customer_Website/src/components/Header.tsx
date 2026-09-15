@@ -22,26 +22,30 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
 
   const submitSearch = (e: FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      nav('/login');
+      return;
+    }
     const query = q.trim();
     nav(query ? `/food?q=${encodeURIComponent(query)}` : '/food');
     setQ('');
   };
 
   return (
-    <header className="header">
-      <div className="header-inner">
-        <Link to="/" className="brand" aria-label="FoodMela home">
-          <span className="brand-mark" aria-hidden="true">F</span>
+    <header className="fm-header">
+      <div className="fm-header-inner">
+        <Link to="/" className="fm-brand" aria-label="FoodMela home">
+          <span className="fm-mark" aria-hidden="true">F</span>
           <span>
             FoodMela
             <small>
-              YOUR <b>TRUSTED</b> LOCAL DELIVERY
+              LOCAL · <b>FRESH</b> · FAST
             </small>
           </span>
         </Link>
 
-        <button className="loc-pill" onClick={() => setLocOpen(true)} aria-label={`Delivery location: ${area}, ${city}. Change location`}>
-          <span className="dot" aria-hidden="true" />
+        <button className="fm-loc" onClick={() => setLocOpen(true)} aria-label={`Delivery location: ${area}, ${city}. Change location`}>
+          <span className="pin" aria-hidden="true">📍</span>
           <span>
             <small>Delivering to</small>
             {area}, {city}
@@ -50,7 +54,7 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
         </button>
 
         {Boolean(user) && (
-          <nav className="nav-links" aria-label="Primary">
+          <nav className="fm-nav" aria-label="Primary">
             <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink>
             <NavLink to="/food" className={({ isActive }) => (isActive ? 'active' : '')}>Food</NavLink>
             <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'active' : '')}>Restaurants</NavLink>
@@ -60,22 +64,22 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
           </nav>
         )}
 
-        <div className="header-right">
+        <div className="fm-head-right">
           {Boolean(user) && (
-            <form className="search-mini" onSubmit={submitSearch} role="search">
+            <form className="fm-search" onSubmit={submitSearch} role="search">
               <span aria-hidden="true">🔍</span>
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search biryani, pizza…"
-                aria-label="Search food"
-                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: 130, fontFamily: 'inherit' }}
+                placeholder="What are you craving today?"
+                aria-label="What are you craving today?"
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: 150, fontFamily: 'inherit' }}
               />
             </form>
           )}
           {user ? (
             <button
-              className="login-btn ghost-user"
+              className="fm-login me"
               title={user.phone}
               onClick={() => {
                 if (confirm('Log out?')) {
@@ -87,11 +91,11 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
               👋 {user.name.split(' ')[0] || 'Hi'}
             </button>
           ) : (
-            <button className="login-btn" onClick={() => nav('/login')}>Login</button>
+            <button className="fm-login" onClick={() => nav('/login')}>Login</button>
           )}
           {Boolean(user) && !hideCart && (
-            <button className={`cart-btn ${bump ? 'bump' : ''}`} onClick={onCartOpen} aria-label={`Open cart, ${cartCount} items`}>
-              🛒 Cart <span className="cart-count">{cartCount}</span>
+            <button className={`fm-cart ${bump ? 'bump' : ''}`} onClick={onCartOpen} aria-label={`Open cart, ${cartCount} items`}>
+              🛒 Cart <span className="n">{cartCount}</span>
             </button>
           )}
         </div>

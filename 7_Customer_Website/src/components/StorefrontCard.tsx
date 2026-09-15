@@ -2,29 +2,51 @@ import { useNavigate } from 'react-router-dom';
 import { useShop } from '../store';
 import type { Storefront } from '../data/catalog';
 
-// Storefront card — stats computed from REAL catalog data at render time.
+// Postcard card — editorial split layout (image spine + details).
+// Stats computed from REAL catalog data at render time.
 export default function StorefrontCard({ store }: { store: Storefront }) {
-  const { allItems } = useShop();
+  const { allItems, priceOf, mrpOf } = useShop();
   const nav = useNavigate();
 
   const items = allItems.filter((c) => c.category === store.key);
   const count = items.length;
   const top = items.reduce((m, c) => Math.max(m, c.rating), 0);
+  // Signature dish = top-rated item in this storefront (real data).
+  const signature = [...items].sort((a, b) => b.rating - a.rating)[0];
+  const sigOff = (() => {
+    if (!signature) return 0;
+    const mrp = mrpOf(signature);
+    if (!mrp) return 0;
+    return Math.round(((mrp - priceOf(signature)) / mrp) * 100);
+  })();
 
   return (
-    <article className="rest-card" onClick={() => nav(`/food?cat=${store.key}`)} role="link" aria-label={`${store.name} — order now`} tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/food?cat=${store.key}`); }}>
-      <div className="rest-img">
+    <article
+      className="postcard"
+      onClick={() => nav(`/food?cat=${store.key}`)}
+      role="link"
+      aria-label={`${store.name} — order now`}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/food?cat=${store.key}`); }}
+    >
+      <div className="postcard-img">
         <img src={store.image} alt={store.name} loading="lazy" />
-        <span className="rating-pill">★ {top > 0 ? top.toFixed(1) : '4.5'}</span>
       </div>
-      <div className="rest-body">
+      <div className="postcard-body">
         <h3>{store.name}</h3>
-        <div className="rest-sub">{store.cuisine}</div>
-        <div className="rest-meta">
-          <span className="meta-chip rate">🛵 {store.eta}</span>
-          <span className="meta-chip">{count} items</span>
-          <span className="meta-chip">🎁 {store.offer}</span>
+        <div className="postcard-cuisine">{store.cuisine}</div>
+        <div className="postcard-stars">
+          <span className="stars">★ {top > 0 ? top.toFixed(1) : '4.5'}</span>
+          <span>{count} items</span>
+        </div>
+        {signature && (
+          <div className="postcard-dish">
+            ⭐ {signature.name}{sigOff > 0 ? ` · ${sigOff}% off` : ''}
+          </div>
+        )}
+        <div className="postcard-foot">
+          <span className="meta-chip">🛵 {store.eta}</span>
+          <span className="meta-chip hot">🎁 {store.offer}</span>
         </div>
       </div>
     </article>

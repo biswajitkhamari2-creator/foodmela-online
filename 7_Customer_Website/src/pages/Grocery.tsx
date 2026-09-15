@@ -27,10 +27,10 @@ export default function Grocery() {
 
   return (
     <div className="page-enter">
-      <div className="page-hero">
-        <div className="page-hero-inner">
-          <h1>Fresh groceries, <span className="accent">delivered fast</span></h1>
-          <p>Vegetables, fruits, dairy &amp; staples — picked fresh daily from local stores.</p>
+      <div className="mela-pagehead">
+        <div className="mela-pagehead-inner">
+          <h1>Fresh for <span className="accent">your home</span></h1>
+          <p>Vegetables, fruits, dairy &amp; staples — one mela, everything fresh, picked daily.</p>
         </div>
       </div>
       <div className="section">
@@ -69,10 +69,10 @@ export default function Grocery() {
         </div>
         <p style={{ fontSize: 13, color: '#66707D', marginBottom: 14 }}>{items.length} products</p>
         {items.length === 0 ? (
-          <div className="empty">
-            <div className="empty-icon">🥬</div>
-            <h3>No products found</h3>
-            <p>Try a different search or aisle.</p>
+          <div className="mela-empty">
+            <div className="mela-empty-icon">🧺</div>
+            <h3>Your basket is empty here</h3>
+            <p>Try a different search or aisle — fresh stock arrives daily.</p>
           </div>
         ) : (
           <div className="food-grid">
