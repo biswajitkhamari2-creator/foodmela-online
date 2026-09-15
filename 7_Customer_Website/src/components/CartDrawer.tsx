@@ -11,11 +11,19 @@ const DELIVERY_FEE = 39;
 // shown as its own bill row and included in the placed totalAmount.
 const PLATFORM_FEE = 7;
 
+// Special discount coupons (₹50, ₹60, ₹70)
+const COUPONS = [
+  { code: 'MEGA70', discount: 70, minOrder: 220, label: 'Mega Feast ₹70 OFF' },
+  { code: 'FEAST60', discount: 60, minOrder: 160, label: 'Special Treat ₹60 OFF' },
+  { code: 'MELA50', discount: 50, minOrder: 100, label: 'Mela Welcome ₹50 OFF' },
+] as const;
+
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { cart, addToCart, removeFromCart, clearCart, priceOf, mrpOf, cartTotal, cartCount, user, allItems } = useShop();
   const nav = useNavigate();
   const [address, setAddress] = useState('');
   const [paymentMode, setPaymentMode] = useState<'cod' | 'prepaid'>('prepaid');
+  const [selectedCouponCode, setSelectedCouponCode] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [err, setErr] = useState('');
 
@@ -32,7 +40,18 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const savings = Math.max(0, mrpTotal - cartTotal);
   const deliveryFee = cartTotal >= FREE_DELIVERY_OVER || cartTotal === 0 ? 0 : DELIVERY_FEE;
   const platformFee = cartTotal === 0 ? 0 : PLATFORM_FEE;
-  const grand = cartTotal + deliveryFee + platformFee;
+
+  // Best eligible coupon based on cartTotal
+  const bestEligibleCoupon = COUPONS.find((c) => cartTotal >= c.minOrder) || null;
+  const effectiveCoupon =
+    selectedCouponCode === 'NONE'
+      ? null
+      : selectedCouponCode
+      ? COUPONS.find((c) => c.code === selectedCouponCode && cartTotal >= c.minOrder) ?? bestEligibleCoupon
+      : bestEligibleCoupon;
+  const discountAmount = effectiveCoupon ? effectiveCoupon.discount : 0;
+
+  const grand = Math.max(0, cartTotal + deliveryFee + platformFee - discountAmount);
   const awayFromFree = Math.max(0, FREE_DELIVERY_OVER - cartTotal);
   const progress = Math.min(100, Math.round((cartTotal / FREE_DELIVERY_OVER) * 100));
 
@@ -50,7 +69,9 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       const res = await api.placeOrder({
         customerName: user.name,
         phone: user.phone,
-        address: `${addr} [${effectiveMode}]`,
+        address: effectiveCoupon
+          ? `${addr} [${effectiveMode}] [Coupon: ${effectiveCoupon.code} (-₹${discountAmount})]`
+          : `${addr} [${effectiveMode}]`,
         items: lines.map((l) => ({
           itemId: l.item.id,
           name: l.item.name,
@@ -121,10 +142,181 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                   </div>
                 </div>
               ))}
+              {/* 🏷️ Discount Coupons Section (50 / 60 / 70) */}
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #FFFDF8 0%, #FEF9EE 100%)',
+                  border: '1.5px dashed #F59E0B',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  marginTop: '12px',
+                  marginBottom: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      color: '#B45309',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.6px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    🏷️ Available Coupons (Save ₹50–₹70)
+                  </span>
+                  {effectiveCoupon && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCouponCode('NONE')}
+                      style={{
+                        fontSize: '11px',
+                        color: '#DC2626',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                  {COUPONS.map((c) => {
+                    const isEligible = cartTotal >= c.minOrder;
+                    const isApplied = effectiveCoupon?.code === c.code;
+                    return (
+                      <button
+                        key={c.code}
+                        type="button"
+                        disabled={!isEligible}
+                        onClick={() => setSelectedCouponCode(c.code)}
+                        style={{
+                          padding: '8px 4px',
+                          borderRadius: '10px',
+                          border: isApplied
+                            ? '2px solid #0e9f4e'
+                            : isEligible
+                              ? '1.5px solid #F59E0B'
+                              : '1px solid #E5E7EB',
+                          background: isApplied
+                            ? '#E7F6EC'
+                            : isEligible
+                              ? '#FFFFFF'
+                              : '#F3F4F6',
+                          color: isApplied ? '#0a5c2f' : isEligible ? '#1F2937' : '#9CA3AF',
+                          cursor: isEligible ? 'pointer' : 'not-allowed',
+                          textAlign: 'center',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: isApplied ? '0 2px 6px rgba(14, 159, 78, 0.18)' : 'none',
+                          transition: 'all 0.15s ease',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 800,
+                            color: isApplied ? '#0e9f4e' : isEligible ? '#D97706' : '#9CA3AF',
+                          }}
+                        >
+                          {c.code}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 900,
+                            color: isApplied ? '#0a5c2f' : isEligible ? '#111827' : '#9CA3AF',
+                          }}
+                        >
+                          ₹{c.discount} OFF
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '9.5px',
+                            fontWeight: 600,
+                            color: isApplied ? '#0e9f4e' : isEligible ? '#059669' : '#9CA3AF',
+                            marginTop: '2px',
+                          }}
+                        >
+                          {isApplied ? '✓ Applied' : isEligible ? 'Tap to apply' : `Min ₹${c.minOrder}`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {effectiveCoupon ? (
+                  <div
+                    style={{
+                      marginTop: '8px',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      color: '#059669',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>🎉</span>
+                    <span>
+                      Coupon <strong>{effectiveCoupon.code}</strong> applied! You save <strong>₹{discountAmount}</strong>!
+                    </span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      marginTop: '8px',
+                      fontSize: '11px',
+                      color: '#B45309',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>💡</span>
+                    <span>Add items to cart (min ₹100) to get flat ₹50, ₹60, ₹70 discounts!</span>
+                  </div>
+                )}
+              </div>
+
               <div className="bill-box">
-                <h4>Bill Details</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <h4 style={{ margin: 0 }}>Bill Details</h4>
+                  {effectiveCoupon && (
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#0e9f4e', background: '#E7F6EC', padding: '2px 8px', borderRadius: '6px' }}>
+                      ₹{discountAmount} SAVED
+                    </span>
+                  )}
+                </div>
                 <div className="bill-row"><span>Subtotal</span><span>₹{cartTotal}</span></div>
-                {savings > 0 && <div className="bill-row save"><span>You save 🎉</span><span>− ₹{savings}</span></div>}
+                {effectiveCoupon && (
+                  <div
+                    className="bill-row save"
+                    style={{
+                      color: '#0e9f4e',
+                      fontWeight: 700,
+                      background: '#E7F6EC',
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      margin: '6px 0',
+                      border: '1px solid #BFE6CC',
+                    }}
+                  >
+                    <span>Special Discount ({effectiveCoupon.code}) 🎉</span>
+                    <span>− ₹{discountAmount}</span>
+                  </div>
+                )}
+                {savings > 0 && <div className="bill-row save"><span>Item MRP Savings</span><span>− ₹{savings}</span></div>}
                 <div className="bill-row">
                   <span>Delivery {deliveryFee === 0 ? '(FREE over ₹299)' : ''}</span>
                   <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
