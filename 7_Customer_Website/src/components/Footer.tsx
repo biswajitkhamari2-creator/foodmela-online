@@ -42,6 +42,7 @@ export function BottomNav({ onCartOpen }: { onCartOpen: () => void }) {
 }
 
 export default function Footer() {
+  const { user } = useShop();
   const nav = useNavigate();
 
   return (
@@ -50,7 +51,7 @@ export default function Footer() {
         <h3>
           Hungry? Good food is <span className="accent">minutes away.</span>
         </h3>
-        <button className="btn-primary" onClick={() => nav('/food')}>
+        <button className="btn-primary" onClick={() => nav(user ? '/food' : '/login')}>
           Order Now →
         </button>
       </div>

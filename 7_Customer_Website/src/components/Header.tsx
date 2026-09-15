@@ -49,26 +49,30 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
           <span aria-hidden="true">▾</span>
         </button>
 
-        <nav className="nav-links" aria-label="Primary">
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink>
-          <NavLink to="/food" className={({ isActive }) => (isActive ? 'active' : '')}>Food</NavLink>
-          <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'active' : '')}>Restaurants</NavLink>
-          <NavLink to="/grocery" className={({ isActive }) => (isActive ? 'active' : '')}>Grocery</NavLink>
-          <NavLink to="/offers" className={({ isActive }) => (isActive ? 'active' : '')}>Offers</NavLink>
-          <NavLink to="/orders" className={({ isActive }) => (isActive ? 'active' : '')}>Orders</NavLink>
-        </nav>
+        {Boolean(user) && (
+          <nav className="nav-links" aria-label="Primary">
+            <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink>
+            <NavLink to="/food" className={({ isActive }) => (isActive ? 'active' : '')}>Food</NavLink>
+            <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'active' : '')}>Restaurants</NavLink>
+            <NavLink to="/grocery" className={({ isActive }) => (isActive ? 'active' : '')}>Grocery</NavLink>
+            <NavLink to="/offers" className={({ isActive }) => (isActive ? 'active' : '')}>Offers</NavLink>
+            <NavLink to="/orders" className={({ isActive }) => (isActive ? 'active' : '')}>Orders</NavLink>
+          </nav>
+        )}
 
         <div className="header-right">
-          <form className="search-mini" onSubmit={submitSearch} role="search">
-            <span aria-hidden="true">🔍</span>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search biryani, pizza…"
-              aria-label="Search food"
-              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: 130, fontFamily: 'inherit' }}
-            />
-          </form>
+          {Boolean(user) && (
+            <form className="search-mini" onSubmit={submitSearch} role="search">
+              <span aria-hidden="true">🔍</span>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search biryani, pizza…"
+                aria-label="Search food"
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 13, width: 130, fontFamily: 'inherit' }}
+              />
+            </form>
+          )}
           {user ? (
             <button
               className="login-btn ghost-user"

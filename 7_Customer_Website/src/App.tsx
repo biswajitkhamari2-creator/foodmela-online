@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 import { ShopProvider, useShop } from './store';
 import { DeliveryLocationProvider } from './components/location-context';
 import Header from './components/Header';
@@ -41,19 +41,19 @@ function Shell() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/food" element={<Food />} />
-          <Route path="/grocery" element={<Grocery />} />
-          <Route path="/restaurants" element={<Restaurants />} />
-          <Route path="/offers" element={<Offers />} />
+          <Route path="/food" element={user ? <Food /> : <Navigate to="/login" replace />} />
+          <Route path="/grocery" element={user ? <Grocery /> : <Navigate to="/login" replace />} />
+          <Route path="/restaurants" element={user ? <Restaurants /> : <Navigate to="/login" replace />} />
+          <Route path="/offers" element={user ? <Offers /> : <Navigate to="/login" replace />} />
           <Route path="/page/:slug" element={<Info />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/orders" element={<Orders />} />
+          <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" replace />} />
           <Route path="/track/:orderId" element={<Track />} />
           <Route path="*" element={<Info />} />
         </Routes>
       </main>
       <Footer />
-      <BottomNav onCartOpen={openCart} />
+      {Boolean(user) && <BottomNav onCartOpen={openCart} />}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <LocationModal />
     </>

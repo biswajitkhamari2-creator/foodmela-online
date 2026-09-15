@@ -86,6 +86,10 @@ export default function Home() {
   }, [allItems]);
 
   const pickCategory = (key: string) => {
+    if (!user) {
+      nav('/login');
+      return;
+    }
     setCat(key);
     setQ('');
     scrollToMenu();
@@ -93,6 +97,23 @@ export default function Home() {
 
   const submitHeroSearch = (e: FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      nav('/login');
+      return;
+    }
+    const query = q.trim();
+    if (!query) {
+      scrollToMenu();
+      return;
+    }
+    nav(`/food?q=${encodeURIComponent(query)}`);
+  };
+
+  const handleOrderNow = () => {
+    if (!user) {
+      nav('/login');
+      return;
+    }
     scrollToMenu();
   };
 
@@ -114,8 +135,8 @@ export default function Home() {
               Food, groceries &amp; more — delivered fresh to your doorstep.
             </p>
             <div className="hero-cta">
-              <button className="btn-primary" onClick={scrollToMenu}>Order Now →</button>
-              <button className="btn-ghost" onClick={() => nav('/food')}>Explore Food</button>
+              <button className="btn-primary" onClick={handleOrderNow}>Order Now →</button>
+              <button className="btn-ghost" onClick={() => nav(user ? '/food' : '/login')}>Explore Food</button>
             </div>
             <button className="hero-serve" onClick={() => setLocOpen(true)} aria-label={`Change delivery location, currently ${area}`}>
               📍 Delivering to <strong>&nbsp;{area}, {city}&nbsp;</strong> · Change ▾
@@ -165,7 +186,18 @@ export default function Home() {
           <div className="hero-search-hints">
             <span>Popular:</span>
             {SEARCH_SUGGESTIONS.slice(0, 6).map((s) => (
-              <button key={s} className="hint-chip" onClick={() => { setQ(s); scrollToMenu(); }}>
+              <button
+                key={s}
+                className="hint-chip"
+                onClick={() => {
+                  if (!user) {
+                    nav('/login');
+                    return;
+                  }
+                  setQ(s);
+                  scrollToMenu();
+                }}
+              >
                 {s}
               </button>
             ))}
@@ -175,8 +207,10 @@ export default function Home() {
 
       <FestBanner />
 
-      {/* ── 3. CATEGORIES ── */}
-      <div className="section">
+      {user ? (
+        <>
+          {/* ── 3. CATEGORIES ── */}
+          <div className="section">
         <div className="section-head">
           <div>
             <h2>What&apos;s on your <span className="accent">mind?</span></h2>
@@ -329,6 +363,19 @@ export default function Home() {
           ))}
         </div>
       </div>
+        </>
+      ) : (
+        <div className="section" id="menu">
+          <div className="menu-lock-card">
+            <span className="lock-badge">🔒 Members Only Menu</span>
+            <h2>Log in to view our <span className="accent">Delicious Menu</span></h2>
+            <p>Sign in with your mobile number to explore fresh dishes, live prices, and order online in Birmaharajpur.</p>
+            <button className="btn-primary" onClick={() => nav('/login')}>
+              Login with Phone to View Menu →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── 10. SUPPORT LOCAL (dark band) ── */}
       <div className="section">
@@ -346,7 +393,7 @@ export default function Home() {
               <div className="db-point"><span className="tick">✓</span>Support that knows your name</div>
             </div>
             <div style={{ marginTop: 24 }}>
-              <button className="btn-primary" onClick={() => nav('/restaurants')}>Meet Local Stores →</button>
+              <button className="btn-primary" onClick={() => nav(user ? '/restaurants' : '/login')}>Meet Local Stores →</button>
             </div>
           </div>
           <div className="db-img">
@@ -360,34 +407,38 @@ export default function Home() {
       </div>
 
       {/* ── 11. TRENDING + RECOMMENDED ── */}
-      <div className="section">
-        <div className="section-head">
-          <div>
-            <h2>Trending <span className="accent">now</span></h2>
-            <p>{customs.length > 0 ? 'Just added by your local stores' : 'What everyone is ordering this week'}</p>
-          </div>
-        </div>
-        <div className="h-scroll">
-          {trending.map((item) => (
-            <FoodCard key={item.id} item={item} />
-          ))}
-        </div>
-      </div>
-
-      {recommended.length > 0 && (
-        <div className="section">
-          <div className="section-head">
-            <div>
-              <h2>Recommended <span className="accent">for you</span></h2>
-              <p>Top-rated vegetarian picks</p>
+      {user && (
+        <>
+          <div className="section">
+            <div className="section-head">
+              <div>
+                <h2>Trending <span className="accent">now</span></h2>
+                <p>{customs.length > 0 ? 'Just added by your local stores' : 'What everyone is ordering this week'}</p>
+              </div>
+            </div>
+            <div className="h-scroll">
+              {trending.map((item) => (
+                <FoodCard key={item.id} item={item} />
+              ))}
             </div>
           </div>
-          <div className="h-scroll">
-            {recommended.map((item) => (
-              <FoodCard key={item.id} item={item} />
-            ))}
-          </div>
-        </div>
+
+          {recommended.length > 0 && (
+            <div className="section">
+              <div className="section-head">
+                <div>
+                  <h2>Recommended <span className="accent">for you</span></h2>
+                  <p>Top-rated vegetarian picks</p>
+                </div>
+              </div>
+              <div className="h-scroll">
+                {recommended.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* ── 12. BENEFITS ── */}
@@ -424,7 +475,7 @@ export default function Home() {
                 <span className="s-ico" aria-hidden="true">▶️</span>
                 <span><small>GET IT ON</small><strong>Google Play</strong></span>
               </a>
-              <button className="store-btn" onClick={() => nav('/food')}>
+              <button className="store-btn" onClick={() => nav(user ? '/food' : '/login')}>
                 <span className="s-ico" aria-hidden="true">🌐</span>
                 <span><small>OR CONTINUE ON</small><strong>foodmela.online</strong></span>
               </button>
