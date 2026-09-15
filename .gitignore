@@ -26,3 +26,5 @@ dist/
 
 # Local tooling
 .claude/
+
+.vercel
