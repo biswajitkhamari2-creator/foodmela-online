@@ -169,10 +169,15 @@ export default function Track() {
               </div>
             )}
             {otp && stage < 3 && (
-              <div className="otp-box">
-                <span style={{ fontSize: 12, opacity: 0.85 }}>Share this OTP with your rider at delivery</span>
-                <strong>{otp}</strong>
-              </div>
+              <>
+                <div className="otp-box">
+                  <span style={{ fontSize: 12, opacity: 0.85 }}>Share this OTP with your rider ONLY after checking package seal</span>
+                  <strong>{otp}</strong>
+                </div>
+                <div style={{ marginTop: 8, fontSize: 11.5, color: '#4B5563', background: '#FFFBEB', border: '1px solid #FDE68A', padding: '8px 12px', borderRadius: 10, lineHeight: 1.45, textAlign: 'left' }}>
+                  🛡️ <strong>Safety Advisory:</strong> Inspect your package seal / staples upon arrival. If the seal is broken or tampered with, do <strong>NOT</strong> share your OTP and immediately call Helpline at <a href="tel:8144503650" style={{ color: '#0e9f4e', fontWeight: 700 }}>8144503650</a>.
+                </div>
+              </>
             )}
             {canCancel && (
               <button

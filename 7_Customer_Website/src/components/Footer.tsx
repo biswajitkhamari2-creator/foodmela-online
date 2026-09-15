@@ -86,10 +86,11 @@ export default function Footer() {
         <div className="footer-col">
           <h4>Company</h4>
           <Link to="/page/about">About FoodMela</Link>
-          <Link to="/page/contact">Contact Us</Link>
+          <Link to="/page/contact">Contact Us &amp; Grievance</Link>
           <a href="tel:8144503650">📞 8144503650</a>
           <Link to="/page/help">Help &amp; Support</Link>
           <Link to="/page/terms">Terms of Service</Link>
+          <Link to="/page/disclaimer">Food Safety &amp; Disclaimer</Link>
           <Link to="/page/privacy">Privacy Policy</Link>
           <Link to="/page/refund">Refund Policy</Link>
         </div>
@@ -121,8 +122,11 @@ export default function Footer() {
 
       <div className="footer-bottom">
         <div className="tagline">“Good Food Brings People Together”</div>
-        <div style={{ marginTop: 8 }}>
-          © 2026 FoodMela · foodmela.online · Now serving Birmaharajpur, Odisha
+        <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6, opacity: 0.88 }}>
+          © 2026 FoodMela (foodmela.online) · Intermediary Delivery Service · Birmaharajpur, Subarnapur, Odisha - 767018
+        </div>
+        <div style={{ fontSize: 11.5, opacity: 0.72, marginTop: 4 }}>
+          Helpline &amp; Grievance Redressal: +91 8144503650 | Prepared &amp; cooked by licensed merchant partners
         </div>
       </div>
     </footer>
