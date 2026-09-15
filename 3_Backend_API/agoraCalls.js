@@ -257,10 +257,11 @@ function registerCallRoutes(app, { readOrders }) {
           cname: channel, uid: String(RECORD_UID),
           clientRequest: {
             token: recToken,
-            // Mix (composite) mode requires hls in the list — mp3 is
-            // derived alongside it. ['mp3'] alone is rejected with
-            // "avFileType can not set mp3 only" (verified live 2026-09-15).
-            recordingFileConfig: { avFileType: ['hls', 'mp3'] },
+            // Mix mode accepts hls ONLY — mp3/mp4 (alone or combined)
+            // are rejected ("not supported by mix mode"). HLS outputs an
+            // .m3u8 playlist + .ts segments (audio-only call → audio
+            // segments), playable in the admin player. Verified 2026-09-15.
+            recordingFileConfig: { avFileType: ['hls'] },
             storageConfig: {
               vendor: 6, region: 0, bucket: REC_BUCKET,
               accessKey: REC_KEY, secretKey: REC_SECRET,
