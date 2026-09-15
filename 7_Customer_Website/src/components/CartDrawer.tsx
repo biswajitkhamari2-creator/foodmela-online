@@ -324,84 +324,118 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                 <div className="bill-row"><span>Platform Fee</span><span>₹{platformFee}</span></div>
                 <div className="bill-row total"><span>Total</span><span>₹{grand}</span></div>
               </div>
+
+              {/* Delivery Address Section */}
+              <div style={{ marginTop: '14px' }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--muted)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  📍 Delivery Address
+                </div>
+                <textarea
+                  className="addr-input"
+                  rows={2}
+                  placeholder={user ? `Deliver to: ${user.address}` : 'Delivery address'}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  aria-label="Delivery address"
+                  style={{ marginBottom: '4px', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Payment Method Section */}
+              <div className="pay-opt-box" style={{ margin: '10px 0 14px', background: '#f7f9f6', padding: '12px', borderRadius: '14px', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#66707D', marginBottom: '8px' }}>
+                  Payment Method
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => isCodAllowed && setPaymentMode('cod')}
+                    disabled={!isCodAllowed}
+                    style={{
+                      padding: '8px 6px',
+                      borderRadius: '10px',
+                      border: `1.5px solid ${paymentMode === 'cod' && isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
+                      background: paymentMode === 'cod' && isCodAllowed ? 'var(--green-tint)' : isCodAllowed ? '#fff' : '#f1f3f0',
+                      color: !isCodAllowed ? '#9AA3AF' : paymentMode === 'cod' ? 'var(--green-ink)' : '#2B323B',
+                      cursor: isCodAllowed ? 'pointer' : 'not-allowed',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    💵 Cash on Delivery
+                    <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: isCodAllowed ? 'var(--green-ink)' : '#C4271F', marginTop: '2px' }}>
+                      {isCodAllowed ? 'Available (≤ ₹100)' : 'Unavailable (> ₹100)'}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMode('prepaid')}
+                    style={{
+                      padding: '8px 6px',
+                      borderRadius: '10px',
+                      border: `1.5px solid ${paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
+                      background: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-tint)' : '#fff',
+                      color: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-ink)' : '#2B323B',
+                      cursor: 'pointer',
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      textAlign: 'center',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    📱 Online / Prepaid
+                    <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: 'var(--green-ink)', marginTop: '2px' }}>
+                      UPI / QR Transfer
+                    </span>
+                  </button>
+                </div>
+
+                {!isCodAllowed && (
+                  <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '8px', background: '#FEF2F2', padding: '6px 8px', borderRadius: '8px', lineHeight: '1.4' }}>
+                    ℹ️ Orders above ₹100 must be Prepaid. COD is capped at ₹100.
+                  </div>
+                )}
+
+                <div style={{ fontSize: '10.5px', color: '#56606D', marginTop: '8px', textAlign: 'center', lineHeight: '1.4' }}>
+                  🔒 <strong>100% Sealed Delivery:</strong> Food is picked up sealed from restaurants. Report transit issues within 60 mins. Helpline: <a href="tel:8144503650" style={{ color: 'var(--green)', fontWeight: 700 }}>8144503650</a>
+                </div>
+              </div>
             </>
           )}
         </div>
         {lines.length > 0 && (
           <div className="drawer-foot">
-            <textarea
-              className="addr-input"
-              rows={2}
-              placeholder={user ? `Deliver to: ${user.address}` : 'Delivery address'}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              aria-label="Delivery address"
-            />
-            <div className="pay-opt-box" style={{ margin: '10px 0 10px', background: '#f7f9f6', padding: '10px 12px', borderRadius: '14px', border: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#66707D', marginBottom: '8px' }}>
-                Payment Method
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => isCodAllowed && setPaymentMode('cod')}
-                  disabled={!isCodAllowed}
-                  style={{
-                    padding: '8px 6px',
-                    borderRadius: '10px',
-                    border: `1.5px solid ${paymentMode === 'cod' && isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
-                    background: paymentMode === 'cod' && isCodAllowed ? 'var(--green-tint)' : isCodAllowed ? '#fff' : '#f1f3f0',
-                    color: !isCodAllowed ? '#9AA3AF' : paymentMode === 'cod' ? 'var(--green-ink)' : '#2B323B',
-                    cursor: isCodAllowed ? 'pointer' : 'not-allowed',
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  💵 Cash on Delivery
-                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: isCodAllowed ? 'var(--green-ink)' : '#C4271F', marginTop: '2px' }}>
-                    {isCodAllowed ? 'Available (≤ ₹100)' : 'Unavailable (> ₹100)'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setPaymentMode('prepaid')}
-                  style={{
-                    padding: '8px 6px',
-                    borderRadius: '10px',
-                    border: `1.5px solid ${paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
-                    background: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-tint)' : '#fff',
-                    color: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-ink)' : '#2B323B',
-                    cursor: 'pointer',
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    textAlign: 'center',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  📱 Online / Prepaid
-                  <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: 'var(--green-ink)', marginTop: '2px' }}>
-                    UPI / QR Transfer
-                  </span>
-                </button>
-              </div>
-
-              {!isCodAllowed && (
-                <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '8px', background: '#FEF2F2', padding: '6px 8px', borderRadius: '8px', lineHeight: '1.4' }}>
-                  ℹ️ Orders above ₹100 must be Prepaid. COD is capped at ₹100.
+            {err && (
+              <p style={{ color: '#DC2626', fontSize: '12px', marginBottom: '8px', fontWeight: 700, background: '#FEF2F2', padding: '6px 10px', borderRadius: '8px' }}>
+                ⚠️ {err}
+              </p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  To Pay ({effectiveMode})
                 </div>
-              )}
-
-              <div style={{ fontSize: '10.5px', color: '#56606D', marginTop: '6px', textAlign: 'center', lineHeight: '1.4' }}>
-                🔒 <strong>100% Sealed Delivery:</strong> Food is picked up sealed from restaurants. Report transit issues within 60 mins. Helpline: <a href="tel:8144503650" style={{ color: 'var(--green)', fontWeight: 700 }}>8144503650</a>
+                <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--ink)', lineHeight: '1.2' }}>
+                  ₹{grand}
+                  {discountAmount > 0 && (
+                    <span style={{ fontSize: '10.5px', color: '#0e9f4e', fontWeight: 800, marginLeft: '6px', background: '#E7F6EC', padding: '1px 6px', borderRadius: '4px' }}>
+                      ₹{discountAmount} OFF
+                    </span>
+                  )}
+                </div>
               </div>
+              <button
+                className="btn-primary"
+                style={{ flex: 1, padding: '13px 18px', fontSize: '14.5px', borderRadius: '14px', fontWeight: 800, textAlign: 'center' }}
+                disabled={placing}
+                onClick={placeOrder}
+              >
+                {placing ? 'Placing...' : user ? 'Place Order →' : 'Login to Order →'}
+              </button>
             </div>
-            {err && <p style={{ color: '#DC2626', fontSize: 13, marginBottom: 8 }}>{err}</p>}
-            <button className="btn-primary" style={{ width: '100%' }} disabled={placing} onClick={placeOrder}>
-              {placing ? 'Placing...' : user ? `Place Order (${effectiveMode}) • ₹${grand}` : 'Login to Order →'}
-            </button>
           </div>
         )}
       </div>
