@@ -123,10 +123,10 @@ export default function Footer() {
       <div className="footer-bottom">
         <div className="tagline">“Good Food Brings People Together”</div>
         <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6, opacity: 0.88 }}>
-          © 2026 FoodMela (foodmela.online) · Intermediary Delivery Service · Birmaharajpur, Subarnapur, Odisha - 767018
+          © 2026 FoodMela (foodmela.online) · Digital Hyperlocal Delivery Intermediary · Birmaharajpur, Subarnapur, Odisha - 767018
         </div>
-        <div style={{ fontSize: 11.5, opacity: 0.72, marginTop: 4 }}>
-          Helpline &amp; Grievance Redressal: +91 8144503650 | Prepared &amp; cooked by licensed merchant partners
+        <div style={{ fontSize: 11.5, opacity: 0.75, marginTop: 4 }}>
+          Helpline &amp; Grievance Redressal: +91 8144503650 | Email: support@foodmela.online | Food cooked &amp; packaged by licensed merchant partners
         </div>
       </div>
     </footer>
