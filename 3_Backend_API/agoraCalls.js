@@ -257,7 +257,10 @@ function registerCallRoutes(app, { readOrders }) {
           cname: channel, uid: String(RECORD_UID),
           clientRequest: {
             token: recToken,
-            recordingFileConfig: { avFileType: ['mp3'] },
+            // Mix (composite) mode requires hls in the list — mp3 is
+            // derived alongside it. ['mp3'] alone is rejected with
+            // "avFileType can not set mp3 only" (verified live 2026-09-15).
+            recordingFileConfig: { avFileType: ['hls', 'mp3'] },
             storageConfig: {
               vendor: 6, region: 0, bucket: REC_BUCKET,
               accessKey: REC_KEY, secretKey: REC_SECRET,
