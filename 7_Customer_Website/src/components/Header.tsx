@@ -59,7 +59,11 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
             <NavLink to="/food" className={({ isActive }) => (isActive ? 'active' : '')}>Food</NavLink>
             <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'active' : '')}>Restaurants</NavLink>
             <NavLink to="/grocery" className={({ isActive }) => (isActive ? 'active' : '')}>Grocery</NavLink>
-            <NavLink to="/offers" className={({ isActive }) => (isActive ? 'active' : '')}>Offers</NavLink>
+            <NavLink to="/offers" className={({ isActive }) => `fm-nav-offers ${isActive ? 'active' : ''}`}>
+              <span className="offer-fire" aria-hidden="true">🔥</span>
+              <span>Offers</span>
+              <span className="nav-discount-badge">50% OFF</span>
+            </NavLink>
             <NavLink to="/orders" className={({ isActive }) => (isActive ? 'active' : '')}>Orders</NavLink>
           </nav>
         )}

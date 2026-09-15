@@ -121,10 +121,10 @@ export interface PromoOffer {
 }
 
 export const PROMO_OFFERS: PromoOffer[] = [
-  { emoji: '🎉', title: 'Food Fiesta', text: 'Celebrate every meal with hot & fresh favourites.', code: 'FIESTA', theme: 'offer-green' },
-  { emoji: '🥬', title: 'Fresh Deals', text: 'Farm-fresh veggies & fruits at mandi prices.', code: 'FRESH10', theme: 'offer-dark' },
-  { emoji: '🛵', title: 'Free Delivery', text: 'Zero delivery fee on all orders over ₹299.', code: 'FREEDEL', theme: 'offer-red' },
-  { emoji: '💰', title: 'Best Prices Near You', text: 'Local kitchen rates — no platform markup.', code: 'LOCAL', theme: 'offer-gold' },
+  { emoji: '🔥', title: 'Flat 50% OFF', text: 'Get 50% OFF up to ₹100 on your delicious meal today!', code: 'MELA50', theme: 'offer-red' },
+  { emoji: '🛵', title: 'FREE Delivery', text: 'Zero delivery charges on all orders over ₹299.', code: 'FREEDEL', theme: 'offer-green' },
+  { emoji: '⚡', title: 'Flat ₹20 OFF', text: 'Instant ₹20 discount on local Birmaharajpur favourites.', code: 'BMAJ20', theme: 'offer-gold' },
+  { emoji: '🍰', title: '15% Sweet Discount', text: 'Extra 15% discount on desserts, sweets & bakery.', code: 'SWEET15', theme: 'offer-dark' },
 ];
 
 /** Search suggestions — plain strings that feed the existing local filter. */

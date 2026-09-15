@@ -146,6 +146,79 @@ img { display: block; max-width: 100%; }
   color: var(--muted); transition: color 0.15s, background 0.15s; white-space: nowrap;
 }
 .fm-nav a.active, .fm-nav a:hover { color: var(--leaf-ink); background: var(--leaf-tint); }
+
+/* ── Attractive Offers / Discount Nav Tab & Badges ── */
+.fm-nav-offers {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, rgba(230, 51, 41, 0.08), rgba(255, 197, 49, 0.16)) !important;
+  border: 1.5px solid rgba(230, 51, 41, 0.3) !important;
+  color: var(--chili-deep) !important;
+  font-weight: 700 !important;
+  padding: 7px 14px 7px 11px !important;
+  animation: discountPulse 2.8s infinite ease-in-out;
+}
+.fm-nav-offers:hover,
+.fm-nav-offers.active {
+  background: linear-gradient(135deg, var(--chili), #d91c12) !important;
+  color: #ffffff !important;
+  border-color: var(--chili) !important;
+  box-shadow: 0 4px 14px rgba(230, 51, 41, 0.35);
+}
+.fm-nav-offers:hover .nav-discount-badge,
+.fm-nav-offers.active .nav-discount-badge {
+  background: #ffffff !important;
+  color: var(--chili-deep) !important;
+}
+.offer-fire {
+  font-size: 14px;
+  animation: fireFlicker 1.8s infinite ease-in-out;
+}
+.nav-discount-badge {
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  background: linear-gradient(135deg, var(--chili), #c4271f);
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  margin-left: 2px;
+  box-shadow: 0 2px 6px rgba(230, 51, 41, 0.25);
+}
+
+.tab-offers {
+  position: relative;
+}
+.tab-offers.active {
+  color: var(--chili) !important;
+}
+.bottom-discount-dot {
+  position: absolute;
+  top: 1px;
+  right: 12%;
+  background: linear-gradient(135deg, var(--chili), #e11d48);
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cream);
+  letter-spacing: 0.2px;
+  animation: discountPulse 2s infinite ease-in-out;
+}
+
+@keyframes discountPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes fireFlicker {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(5deg) scale(1.1); }
+}
+
 .fm-head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .fm-search {
   display: flex; align-items: center; gap: 8px; background: var(--paper);

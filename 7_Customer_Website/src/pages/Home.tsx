@@ -208,6 +208,22 @@ export default function Home() {
 
       {user ? (
         <>
+          {/* ── MEGA OFFERS & HOT DISCOUNTS ── */}
+          <div className="section" style={{ paddingBottom: 10 }}>
+            <div className="section-head">
+              <div>
+                <h2>🔥 Today&apos;s Hot <span className="accent-chili">Discounts &amp; Deals</span></h2>
+                <p>Tap any coupon to copy &amp; save big on your order</p>
+              </div>
+              <span className="link-more" onClick={() => nav('/offers')}>All Offers (50% OFF) →</span>
+            </div>
+            <div className="ticket-grid" role="list">
+              {PROMO_OFFERS.slice(0, 3).map((o) => (
+                <OfferCard key={o.code} offer={o} />
+              ))}
+            </div>
+          </div>
+
           {/* ── WHAT'S YOUR MOOD? ── */}
           <div className="section">
             <div className="section-head">
