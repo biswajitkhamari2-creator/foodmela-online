@@ -150,6 +150,31 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.setItem('fm_cart', JSON.stringify(Object.fromEntries(cart))); } catch { /* ignore */ }
   }, [cart]);
 
+  // ── LIVE profile sync: backend is the single source of truth.
+  // If the name changes anywhere (app, admin), this open website updates
+  // within seconds — no reload, no re-login. Polls every 15s while logged in.
+  useEffect(() => {
+    if (!user) return;
+    const phone = user.phone;
+    let dead = false;
+    const sync = async () => {
+      try {
+        const res = await fetch(`/api/user/${encodeURIComponent(phone)}`);
+        if (!res.ok || dead) return;
+        const data = (await res.json()) as { user?: Record<string, unknown> };
+        const u = data.user ?? {};
+        const fresh = String(u.fullName ?? u.name ?? '').trim();
+        if (fresh && fresh !== user.name) {
+          setUserState({ ...user, name: fresh });
+          try { localStorage.setItem('fm_user', JSON.stringify({ ...user, name: fresh })); } catch { /* ignore */ }
+        }
+      } catch { /* backend unreachable — keep current */ }
+    };
+    const t = setInterval(sync, 15000);
+    return () => { dead = true; clearInterval(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.phone]);
+
   const setUser = (u: ShopState['user']) => {
     setUserState(u);
     try {

@@ -13,6 +13,7 @@ import Restaurants from './pages/Restaurants';
 import Offers from './pages/Offers';
 import Info from './pages/Info';
 import Login from './pages/Login';
+import Apk from './pages/Apk';
 import Orders from './pages/Orders';
 import Track from './pages/Track';
 import Profile from './pages/Profile';
@@ -51,6 +52,7 @@ function Shell() {
           <Route path="/offers" element={user ? <Offers /> : <Navigate to="/login" replace />} />
           <Route path="/page/:slug" element={<Info />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/apk" element={<Apk />} />
           <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" replace />} />
           <Route path="/track/:orderId" element={<Track />} />
           <Route path="/profile" element={<Profile />} />

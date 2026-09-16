@@ -105,6 +105,19 @@ const PAGES: Record<string, InfoPage> = {
     ],
     cta: { label: 'Call Support: 8144503650 →', to: 'tel:8144503650' },
   },
+  shipping: {
+    title: 'Shipping & Delivery Policy',
+    emoji: '🛵',
+    body: [
+      '1. HYPERLOCAL DELIVERY TIMELINES: FoodMela provides on-demand hyperlocal food and grocery delivery across Birmaharajpur, Odisha. Standard delivery time is typically 25 to 45 minutes from the time of order confirmation, depending on food preparation time and delivery distance.',
+      '2. REAL-TIME ORDER TRACKING: Once your order is accepted by the merchant kitchen, you can track your order live from the "My Orders" and "Track Order" screens with real-time status updates.',
+      '3. DELIVERY CHARGES: Delivery fees (if applicable) are clearly calculated and displayed on the checkout cart before you place the order. Free delivery is provided on orders exceeding ₹299.',
+      '4. PACKAGING & SAFETY: All food orders are dispatched in sealed packages directly from partner restaurants. Customers are requested to inspect the seal before sharing the delivery confirmation OTP with the rider.',
+      '5. DELIVERY ATTEMPTS: Our delivery partner will make attempts to contact the customer via phone upon arriving at the designated address. If the customer is unreachable after multiple attempts, the order may be cancelled without refund to cover kitchen and rider expenses.',
+      '6. CUSTOMER SUPPORT: For any delivery queries or delays, reach out directly to our Birmaharajpur helpline at +91 8144503650 or email support@foodmela.online.',
+    ],
+    cta: { label: 'Contact Support: 8144503650 →', to: 'tel:8144503650' },
+  },
   partner: {
     title: 'Partner With Us',
     emoji: '🤝',

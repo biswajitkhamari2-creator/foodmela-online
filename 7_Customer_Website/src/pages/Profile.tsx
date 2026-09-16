@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useShop } from '../store';
 import FoodCard from '../components/FoodCard';
@@ -31,6 +31,37 @@ export default function Profile() {
   }
 
   const initial = (user.name.trim()[0] ?? 'F').toUpperCase();
+  // ── Instant name edit: pushes to backend (single source of truth).
+  // App + admin pick it up live via their listeners — no delay.
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState('');
+  const [savingName, setSavingName] = useState(false);
+  const [nameMsg, setNameMsg] = useState('');
+
+  const saveName = async () => {
+    const clean = draftName.trim();
+    if (!user || clean.length < 2) { setNameMsg('Enter a valid name'); return; }
+    if (clean === user.name) { setEditingName(false); return; }
+    setSavingName(true);
+    setNameMsg('');
+    try {
+      const { api } = await import('../api');
+      const res = await fetch(`/api/user/${encodeURIComponent(user.phone)}/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: clean }),
+      });
+      if (!res.ok) throw new Error('save failed');
+      setUser({ ...user, name: clean });
+      try { void api.register({ phone: user.phone, name: clean, address: user.address }); } catch { /* name already saved */ }
+      setEditingName(false);
+      setNameMsg('✓ Name updated everywhere');
+      setTimeout(() => setNameMsg(''), 3000);
+    } catch {
+      setNameMsg('Could not save — check internet');
+    }
+    setSavingName(false);
+  };
 
   const rows: { icon: string; bg: string; title: string; sub: string; to: string; danger?: boolean }[] = [
     { icon: '🧾', bg: '#E7F6EC', title: 'My Orders', sub: 'Track, reorder & receipts', to: '/orders' },
@@ -47,7 +78,36 @@ export default function Profile() {
         <div className="profile-hero-inner">
           <div className="profile-avatar" aria-hidden="true">{initial}</div>
           <div>
-            <h1>{user.name}</h1>
+            {editingName ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  className="text-input"
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  placeholder="Your full name"
+                  autoFocus
+                  style={{ maxWidth: 220 }}
+                />
+                <button className="btn-primary" style={{ padding: '9px 18px', fontSize: 13 }} disabled={savingName} onClick={saveName}>
+                  {savingName ? 'Saving…' : 'Save'}
+                </button>
+                <button className="btn-ghost" style={{ padding: '9px 14px', fontSize: 13 }} onClick={() => setEditingName(false)}>
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <h1>
+                {user.name}{' '}
+                <button
+                  onClick={() => { setDraftName(user.name); setEditingName(true); }}
+                  aria-label="Edit name"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}
+                >
+                  ✏️
+                </button>
+              </h1>
+            )}
+            {nameMsg && <p style={{ fontSize: 12, color: nameMsg.startsWith('✓') ? '#0e9f4e' : '#C4271F', fontWeight: 700 }}>{nameMsg}</p>}
             <p>+91 {user.phone}{cartCount > 0 ? ` · ${cartCount} item${cartCount === 1 ? '' : 's'} in your thali` : ''}</p>
             {user.address && <p>📍 {user.address}</p>}
           </div>

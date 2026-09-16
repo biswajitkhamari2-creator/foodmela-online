@@ -319,6 +319,79 @@ img { display: block; max-width: 100%; }
 }
 .mela-serve:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 .mela-serve strong { color: var(--leaf-ink); }
+/* ── APP DOWNLOAD highlight banner (hero) — HIGH VISIBILITY ── */
+@keyframes mela-app-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 197, 49, 0.7), 0 8px 28px rgba(230, 51, 41, 0.45); }
+  50% { box-shadow: 0 0 0 12px rgba(255, 197, 49, 0), 0 8px 32px rgba(230, 51, 41, 0.6); }
+}
+.mela-app-banner {
+  display: flex; align-items: center; gap: 12px; margin-top: 18px;
+  background: linear-gradient(135deg, #E63329, #B91C1C);
+  border: 3px solid #FFC531;
+  border-radius: 18px; padding: 14px 18px; text-decoration: none;
+  animation: mela-app-pulse 1.8s ease-in-out infinite;
+  transition: transform 0.15s; max-width: 440px;
+}
+.mela-app-banner:hover { transform: scale(1.03); }
+.mela-app-ico { font-size: 34px; }
+.mela-app-text { flex: 1; display: flex; flex-direction: column; }
+.mela-app-text strong { color: #fff; font-size: 17px; font-weight: 900; letter-spacing: 0.3px; }
+.mela-app-text small { color: #FFE9A8; font-size: 12px; font-weight: 600; }
+.mela-app-go {
+  background: #FFC531; color: #7A1F1F; font-weight: 900; font-size: 14px;
+  padding: 10px 16px; border-radius: 12px; flex-shrink: 0; white-space: nowrap;
+}
+/* ── APK download hub (foodmela.online/apk) — MAXIMUM HIGHLIGHT ── */
+.apk-page { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+.apk-hero {
+  text-align: center; border-radius: 28px; padding: 48px 24px 40px; margin-top: 20px;
+  background: linear-gradient(160deg, #06281A 0%, #0B3D24 45%, #0e9f4e 100%);
+  border: 3px solid #FFC531; position: relative; overflow: hidden;
+  animation: mela-app-pulse 2s ease-in-out infinite;
+}
+.apk-hero-emoji { font-size: 72px; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4)); }
+.apk-badge {
+  display: inline-block; margin-top: 12px; padding: 6px 16px; border-radius: 20px;
+  background: #FFC531; color: #7A1F1F; font-size: 12px; font-weight: 900; letter-spacing: 0.6px;
+}
+.apk-hero h1 { color: #fff; font-size: 38px; font-weight: 900; margin: 14px 0 6px; letter-spacing: -0.5px; }
+.apk-hero p { color: rgba(255,255,255,0.85); font-size: 16px; margin: 0 0 26px; }
+.apk-dl-btn {
+  display: inline-block; padding: 18px 56px; border-radius: 18px;
+  background: linear-gradient(135deg, #FFC531, #F59E0B); color: #431407;
+  font-size: 21px; font-weight: 900; letter-spacing: 0.5px; text-decoration: none;
+  box-shadow: 0 10px 30px rgba(255, 197, 49, 0.5);
+  transition: transform 0.15s;
+}
+.apk-dl-btn:hover { transform: scale(1.05); }
+.apk-meta { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 14px; font-weight: 600; }
+.apk-feats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 24px; }
+.apk-feat {
+  background: #fff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px 8px;
+  text-align: center; display: flex; flex-direction: column; gap: 4px; align-items: center;
+}
+.apk-feat-emoji { font-size: 30px; }
+.apk-feat strong { font-size: 13px; }
+.apk-feat small { font-size: 11px; color: #64748b; }
+.apk-steps-title { text-align: center; font-size: 22px; font-weight: 800; margin: 32px 0 16px; }
+.apk-steps { display: flex; flex-direction: column; gap: 12px; }
+.apk-step {
+  display: flex; gap: 14px; align-items: center; background: #f8fafc;
+  border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 14px 16px;
+}
+.apk-step-n {
+  width: 38px; height: 38px; border-radius: 50%; background: #0e9f4e; color: #fff;
+  font-weight: 900; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.apk-step strong { display: block; font-size: 15px; }
+.apk-step small { font-size: 13px; color: #64748b; }
+.apk-back { text-align: center; margin-top: 28px; }
+.apk-back a { color: #0e9f4e; font-weight: 700; }
+@media (max-width: 560px) {
+  .apk-feats { grid-template-columns: repeat(2, 1fr); }
+  .apk-hero h1 { font-size: 30px; }
+  .apk-dl-btn { padding: 16px 40px; font-size: 18px; }
+}
 .mela-stats { display: flex; gap: 34px; margin-top: 28px; padding-bottom: 8px; }
 .mela-stats strong { font-size: 24px; display: block; font-family: var(--font-display); }
 .mela-stats span { font-size: 12px; color: var(--muted); font-weight: 600; }
@@ -1407,9 +1480,16 @@ img { display: block; max-width: 100%; }
 }
 
 @media print {
+  /* ── Single-page invoice: compact, no breaks inside sections ── */
+  @page { size: A4; margin: 10mm 12mm; }
   body * {
     visibility: hidden !important;
   }
+  .invoice-print-area { padding: 0 !important; font-size: 12px !important; }
+  .inv-header, .inv-grid-2, .inv-summary-wrap, .inv-footer-note { break-inside: avoid !important; }
+  .inv-table tr { break-inside: avoid !important; }
+  .inv-footer-note { font-size: 9px !important; padding: 8px 10px !important; margin-top: 8px !important; }
+  .inv-table th, .inv-table td { padding: 5px 8px !important; font-size: 12px !important; }
   .invoice-modal-overlay,
   .invoice-modal-card,
   .invoice-print-area,

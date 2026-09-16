@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   MOODS,
   STOREFRONTS,
@@ -148,6 +148,19 @@ export default function Home() {
               <button className="btn-primary" onClick={() => requireLogin(scrollToMenu)}>Order Now →</button>
               <button className="btn-ghost" onClick={() => requireLogin(() => nav('/food'))}>Explore Nearby</button>
             </div>
+            {/* ── APP DOWNLOAD highlight — glowing, pulsing, unmissable ── */}
+            <Link
+              to="/apk"
+              className="mela-app-banner"
+              aria-label="Download the FoodMela Android app"
+            >
+              <span className="mela-app-ico" aria-hidden="true">📱</span>
+              <span className="mela-app-text">
+                <strong>⬇ GET THE APP — FREE DOWNLOAD</strong>
+                <small>Faster ordering · Live tracking · Same account · v1.0.0</small>
+              </span>
+              <span className="mela-app-go" aria-hidden="true">GET →</span>
+            </Link>
             <button className="mela-serve" onClick={() => setLocOpen(true)} aria-label={`Change delivery location, currently ${area}`}>
               📍 Delivering to <strong>&nbsp;{area}, {city}&nbsp;</strong> · Change ▾
             </button>
