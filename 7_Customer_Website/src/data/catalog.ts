@@ -31,9 +31,9 @@ export const FOOD_MENU_CATS: Set<string> = new Set(['cooked_food', 'non_veg', 's
 
 // ── TEMPORARILY HIDDEN (for now) ───────────────────────────────────────────
 // Cooked food (cf1–cf3), Mutton Curry (cf4), Fish Curry (cf5),
-// raw Chicken (em2), Farm Eggs (em1), Samosa (sn1).
+// raw Chicken (em2), Farm Eggs (em1), Samosa (sn1), Milk (da1).
 // Items stay in code — remove an ID from this set to bring it back.
-export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em1', 'em2', 'sn1']);
+export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em1', 'em2', 'sn1', 'da1']);
 
 export const CATALOG: CatalogItem[] = [
   { id: 'cf1', name: 'Chicken Biryani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 220, rating: 4.8, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&h=400&fit=crop', isVeg: false },
@@ -128,7 +128,7 @@ export const PROMO_OFFERS: PromoOffer[] = [
 ];
 
 /** Search suggestions — plain strings that feed the existing local filter. */
-export const SEARCH_SUGGESTIONS = ['milk', 'eggs', 'rice', 'tomato', 'onion', 'potato', 'apple', 'banana', 'oil', 'paneer'];
+export const SEARCH_SUGGESTIONS = ['eggs', 'rice', 'tomato', 'onion', 'potato', 'apple', 'banana', 'oil', 'paneer'];
 
 // ── "What's Your Mood?" — signature discovery (frontend only). ──
 // Each mood maps to REAL catalog categories; counts computed at render time.

@@ -56,7 +56,6 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
         {Boolean(user) && (
           <nav className="fm-nav" aria-label="Primary">
             <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink>
-            <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'active' : '')}>Restaurants</NavLink>
             <NavLink to="/grocery" className={({ isActive }) => (isActive ? 'active' : '')}>Grocery</NavLink>
             <NavLink to="/offers" className={({ isActive }) => `fm-nav-offers ${isActive ? 'active' : ''}`}>
               <span className="offer-fire" aria-hidden="true">🔥</span>

@@ -8,7 +8,6 @@ import CartDrawer from './components/CartDrawer';
 import LocationModal from './components/LocationModal';
 import Home from './pages/Home';
 import Grocery from './pages/Grocery';
-import Restaurants from './pages/Restaurants';
 import Offers from './pages/Offers';
 import Info from './pages/Info';
 import Login from './pages/Login';
@@ -47,7 +46,7 @@ function Shell() {
           <Route path="/" element={<Home />} />
           <Route path="/food" element={<Navigate to="/grocery" replace />} />
           <Route path="/grocery" element={user ? <Grocery /> : <Navigate to="/login" replace />} />
-          <Route path="/restaurants" element={user ? <Restaurants /> : <Navigate to="/login" replace />} />
+          <Route path="/restaurants" element={<Navigate to="/grocery" replace />} />
           <Route path="/offers" element={user ? <Offers /> : <Navigate to="/login" replace />} />
           <Route path="/page/:slug" element={<Info />} />
           <Route path="/login" element={<Login />} />

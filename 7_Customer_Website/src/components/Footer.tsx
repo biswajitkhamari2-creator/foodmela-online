@@ -110,7 +110,6 @@ export default function Footer() {
         <div className="footer-col">
           <h4>Explore</h4>
           <Link to="/grocery">Shop Grocery</Link>
-          <Link to="/restaurants">Restaurants</Link>
           <Link to="/offers">Offers</Link>
         </div>
 

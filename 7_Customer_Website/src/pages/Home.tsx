@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MOODS,
   STOREFRONTS,
@@ -15,13 +15,6 @@ import OfferCard from '../components/OfferCard';
 
 const GROCERY_CATS = new Set(['vegetables', 'fruits', 'grocery', 'dairy', 'eggs_meat']);
 
-// Rotating hero plate images (presentation only).
-const PLATE_IMAGES = [
-  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=800&h=800&fit=crop',
-  'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&h=800&fit=crop',
-];
-
 const BENEFITS = [
   { emoji: '⚡', bg: '#FFF4D6', title: 'Fast Delivery', text: 'Hot & fresh at your door in minutes' },
   { emoji: '🛡️', bg: '#E7F6EC', title: 'Safe & Secure', text: 'Trusted payments, every single order' },
@@ -30,21 +23,10 @@ const BENEFITS = [
   { emoji: '❤️', bg: '#FDECEA', title: 'Support Local', text: 'Every order helps your community' },
 ];
 
-function scrollToMenu() {
-  document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth' });
-}
-
 export default function Home() {
-  const { cartCount, allItems, customs, priceOf, mrpOf, user, favs } = useShop();
-  const { city, area, setLocOpen } = useDeliveryLocation();
+  const { allItems, customs, priceOf, mrpOf, user, favs } = useShop();
+  const { city } = useDeliveryLocation();
   const nav = useNavigate();
-  const [q, setQ] = useState('');
-  const [plateIdx, setPlateIdx] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setPlateIdx((i) => (i + 1) % PLATE_IMAGES.length), 4000);
-    return () => clearInterval(t);
-  }, []);
 
   // ── Discovery rails — all computed from REAL catalog + live prices ──
   // Prepared-food menu items are excluded from every display rail (frontend only).
@@ -112,111 +94,8 @@ export default function Home() {
     return m;
   }, [allItems]);
 
-  const avgRating = useMemo(() => {
-    if (allItems.length === 0) return '4.6';
-    return (allItems.reduce((s, c) => s + c.rating, 0) / allItems.length).toFixed(1);
-  }, [allItems]);
-
-  const requireLogin = (fn: () => void) => {
-    if (!user) {
-      nav('/login');
-      return;
-    }
-    fn();
-  };
-
-  const submitHeroSearch = (e: FormEvent) => {
-    e.preventDefault();
-    const query = q.trim();
-    if (!query) {
-      requireLogin(scrollToMenu);
-      return;
-    }
-    requireLogin(() => nav(`/grocery?q=${encodeURIComponent(query)}`));
-  };
-
   return (
     <div className="page-enter">
-      {/* ── HERO ── */}
-      <div className="mela-hero">
-        <div className="mela-hero-grid">
-          <div>
-            <span className="mela-eyebrow">
-              <span className="pulse" aria-hidden="true" /> Now serving {city}
-            </span>
-            <h1>
-              Daily Essentials.
-              <br />
-              <span className="w-leaf">Made</span> <span className="w-chili">Local.</span>
-            </h1>
-            <p className="mela-sub">
-              Discover fresh groceries and local favourites delivered to your doorstep.
-            </p>
-            <div className="mela-cta">
-              <button className="btn-primary" onClick={() => requireLogin(scrollToMenu)}>Order Now →</button>
-              <button className="btn-ghost" onClick={() => requireLogin(() => nav('/grocery'))}>Explore Nearby</button>
-            </div>
-            {/* ── APP DOWNLOAD highlight — glowing, pulsing, unmissable ── */}
-            <Link
-              to="/apk"
-              className="mela-app-banner"
-              aria-label="Download the FoodMela Android app"
-            >
-              <span className="mela-app-ico" aria-hidden="true">📱</span>
-              <span className="mela-app-text">
-                <strong>⬇ GET THE APP — FREE DOWNLOAD</strong>
-                <small>Faster ordering · Live tracking · Same account · v1.0.0</small>
-              </span>
-              <span className="mela-app-go" aria-hidden="true">GET →</span>
-            </Link>
-            <button className="mela-serve" onClick={() => setLocOpen(true)} aria-label={`Change delivery location, currently ${area}`}>
-              📍 Delivering to <strong>&nbsp;{area}, {city}&nbsp;</strong> · Change ▾
-            </button>
-            <div className="mela-stats">
-              <div><strong>{allItems.length}+</strong><span>Items &amp; essentials</span></div>
-              <div><strong>{avgRating}★</strong><span>Loved by locals</span></div>
-              <div><strong>~30 min</strong><span>Avg. delivery</span></div>
-            </div>
-          </div>
-          <div className="mela-plate-wrap">
-            <div className="mela-plate-ring" aria-hidden="true" />
-            <div className="mela-plate">
-              {PLATE_IMAGES.map((src, i) => (
-                <img key={src} src={src} alt="" aria-hidden={i !== plateIdx} className={i === plateIdx ? 'on' : ''} loading={i === 0 ? 'eager' : 'lazy'} />
-              ))}
-            </div>
-            <div className="mela-chip mela-chip-1">
-              <span className="ci" aria-hidden="true">🛵</span>
-              <span>
-                <strong>Live rider tracking</strong>
-                <small>{user && cartCount > 0 ? `${cartCount} item(s) in your thali` : 'Riders reach your exact address'}</small>
-              </span>
-            </div>
-            <div className="mela-chip mela-chip-2">
-              <span className="ci" aria-hidden="true">⭐</span>
-              <span>
-                <strong>{avgRating} rated by locals</strong>
-                <small>Your trusted neighbourhood mela</small>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── CRAVING SEARCH ── */}
-        <div className="mela-search-zone">
-          <form className="mela-search-box" onSubmit={submitHeroSearch} role="search">
-            <span className="s-ico" aria-hidden="true">🔍</span>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search milk, rice, tomato... find your favourites..."
-              aria-label="Search groceries, find your favourites"
-            />
-            <button type="submit" className="btn-primary">Search</button>
-          </form>
-        </div>
-      </div>
-
       <FestBanner />
 
       {user ? (

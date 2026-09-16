@@ -53,7 +53,7 @@ export default function Grocery() {
           <div className="search-bar">
             <span aria-hidden="true">🔍</span>
             <input
-              placeholder="Search milk, rice, tomato..."
+              placeholder="Search rice, tomato, onion..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
               aria-label="Search groceries"
