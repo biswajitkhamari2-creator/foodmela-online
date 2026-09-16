@@ -28,6 +28,11 @@ export const CATEGORIES = [
 // No backend change: every card below filters the REAL catalog / live
 // Firestore prices. Nothing here invents products, prices or restaurants.
 
+// ── TEMPORARILY HIDDEN (for now) ───────────────────────────────────────────
+// Cooked food (cf1–cf3), Mutton Curry (cf4), raw Chicken (em2).
+// Items stay in code — remove an ID from this set to bring it back.
+export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'em2']);
+
 export const CATALOG: CatalogItem[] = [
   { id: 'cf1', name: 'Chicken Biryani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 220, rating: 4.8, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&h=400&fit=crop', isVeg: false },
   { id: 'cf2', name: 'Paneer Butter Masala', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 180, rating: 4.6, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&h=400&fit=crop', isVeg: true },

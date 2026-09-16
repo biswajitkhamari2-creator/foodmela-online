@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
-import { CATALOG, readFavs, writeFavs, type CatalogItem } from './data/catalog';
+import { CATALOG, HIDDEN_ITEM_IDS, readFavs, writeFavs, type CatalogItem } from './data/catalog';
 
 export interface Banner {
   id: string;
@@ -190,8 +190,9 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Admin image overrides applied onto bundled catalog — instant via onSnapshot.
+  // HIDDEN_ITEM_IDS filtered out (cooked food + raw chicken/mutton, for now).
   const allItems = useMemo(
-    () => [...CATALOG.map((c) => {
+    () => [...CATALOG.filter((c) => !HIDDEN_ITEM_IDS.has(c.id)).map((c) => {
       const img = images.get(c.id);
       return img ? { ...c, image: img } : c;
     }), ...customs],
