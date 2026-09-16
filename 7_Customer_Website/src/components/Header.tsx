@@ -75,7 +75,7 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Craving something?"
+                placeholder="Search food..."
                 aria-label="Search food"
               />
             </form>
