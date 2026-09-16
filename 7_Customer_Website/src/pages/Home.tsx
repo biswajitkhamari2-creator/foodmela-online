@@ -228,7 +228,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── WHAT'S YOUR MOOD? ── */}
+          {/* ── WHAT'S YOUR MOOD? — hidden for now (restore by removing this false) ── */}
+          {false && (
           <div className="section">
             <div className="section-head">
               <div>
@@ -254,6 +255,7 @@ export default function Home() {
               ))}
             </div>
           </div>
+          )}
 
           {/* ── MADE AROUND YOU — hidden for now (restore by removing this false) ── */}
           {false && (
