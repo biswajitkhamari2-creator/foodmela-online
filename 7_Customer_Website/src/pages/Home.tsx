@@ -255,7 +255,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── MADE AROUND YOU ── */}
+          {/* ── MADE AROUND YOU — hidden for now (restore by removing this false) ── */}
+          {false && (
           <div className="section">
             <div className="local-band">
               <h2>Made <span className="accent">around you</span></h2>
@@ -284,6 +285,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+          )}
 
           {/* ── POPULAR RIGHT NOW ── */}
           <div className="section">

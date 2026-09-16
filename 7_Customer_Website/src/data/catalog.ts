@@ -29,9 +29,9 @@ export const CATEGORIES = [
 // Firestore prices. Nothing here invents products, prices or restaurants.
 
 // ── TEMPORARILY HIDDEN (for now) ───────────────────────────────────────────
-// Cooked food (cf1–cf3), Mutton Curry (cf4), raw Chicken (em2).
+// Cooked food (cf1–cf3), Mutton Curry (cf4), Fish Curry (cf5), raw Chicken (em2).
 // Items stay in code — remove an ID from this set to bring it back.
-export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'em2']);
+export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em2']);
 
 export const CATALOG: CatalogItem[] = [
   { id: 'cf1', name: 'Chicken Biryani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 220, rating: 4.8, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&h=400&fit=crop', isVeg: false },
