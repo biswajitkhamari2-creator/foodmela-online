@@ -451,7 +451,8 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── APP ── */}
+      {/* ── APP BAND — hidden for now (restore by removing this false) ── */}
+      {false && (
       <div className="section" id="app">
         <div className="app-band">
           <div>
@@ -486,6 +487,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
