@@ -27,7 +27,7 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
       return;
     }
     const query = q.trim();
-    nav(query ? `/food?q=${encodeURIComponent(query)}` : '/food');
+    nav(query ? `/grocery?q=${encodeURIComponent(query)}` : '/grocery');
     setQ('');
   };
 
@@ -56,7 +56,6 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
         {Boolean(user) && (
           <nav className="fm-nav" aria-label="Primary">
             <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink>
-            <NavLink to="/food" className={({ isActive }) => (isActive ? 'active' : '')}>Food</NavLink>
             <NavLink to="/restaurants" className={({ isActive }) => (isActive ? 'active' : '')}>Restaurants</NavLink>
             <NavLink to="/grocery" className={({ isActive }) => (isActive ? 'active' : '')}>Grocery</NavLink>
             <NavLink to="/offers" className={({ isActive }) => `fm-nav-offers ${isActive ? 'active' : ''}`}>
@@ -75,8 +74,8 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Search food..."
-                aria-label="Search food"
+                placeholder="Search groceries..."
+                aria-label="Search groceries"
               />
             </form>
           )}

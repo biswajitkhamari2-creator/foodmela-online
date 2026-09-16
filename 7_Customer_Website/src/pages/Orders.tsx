@@ -64,7 +64,7 @@ function itemsText(o: UnifiedOrder): string {
     });
     if (parts.length > 0) return parts.join(', ');
   }
-  return o.itemsSummary ?? 'Food items';
+  return o.itemsSummary ?? 'Items';
 }
 
 function totalOf(o: UnifiedOrder): string {
@@ -233,8 +233,8 @@ export default function Orders() {
           <h3>{tab === 'active' ? 'Nothing cooking right now' : 'No mela memories yet'}</h3>
           <p>{tab === 'active' ? 'Place a new order from the menu and follow its journey live here.' : 'Your completed orders will live here — reorder in one tap.'}</p>
           {tab === 'active' && (
-            <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => nav('/food')}>
-              Order Food →
+            <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => nav('/grocery')}>
+              Shop Grocery →
             </button>
           )}
         </div>

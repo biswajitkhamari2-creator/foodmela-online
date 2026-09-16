@@ -240,7 +240,7 @@ export default function Login() {
           <p style={{ textAlign: 'center', color: '#66707D', fontSize: 13.5, marginBottom: 8 }}>
             {needProfile
               ? 'Tell us where to deliver your happiness.'
-              : 'Good food. Delivered happier. Login with OTP to order.'}
+              : 'Fresh groceries. Delivered happier. Login with OTP to order.'}
           </p>
           <div className="auth-perks">
             <span>⚡ Fast delivery</span>

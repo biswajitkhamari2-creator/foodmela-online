@@ -13,16 +13,17 @@ export interface CatalogItem {
 
 export const CATEGORIES = [
   { key: 'all', label: 'All', icon: '🍽️' },
-  { key: 'cooked_food', label: 'Cooked Food', icon: '🍛' },
-  { key: 'non_veg', label: 'Non-Veg', icon: '🍗' },
-  { key: 'sweets', label: 'Sweets', icon: '🍮' },
-  { key: 'snacks', label: 'Snacks', icon: '🥙' },
   { key: 'vegetables', label: 'Vegetables', icon: '🥦' },
   { key: 'fruits', label: 'Fruits', icon: '🍎' },
   { key: 'grocery', label: 'Grocery', icon: '🛒' },
   { key: 'dairy', label: 'Dairy', icon: '🥛' },
   { key: 'eggs_meat', label: 'Eggs & Meat', icon: '🥚' },
 ];
+
+// Prepared-food menu categories — hidden from every storefront menu /
+// display section (frontend only). Catalog data + backend stay untouched
+// so cart, orders and auth keep resolving existing items.
+export const FOOD_MENU_CATS: Set<string> = new Set(['cooked_food', 'non_veg', 'sweets', 'snacks']);
 
 // ── Presentation-only discovery data (frontend). ──
 // No backend change: every card below filters the REAL catalog / live
@@ -72,10 +73,6 @@ export interface ShowcaseCategory {
 }
 
 export const SHOWCASE_CATEGORIES: ShowcaseCategory[] = [
-  { key: 'cooked_food', label: 'Restaurant Food', emoji: '🍛', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=400&fit=crop', blurb: 'Biryani, curries & homely meals' },
-  { key: 'non_veg', label: 'Non-Veg Specials', emoji: '🍗', image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=400&fit=crop', blurb: 'Chicken, mutton & fish curries' },
-  { key: 'snacks', label: 'Fast Food & Snacks', emoji: '🍔', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=400&fit=crop', blurb: 'Samosa, tikki & evening bites' },
-  { key: 'sweets', label: 'Desserts & Sweets', emoji: '🍰', image: 'https://images.unsplash.com/photo-1601303516534-61dcef5bc3c5?w=400&h=400&fit=crop', blurb: 'Rasgulla, gulab jamun & kheer' },
   { key: 'vegetables', label: 'Vegetables', emoji: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop', blurb: 'Farm-fresh, picked daily' },
   { key: 'fruits', label: 'Fruits', emoji: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop', blurb: 'Sweet, juicy & seasonal' },
   { key: 'grocery', label: 'Groceries', emoji: '🛒', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice, oil & kitchen staples' },
@@ -89,8 +86,7 @@ export const GROCERY_AISLES: ShowcaseCategory[] = [
   { key: 'fruits', label: 'Fruits', emoji: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop', blurb: 'Seasonal picks' },
   { key: 'dairy', label: 'Dairy', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Milk & paneer' },
   { key: 'grocery', label: 'Staples', emoji: '🌾', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice, oil & more' },
-  { key: 'snacks', label: 'Snacks', emoji: '🍿', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400&h=400&fit=crop', blurb: 'Evening bites' },
-  { key: 'sweets', label: 'Bakery & Sweets', emoji: '🍰', image: 'https://images.unsplash.com/photo-1601303516534-61dcef5bc3c5?w=400&h=400&fit=crop', blurb: 'Fresh & sweet' },
+  { key: 'eggs_meat', label: 'Eggs & Meat', emoji: '🥚', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop', blurb: 'Farm fresh' },
 ];
 
 /**
@@ -109,12 +105,10 @@ export interface Storefront {
 }
 
 export const STOREFRONTS: Storefront[] = [
-  { key: 'cooked_food', name: 'FoodMela Kitchen', cuisine: 'Biryani • Curries • Homely Meals', image: 'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=800&h=500&fit=crop', eta: '25–30 min', offer: 'Free delivery over ₹299' },
-  { key: 'non_veg', name: 'Non-Veg House', cuisine: 'Chicken • Mutton • Fish Curry', image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=800&h=500&fit=crop', eta: '30–35 min', offer: 'Up to 20% off' },
-  { key: 'sweets', name: 'Mithaas Sweets', cuisine: 'Rasgulla • Gulab Jamun • Kheer', image: 'https://images.unsplash.com/photo-1601303516534-61dcef5bc3c5?w=800&h=500&fit=crop', eta: '20–25 min', offer: 'Fresh made daily' },
-  { key: 'snacks', name: 'Evening Snacks Corner', cuisine: 'Samosa • Tikki • Fried Bites', image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=800&h=500&fit=crop', eta: '15–20 min', offer: 'From just ₹40' },
   { key: 'vegetables', name: 'Fresh Sabzi Mandi', cuisine: 'Vegetables • Daily Harvest', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Farm fresh picks' },
+  { key: 'fruits', name: 'Fresh Fruit Corner', cuisine: 'Fruits • Seasonal Picks', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Sweet & seasonal' },
   { key: 'grocery', name: 'Daily Grocery Store', cuisine: 'Rice • Oil • Staples • Dairy', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=500&fit=crop', eta: '25–35 min', offer: 'Best prices near you' },
+  { key: 'dairy', name: 'Daily Dairy Store', cuisine: 'Milk • Paneer • Fresh Dairy', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Fresh every morning' },
 ];
 
 /** Static promo cards shown alongside the live admin banner (frontend only). */
@@ -134,7 +128,7 @@ export const PROMO_OFFERS: PromoOffer[] = [
 ];
 
 /** Search suggestions — plain strings that feed the existing local filter. */
-export const SEARCH_SUGGESTIONS = ['biryani', 'pizza', 'burger', 'paneer', 'samosa', 'rasgulla', 'milk', 'eggs', 'rice', 'fish curry'];
+export const SEARCH_SUGGESTIONS = ['milk', 'eggs', 'rice', 'tomato', 'onion', 'potato', 'apple', 'banana', 'oil', 'paneer'];
 
 // ── "What's Your Mood?" — signature discovery (frontend only). ──
 // Each mood maps to REAL catalog categories; counts computed at render time.
@@ -147,7 +141,7 @@ export interface Mood {
 }
 
 export const MOODS: Mood[] = [
-  { key: 'comfort', title: 'Comfort Food', emoji: '🍕', blurb: 'Warm, hearty plates', cats: ['cooked_food', 'non_veg'] },
+  { key: 'comfort', title: 'Comfort Picks', emoji: '🍕', blurb: 'Warm, hearty plates', cats: ['cooked_food', 'non_veg'] },
   { key: 'spicy', title: 'Spicy Cravings', emoji: '🌶️', blurb: 'Biryani & curries', cats: ['cooked_food', 'non_veg'] },
   { key: 'sweet', title: 'Sweet Moments', emoji: '🍰', blurb: 'Mithaas & desserts', cats: ['sweets'] },
   { key: 'chai', title: 'Chai Time', emoji: '☕', blurb: 'Snacks & sips', cats: ['snacks', 'dairy'] },

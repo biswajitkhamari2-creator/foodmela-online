@@ -29,7 +29,7 @@ export default function Apk() {
         <div className="apk-hero-emoji" aria-hidden="true">📱</div>
         <span className="apk-badge">✨ OFFICIAL APP · {APP_VERSION} · FREE</span>
         <h1>FoodMela App</h1>
-        <p>Good Food. Delivered Happier — now in your pocket.</p>
+        <p>Daily Essentials. Delivered Happier — now in your pocket.</p>
         <a href={APK_URL} download="FoodMela.apk" className="apk-dl-btn">
           ⬇ DOWNLOAD NOW
         </a>

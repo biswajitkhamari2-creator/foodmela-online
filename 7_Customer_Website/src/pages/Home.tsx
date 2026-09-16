@@ -4,6 +4,7 @@ import {
   MOODS,
   STOREFRONTS,
   PROMO_OFFERS,
+  FOOD_MENU_CATS,
   readSeen,
 } from '../data/catalog';
 import { useShop } from '../store';
@@ -46,13 +47,18 @@ export default function Home() {
   }, []);
 
   // ── Discovery rails — all computed from REAL catalog + live prices ──
-  const popular = useMemo(
-    () => [...allItems].sort((a, b) => b.rating - a.rating).slice(0, 10),
+  // Prepared-food menu items are excluded from every display rail (frontend only).
+  const menuItems = useMemo(
+    () => allItems.filter((c) => !FOOD_MENU_CATS.has(c.category)),
     [allItems],
+  );
+  const popular = useMemo(
+    () => [...menuItems].sort((a, b) => b.rating - a.rating).slice(0, 10),
+    [menuItems],
   );
   const bestValue = useMemo(
     () =>
-      allItems
+      menuItems
         .map((c) => {
           const mrp = mrpOf(c);
           const price = priceOf(c);
@@ -63,38 +69,41 @@ export default function Home() {
         .sort((a, b) => b.off - a.off || b.c.rating - a.c.rating)
         .slice(0, 8)
         .map((x) => x.c),
-    [allItems, priceOf, mrpOf],
+    [menuItems, priceOf, mrpOf],
   );
   const freshToday = useMemo(
-    () => allItems.filter((c) => GROCERY_CATS.has(c.category)).sort((a, b) => b.rating - a.rating).slice(0, 8),
-    [allItems],
+    () => menuItems.filter((c) => GROCERY_CATS.has(c.category)).sort((a, b) => b.rating - a.rating).slice(0, 8),
+    [menuItems],
   );
   const freshAdded = useMemo(
-    () => (customs.length > 0 ? customs : [...allItems].sort((a, b) => b.rating - a.rating)).slice(0, 8),
-    [allItems, customs],
+    () => {
+      const visibleCustoms = customs.filter((c) => !FOOD_MENU_CATS.has(c.category));
+      return (visibleCustoms.length > 0 ? visibleCustoms : [...menuItems].sort((a, b) => b.rating - a.rating)).slice(0, 8);
+    },
+    [menuItems, customs],
   );
   // Hidden gems = rated well but not top-10 (real data, second tier).
   const hiddenGems = useMemo(
-    () => [...allItems].sort((a, b) => b.rating - a.rating).slice(10, 18),
-    [allItems],
+    () => [...menuItems].sort((a, b) => b.rating - a.rating).slice(10, 18),
+    [menuItems],
   );
   const favItems = useMemo(
-    () => allItems.filter((c) => favs.has(c.id)),
-    [allItems, favs],
+    () => menuItems.filter((c) => favs.has(c.id)),
+    [menuItems, favs],
   );
   const becauseYouOrdered = useMemo(() => {
     const seen = readSeen();
     if (seen.length === 0) return [];
     const seenCats = new Set(
       seen
-        .map((id) => allItems.find((c) => c.id === id)?.category)
+        .map((id) => menuItems.find((c) => c.id === id)?.category)
         .filter((c): c is string => Boolean(c)),
     );
-    return allItems
+    return menuItems
       .filter((c) => seenCats.has(c.category) && !seen.includes(c.id))
       .sort((a, b) => b.rating - a.rating)
       .slice(0, 8);
-  }, [allItems]);
+  }, [menuItems]);
   const moodCounts = useMemo(() => {
     const m = new Map<string, number>();
     for (const mood of MOODS) {
@@ -123,7 +132,7 @@ export default function Home() {
       requireLogin(scrollToMenu);
       return;
     }
-    requireLogin(() => nav(`/food?q=${encodeURIComponent(query)}`));
+    requireLogin(() => nav(`/grocery?q=${encodeURIComponent(query)}`));
   };
 
   return (
@@ -136,16 +145,16 @@ export default function Home() {
               <span className="pulse" aria-hidden="true" /> Now serving {city}
             </span>
             <h1>
-              Good Food.
+              Daily Essentials.
               <br />
               <span className="w-leaf">Made</span> <span className="w-chili">Local.</span>
             </h1>
             <p className="mela-sub">
-              Discover amazing food, fresh groceries and local favourites delivered to your doorstep.
+              Discover fresh groceries and local favourites delivered to your doorstep.
             </p>
             <div className="mela-cta">
               <button className="btn-primary" onClick={() => requireLogin(scrollToMenu)}>Order Now →</button>
-              <button className="btn-ghost" onClick={() => requireLogin(() => nav('/food'))}>Explore Nearby</button>
+              <button className="btn-ghost" onClick={() => requireLogin(() => nav('/grocery'))}>Explore Nearby</button>
             </div>
             {/* ── APP DOWNLOAD highlight — glowing, pulsing, unmissable ── */}
             <Link
@@ -164,7 +173,7 @@ export default function Home() {
               📍 Delivering to <strong>&nbsp;{area}, {city}&nbsp;</strong> · Change ▾
             </button>
             <div className="mela-stats">
-              <div><strong>{allItems.length}+</strong><span>Dishes &amp; essentials</span></div>
+              <div><strong>{allItems.length}+</strong><span>Items &amp; essentials</span></div>
               <div><strong>{avgRating}★</strong><span>Loved by locals</span></div>
               <div><strong>~30 min</strong><span>Avg. delivery</span></div>
             </div>
@@ -200,8 +209,8 @@ export default function Home() {
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search biryani... find your favourite food..."
-              aria-label="Search biryani, find your favourite food"
+              placeholder="Search milk, rice, tomato... find your favourites..."
+              aria-label="Search groceries, find your favourites"
             />
             <button type="submit" className="btn-primary">Search</button>
           </form>
@@ -236,7 +245,7 @@ export default function Home() {
                 <h2>What&apos;s your <span className="accent">mood?</span></h2>
                 <p>Six cravings, one neighbourhood — pick yours</p>
               </div>
-              <span className="link-more" onClick={() => nav('/food')}>View all →</span>
+              <span className="link-more" onClick={() => nav('/grocery')}>View all →</span>
             </div>
             <div className="mood-grid" role="list">
               {MOODS.map((m, i) => (
@@ -244,7 +253,7 @@ export default function Home() {
                   key={m.key}
                   role="listitem"
                   className={`mood-card mood-${i} reveal reveal-${Math.min(i, 4)}`}
-                  onClick={() => nav(`/food?mood=${m.key}`)}
+                  onClick={() => nav(`/grocery?mood=${m.key}`)}
                   aria-label={`${m.title} — ${moodCounts.get(m.key) ?? 0} dishes`}
                 >
                   <span className="m-count">{moodCounts.get(m.key) ?? 0} dishes</span>
@@ -268,8 +277,8 @@ export default function Home() {
                   const items = allItems.filter((c) => c.category === s.key);
                   const top = items.reduce((m, c) => Math.max(m, c.rating), 0);
                   return (
-                    <div key={s.key} role="listitem" className="local-card" onClick={() => nav(`/food?cat=${s.key}`)} tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/food?cat=${s.key}`); }}
+                    <div key={s.key} role="listitem" className="local-card" onClick={() => nav(`/grocery?cat=${s.key}`)} tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/grocery?cat=${s.key}`); }}
                       aria-label={`${s.name} — order now`}>
                       <img src={s.image} alt={s.name} loading="lazy" />
                       <div className="lc-body">
@@ -296,7 +305,7 @@ export default function Home() {
                 <h2>Popular <span className="accent">right now</span></h2>
                 <p>Top-rated dishes people around you love</p>
               </div>
-              <span className="link-more" onClick={() => nav('/food')}>View all →</span>
+              <span className="link-more" onClick={() => nav('/grocery')}>View all →</span>
             </div>
             <div className="h-scroll">
               {popular.map((item) => (
@@ -343,7 +352,7 @@ export default function Home() {
           <div className="section" id="offers">
             <div className="section-head">
               <div>
-                <h2>Today&apos;s FoodMela <span className="accent">picks</span></h2>
+                <h2>Today&apos;s <span className="accent">picks</span></h2>
                 <p>Local love deals + festival specials</p>
               </div>
               <span className="link-more" onClick={() => nav('/offers')}>All offers →</span>
@@ -387,12 +396,12 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── YOUR FOODMELA FAVOURITES ── */}
+          {/* ── YOUR MELa FAVOURITES ── */}
           {favItems.length > 0 && (
             <div className="section">
               <div className="section-head">
                 <div>
-                  <h2>Your FoodMela <span className="accent-chili">favourites</span></h2>
+                  <h2>Your <span className="accent-chili">favourites</span></h2>
                   <p>Your saved collection, one tap away</p>
                 </div>
                 <span className="link-more" onClick={() => nav('/profile')}>Manage →</span>
@@ -411,7 +420,7 @@ export default function Home() {
               <div className="section-head">
                 <div>
                   <h2>Because you <span className="accent">ordered…</span></h2>
-                  <p>More from the kitchens you love</p>
+                  <p>More from the stores you love</p>
                 </div>
               </div>
               <div className="h-scroll">
@@ -426,7 +435,7 @@ export default function Home() {
         <div className="section" id="menu">
           <div className="menu-lock-card">
             <span className="lock-badge">🔒 Members Only Menu</span>
-            <h2>Log in to enter the <span className="accent">food mela</span></h2>
+            <h2>Log in to enter the <span className="accent">mela</span></h2>
             <p>Sign in with your mobile number to explore fresh dishes, live prices, and order online in Birmaharajpur.</p>
             <button className="btn-primary" onClick={() => nav('/login')}>
               Login with Phone to View Menu →
@@ -470,7 +479,7 @@ export default function Home() {
                 <span className="s-ico" aria-hidden="true">▶️</span>
                 <span><small>GET IT ON</small><strong>Google Play</strong></span>
               </a>
-              <button className="store-btn" onClick={() => nav(user ? '/food' : '/login')}>
+              <button className="store-btn" onClick={() => nav(user ? '/grocery' : '/login')}>
                 <span className="s-ico" aria-hidden="true">🌐</span>
                 <span><small>OR CONTINUE ON</small><strong>foodmela.online</strong></span>
               </button>

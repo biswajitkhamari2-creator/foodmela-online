@@ -49,7 +49,7 @@ export default function FoodCard({ item }: { item: CatalogItem }) {
           onClick={() => toggleFav(item.id)}
           aria-label={fav ? `Remove ${item.name} from favourites` : `Save ${item.name} to favourites`}
           aria-pressed={fav}
-          title="Your FoodMela Favourites"
+          title="Your Favourites"
         >
           {fav ? '❤️' : '🤍'}
         </button>

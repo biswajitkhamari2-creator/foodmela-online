@@ -188,8 +188,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               <div className="empty-icon">🍽️</div>
               <h3>Cart is empty</h3>
               <p>Add something delicious!</p>
-              <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => { onClose(); nav('/food'); }}>
-                Browse Food →
+              <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => { onClose(); nav('/grocery'); }}>
+                Browse Grocery →
               </button>
             </div>
           ) : (
@@ -480,7 +480,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                 )}
 
                 <div style={{ fontSize: '10.5px', color: '#56606D', marginTop: '8px', textAlign: 'center', lineHeight: '1.4' }}>
-                  🔒 <strong>100% Sealed Delivery:</strong> Food is picked up sealed from restaurants. Report transit issues within 60 mins. Helpline: <a href="tel:8144503650" style={{ color: 'var(--green)', fontWeight: 700 }}>8144503650</a>
+                  🔒 <strong>100% Sealed Delivery:</strong> Orders are picked up sealed from partner stores. Report transit issues within 60 mins. Helpline: <a href="tel:8144503650" style={{ color: 'var(--green)', fontWeight: 700 }}>8144503650</a>
                 </div>
               </div>
             </>

@@ -23,11 +23,11 @@ export default function StorefrontCard({ store }: { store: Storefront }) {
   return (
     <article
       className="postcard"
-      onClick={() => nav(`/food?cat=${store.key}`)}
+      onClick={() => nav(`/grocery?cat=${store.key}`)}
       role="link"
       aria-label={`${store.name} — order now`}
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/food?cat=${store.key}`); }}
+      onKeyDown={(e) => { if (e.key === 'Enter') nav(`/grocery?cat=${store.key}`); }}
     >
       <div className="postcard-img">
         <img src={store.image} alt={store.name} loading="lazy" />

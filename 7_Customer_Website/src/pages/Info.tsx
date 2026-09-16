@@ -16,7 +16,7 @@ const PAGES: Record<string, InfoPage> = {
       'We work directly with local kitchens, shops and riders from your own community. No platform markup, no dark patterns — just good food, delivered happier.',
       'Order on this website or get the FoodMela app. Same kitchen, same riders, same account everywhere.',
     ],
-    cta: { label: 'Start Ordering →', to: '/food' },
+    cta: { label: 'Start Ordering →', to: '/grocery' },
   },
   contact: {
     title: 'Contact Us & Statutory Grievance Redressal',
@@ -152,7 +152,7 @@ const PAGES: Record<string, InfoPage> = {
       'Your favourite food is just a tap away. The Android app brings faster ordering, live rider tracking and app-only deals.',
       'Search “FoodMela” on Google Play, or keep ordering right here on foodmela.online — same account everywhere.',
     ],
-    cta: { label: 'Order on Web →', to: '/food' },
+    cta: { label: 'Order on Web →', to: '/grocery' },
   },
 };
 

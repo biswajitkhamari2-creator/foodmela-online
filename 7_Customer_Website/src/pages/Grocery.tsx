@@ -10,7 +10,7 @@ export default function Grocery() {
   const { allItems } = useShop();
   const [params] = useSearchParams();
   const [cat, setCat] = useState(params.get('cat') || 'all');
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState(params.get('q') || '');
 
   const groceryItems = useMemo(() => allItems.filter((c) => GROCERY_CATS.has(c.category)), [allItems]);
 

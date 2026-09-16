@@ -16,7 +16,7 @@ export function BottomNav({ onCartOpen }: { onCartOpen: () => void }) {
         <Link to="/" className={`tab ${isActive('/')}`}>
           <span className="t-ico" aria-hidden="true">🏠</span>Home
         </Link>
-        <Link to="/food" className={`tab ${isActive('/food') || isActive('/grocery') || isActive('/restaurants') ? 'active' : ''}`}>
+        <Link to="/grocery" className={`tab ${isActive('/grocery') || isActive('/restaurants') ? 'active' : ''}`}>
           <span className="t-ico" aria-hidden="true">🧭</span>Explore
         </Link>
         <Link to="/offers" className={`tab tab-offers ${isActive('/offers')}`}>
@@ -58,7 +58,7 @@ export default function Footer() {
         <h3>
           Craving something? The mela is <span className="accent">always on.</span>
         </h3>
-        <button className="btn-primary" onClick={() => nav(user ? '/food' : '/login')}>
+        <button className="btn-primary" onClick={() => nav(user ? '/grocery' : '/login')}>
           Order Now →
         </button>
       </div>
@@ -73,8 +73,8 @@ export default function Footer() {
             </span>
           </Link>
           <p>
-            Your neighbourhood mela of food — fresh restaurant dishes, sweets,
-            groceries &amp; daily essentials, delivered fast across Birmaharajpur.
+            Your neighbourhood mela — fresh groceries &amp; daily essentials,
+            delivered fast across Birmaharajpur.
           </p>
           <p style={{ marginTop: 8, fontSize: 13, color: '#c6cfc8' }}>
             Helpline: <a href="tel:8144503650" style={{ color: '#ffc531', fontWeight: 700 }}>8144503650</a>
@@ -94,7 +94,7 @@ export default function Footer() {
           <a href="tel:8144503650">📞 8144503650</a>
           <Link to="/page/help">Help &amp; Support</Link>
           <Link to="/page/terms">Terms of Service</Link>
-          <Link to="/page/disclaimer">Food Safety &amp; Disclaimer</Link>
+          <Link to="/page/disclaimer">Safety &amp; Disclaimer</Link>
           <Link to="/page/privacy">Privacy Policy</Link>
           <Link to="/page/refund">Refund Policy</Link>
         </div>
@@ -109,8 +109,7 @@ export default function Footer() {
 
         <div className="footer-col">
           <h4>Explore</h4>
-          <Link to="/food">Order Food</Link>
-          <Link to="/grocery">Fresh Grocery</Link>
+          <Link to="/grocery">Shop Grocery</Link>
           <Link to="/restaurants">Restaurants</Link>
           <Link to="/offers">Offers</Link>
         </div>
@@ -125,12 +124,12 @@ export default function Footer() {
       </div>
 
       <div className="footer-bottom">
-        <div className="tagline">“Good Food Brings People Together”</div>
+        <div className="tagline">“Freshness Brings People Together”</div>
         <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6, opacity: 0.88 }}>
           © 2026 FoodMela (foodmela.online) · Digital Hyperlocal Delivery Intermediary · Birmaharajpur, Subarnapur, Odisha - 767018
         </div>
         <div style={{ fontSize: 11.5, opacity: 0.75, marginTop: 4 }}>
-          Helpline &amp; Grievance Redressal: +91 8144503650 | Email: support@foodmela.online | Food cooked &amp; packaged by licensed merchant partners
+          Helpline &amp; Grievance Redressal: +91 8144503650 | Email: support@foodmela.online | Goods packed &amp; delivered by licensed merchant partners
         </div>
       </div>
     </footer>

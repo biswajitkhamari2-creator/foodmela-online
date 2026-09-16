@@ -7,7 +7,6 @@ import Footer, { BottomNav } from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import LocationModal from './components/LocationModal';
 import Home from './pages/Home';
-import Food from './pages/Food';
 import Grocery from './pages/Grocery';
 import Restaurants from './pages/Restaurants';
 import Offers from './pages/Offers';
@@ -40,13 +39,13 @@ function Shell() {
   return (
     <>
       <div className="top-strip">
-        🎉 <strong>Food Fiesta is live!</strong> Free delivery over ₹299 · Now serving Birmaharajpur
+        🎉 <strong>Mela Fiesta is live!</strong> Free delivery over ₹299 · Now serving Birmaharajpur
       </div>
       <Header onCartOpen={openCart} />
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/food" element={user ? <Food /> : <Navigate to="/login" replace />} />
+          <Route path="/food" element={<Navigate to="/grocery" replace />} />
           <Route path="/grocery" element={user ? <Grocery /> : <Navigate to="/login" replace />} />
           <Route path="/restaurants" element={user ? <Restaurants /> : <Navigate to="/login" replace />} />
           <Route path="/offers" element={user ? <Offers /> : <Navigate to="/login" replace />} />

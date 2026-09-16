@@ -28,7 +28,7 @@ function parseItems(itemsRaw: unknown, summary?: string): InvoiceItem[] {
     return itemsRaw.map((it) => {
       const rec = it as Record<string, unknown>;
       const qty = Math.max(1, Number(rec.quantity ?? rec.qty ?? 1));
-      const name = String(rec.name ?? rec.itemId ?? 'Food Item');
+      const name = String(rec.name ?? rec.itemId ?? 'Item');
       const price = typeof rec.price === 'number' ? rec.price : typeof rec.unitPrice === 'number' ? rec.unitPrice : undefined;
       return { name, quantity: qty, price };
     });
@@ -51,7 +51,7 @@ function parseItems(itemsRaw: unknown, summary?: string): InvoiceItem[] {
       return { quantity: 1, name: part.trim() };
     });
   }
-  return [{ name: 'Assorted Food Dishes', quantity: 1 }];
+  return [{ name: 'Assorted Items', quantity: 1 }];
 }
 
 function formatInvoiceDate(createdAt: unknown, placedAt?: string): string {

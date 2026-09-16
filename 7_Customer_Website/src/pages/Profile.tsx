@@ -65,7 +65,7 @@ export default function Profile() {
 
   const rows: { icon: string; bg: string; title: string; sub: string; to: string; danger?: boolean }[] = [
     { icon: '🧾', bg: '#E7F6EC', title: 'My Orders', sub: 'Track, reorder & receipts', to: '/orders' },
-    { icon: '❤️', bg: '#FDECEA', title: 'My Favourites', sub: favItems.length > 0 ? `${favItems.length} saved dishes` : 'Dishes you heart', to: '/profile#favs' },
+    { icon: '❤️', bg: '#FDECEA', title: 'My Favourites', sub: favItems.length > 0 ? `${favItems.length} saved items` : 'Items you heart', to: '/profile#favs' },
     { icon: '📍', bg: '#FFF4D6', title: 'Delivery Address', sub: user.address || 'Add your address', to: '/page/help' },
     { icon: '🎁', bg: '#FFF4D6', title: 'Offers For You', sub: "Today's mela picks", to: '/offers' },
     { icon: '💬', bg: '#E3F0FF', title: 'Help & Support', sub: 'Helpline 8144503650', to: '/page/help' },
@@ -147,17 +147,17 @@ export default function Profile() {
         <div id="favs" className="section" style={{ paddingLeft: 0, paddingRight: 0 }}>
           <div className="section-head">
             <div>
-              <h2>Your FoodMela <span className="accent">favourites</span></h2>
-              <p>{favItems.length > 0 ? `${favItems.length} saved dishes` : 'Tap 🤍 on any dish to save it here'}</p>
+              <h2>Your <span className="accent">favourites</span></h2>
+              <p>{favItems.length > 0 ? `${favItems.length} saved items` : 'Tap 🤍 on any item to save it here'}</p>
             </div>
           </div>
           {favItems.length === 0 ? (
             <div className="mela-empty" style={{ padding: '30px 10px' }}>
               <div className="mela-empty-icon">🤍</div>
               <h3>No cravings saved yet</h3>
-              <p>Your favourite meals will live here — tap the heart on any dish.</p>
-              <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => nav('/food')}>
-                Explore Food →
+              <p>Your favourite items will live here — tap the heart on any item.</p>
+              <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => nav('/grocery')}>
+                Explore Grocery →
               </button>
             </div>
           ) : (

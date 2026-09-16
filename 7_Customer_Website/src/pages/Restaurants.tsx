@@ -1,4 +1,4 @@
-import { STOREFRONTS } from '../data/catalog';
+import { STOREFRONTS, FOOD_MENU_CATS } from '../data/catalog';
 import StorefrontCard from '../components/StorefrontCard';
 import { useDeliveryLocation } from '../components/location-context';
 
@@ -15,7 +15,7 @@ export default function Restaurants() {
       </div>
       <div className="section">
         <div className="post-grid">
-          {STOREFRONTS.map((s) => (
+          {STOREFRONTS.filter((s) => !FOOD_MENU_CATS.has(s.key)).map((s) => (
             <StorefrontCard key={s.key} store={s} />
           ))}
         </div>
