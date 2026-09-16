@@ -16,7 +16,7 @@ export function BottomNav({ onCartOpen }: { onCartOpen: () => void }) {
         <Link to="/" className={`tab ${isActive('/')}`}>
           <span className="t-ico" aria-hidden="true">🏠</span>Home
         </Link>
-        <Link to="/grocery" className={`tab ${isActive('/grocery') || isActive('/restaurants') ? 'active' : ''}`}>
+        <Link to="/grocery" className={`tab ${isActive('/grocery') ? 'active' : ''}`}>
           <span className="t-ico" aria-hidden="true">🧭</span>Explore
         </Link>
         <Link to="/offers" className={`tab tab-offers ${isActive('/offers')}`}>

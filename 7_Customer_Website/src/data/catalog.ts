@@ -31,9 +31,9 @@ export const FOOD_MENU_CATS: Set<string> = new Set(['cooked_food', 'non_veg', 's
 
 // ── TEMPORARILY HIDDEN (for now) ───────────────────────────────────────────
 // Cooked food (cf1–cf3), Mutton Curry (cf4), Fish Curry (cf5),
-// raw Chicken (em2), Farm Eggs (em1), Samosa (sn1), Milk (da1).
+// raw Chicken (em2), Farm Eggs (em1), Samosa (sn1).
 // Items stay in code — remove an ID from this set to bring it back.
-export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em1', 'em2', 'sn1', 'da1']);
+export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em1', 'em2', 'sn1']);
 
 export const CATALOG: CatalogItem[] = [
   { id: 'cf1', name: 'Chicken Biryani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 220, rating: 4.8, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&h=400&fit=crop', isVeg: false },
@@ -57,7 +57,6 @@ export const CATALOG: CatalogItem[] = [
   { id: 'fr2', name: 'Apple', category: 'fruits', categoryLabel: 'Fruits', basePrice: 160, rating: 4.6, image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&h=400&fit=crop', isVeg: true },
   { id: 'gr1', name: 'Basmati Rice (India Gate)', category: 'grocery', categoryLabel: 'Grocery', basePrice: 180, rating: 4.7, image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&h=400&fit=crop', isVeg: true },
   { id: 'gr2', name: 'Refined Oil (Fortune)', category: 'grocery', categoryLabel: 'Grocery', basePrice: 145, rating: 4.5, image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'da1', name: 'Full Cream Milk (Amul)', category: 'dairy', categoryLabel: 'Dairy', basePrice: 62, rating: 4.8, image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&h=400&fit=crop', isVeg: true },
   { id: 'da2', name: 'Paneer (Fresh)', category: 'dairy', categoryLabel: 'Dairy', basePrice: 80, rating: 4.6, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&h=400&fit=crop', isVeg: true },
   { id: 'em1', name: 'Farm Eggs', category: 'eggs_meat', categoryLabel: 'Eggs & Meat', basePrice: 72, rating: 4.7, image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&h=400&fit=crop', isVeg: false },
   { id: 'em2', name: 'Chicken (Boneless)', category: 'eggs_meat', categoryLabel: 'Eggs & Meat', basePrice: 320, rating: 4.6, image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&h=400&fit=crop', isVeg: false },
@@ -76,7 +75,7 @@ export const SHOWCASE_CATEGORIES: ShowcaseCategory[] = [
   { key: 'vegetables', label: 'Vegetables', emoji: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop', blurb: 'Farm-fresh, picked daily' },
   { key: 'fruits', label: 'Fruits', emoji: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop', blurb: 'Sweet, juicy & seasonal' },
   { key: 'grocery', label: 'Groceries', emoji: '🛒', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice, oil & kitchen staples' },
-  { key: 'dairy', label: 'Dairy & Bakery', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Milk, paneer & fresh dairy' },
+  { key: 'dairy', label: 'Dairy & Bakery', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Paneer & fresh dairy' },
   { key: 'eggs_meat', label: 'Eggs & Meat', emoji: '🥚', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop', blurb: 'Farm eggs & fresh chicken' },
 ];
 
@@ -84,7 +83,7 @@ export const SHOWCASE_CATEGORIES: ShowcaseCategory[] = [
 export const GROCERY_AISLES: ShowcaseCategory[] = [
   { key: 'vegetables', label: 'Vegetables', emoji: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop', blurb: 'Fresh daily' },
   { key: 'fruits', label: 'Fruits', emoji: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop', blurb: 'Seasonal picks' },
-  { key: 'dairy', label: 'Dairy', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Milk & paneer' },
+  { key: 'dairy', label: 'Dairy', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Paneer & more' },
   { key: 'grocery', label: 'Staples', emoji: '🌾', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice, oil & more' },
   { key: 'eggs_meat', label: 'Eggs & Meat', emoji: '🥚', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop', blurb: 'Farm fresh' },
 ];
@@ -108,7 +107,7 @@ export const STOREFRONTS: Storefront[] = [
   { key: 'vegetables', name: 'Fresh Sabzi Mandi', cuisine: 'Vegetables • Daily Harvest', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Farm fresh picks' },
   { key: 'fruits', name: 'Fresh Fruit Corner', cuisine: 'Fruits • Seasonal Picks', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Sweet & seasonal' },
   { key: 'grocery', name: 'Daily Grocery Store', cuisine: 'Rice • Oil • Staples • Dairy', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=500&fit=crop', eta: '25–35 min', offer: 'Best prices near you' },
-  { key: 'dairy', name: 'Daily Dairy Store', cuisine: 'Milk • Paneer • Fresh Dairy', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Fresh every morning' },
+  { key: 'dairy', name: 'Daily Dairy Store', cuisine: 'Paneer • Fresh Dairy', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Fresh every morning' },
 ];
 
 /** Static promo cards shown alongside the live admin banner (frontend only). */
@@ -172,7 +171,6 @@ export const ITEM_DESCRIPTIONS: Record<string, string> = {
   fr2: 'Crisp, juicy apples, hand-picked.',
   gr1: 'Long-grain basmati for perfect pulao.',
   gr2: 'Light refined oil for everyday cooking.',
-  da1: 'Thick, creamy full-cream milk.',
   da2: 'Soft fresh paneer, made daily.',
   em1: 'Protein-rich farm eggs.',
   em2: 'Tender boneless chicken, cleaned fresh.',

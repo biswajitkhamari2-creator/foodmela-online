@@ -12,9 +12,9 @@ const PAGES: Record<string, InfoPage> = {
     title: 'About FoodMela',
     emoji: '🍽️',
     body: [
-      'FoodMela is your trusted local delivery app — bringing fresh restaurant food, sweets, groceries and daily essentials to doorsteps across Birmaharajpur, Odisha.',
-      'We work directly with local kitchens, shops and riders from your own community. No platform markup, no dark patterns — just good food, delivered happier.',
-      'Order on this website or get the FoodMela app. Same kitchen, same riders, same account everywhere.',
+      'FoodMela is your trusted local delivery app — bringing fresh groceries and daily essentials to doorsteps across Birmaharajpur, Odisha.',
+      'We work directly with local shops and riders from your own community. No platform markup, no dark patterns — just freshness, delivered happier.',
+      'Order on this website or get the FoodMela app. Same stores, same riders, same account everywhere.',
     ],
     cta: { label: 'Start Ordering →', to: '/grocery' },
   },
