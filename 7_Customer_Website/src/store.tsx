@@ -20,6 +20,7 @@ export interface Banner {
 interface ShopState {
   prices: Map<string, number>;
   mrps: Map<string, number>;
+  images: Map<string, string>;
   banner: Banner | null;
   customs: CatalogItem[];
   allItems: CatalogItem[];
@@ -53,6 +54,7 @@ function tsToDate(ts: unknown): Date | null {
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [prices, setPrices] = useState<Map<string, number>>(new Map());
   const [mrps, setMrps] = useState<Map<string, number>>(new Map());
+  const [images, setImages] = useState<Map<string, string>>(new Map());
   const [banner, setBanner] = useState<Banner | null>(null);
   const [customs, setCustoms] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<Map<string, number>>(() => {
@@ -81,18 +83,22 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  // Live prices + MRP from the SAME Firestore the admin edits
+  // Live prices + MRP + IMAGES from the SAME Firestore the admin edits.
+  // Admin photo change reflects here instantly (same onSnapshot tick as price).
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'product_prices'), (snap) => {
       const p = new Map<string, number>();
       const m = new Map<string, number>();
+      const img = new Map<string, string>();
       snap.docs.forEach((d) => {
-        const data = d.data() as { price?: number; mrp?: number };
+        const data = d.data() as { price?: number; mrp?: number; image?: string };
         if (typeof data.price === 'number' && data.price >= 0) p.set(d.id, data.price);
         if (typeof data.mrp === 'number' && data.mrp > 0) m.set(d.id, data.mrp);
+        if (typeof data.image === 'string' && data.image.trim()) img.set(d.id, data.image.trim());
       });
       setPrices(p);
       setMrps(m);
+      setImages(img);
     });
     return () => unsub();
   }, []);
@@ -183,7 +189,14 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     } catch { /* ignore */ }
   };
 
-  const allItems = useMemo(() => [...CATALOG, ...customs], [customs]);
+  // Admin image overrides applied onto bundled catalog — instant via onSnapshot.
+  const allItems = useMemo(
+    () => [...CATALOG.map((c) => {
+      const img = images.get(c.id);
+      return img ? { ...c, image: img } : c;
+    }), ...customs],
+    [customs, images],
+  );
 
   const value = useMemo<ShopState>(() => {
     const priceOf = (item: CatalogItem) => prices.get(item.id) ?? item.basePrice;
@@ -201,7 +214,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       cartTotal += priceOf(item) * qty;
     });
     return {
-      prices, mrps, banner, cart, customs, allItems, favs, toggleFav,
+      prices, mrps, images, banner, cart, customs, allItems, favs, toggleFav,
       isFav: (id: string) => favs.has(id),
       addToCart: (id) => setCart((c) => new Map(c).set(id, (c.get(id) ?? 0) + 1)),
       addManyToCart: (entries) => setCart((c) => {
@@ -218,7 +231,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       clearCart: () => setCart(new Map()),
       priceOf, mrpOf, cartCount, cartTotal, user, setUser,
     };
-  }, [prices, mrps, banner, cart, user, customs, allItems, favs]);
+  }, [prices, mrps, images, banner, cart, user, customs, allItems, favs]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
