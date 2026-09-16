@@ -242,7 +242,7 @@ export default function Home() {
             <div className="section-head">
               <div>
                 <h2>What&apos;s your <span className="accent">mood?</span></h2>
-                <p>Seven cravings, one neighbourhood — pick yours</p>
+                <p>Six cravings, one neighbourhood — pick yours</p>
               </div>
               <span className="link-more" onClick={() => nav('/food')}>View all →</span>
             </div>

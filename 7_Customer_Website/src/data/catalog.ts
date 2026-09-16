@@ -143,7 +143,6 @@ export interface Mood {
 export const MOODS: Mood[] = [
   { key: 'comfort', title: 'Comfort Food', emoji: '🍕', blurb: 'Warm, hearty plates', cats: ['cooked_food', 'non_veg'] },
   { key: 'spicy', title: 'Spicy Cravings', emoji: '🌶️', blurb: 'Biryani & curries', cats: ['cooked_food', 'non_veg'] },
-  { key: 'fresh', title: 'Light & Fresh', emoji: '🥗', blurb: 'Veggies & fruits', cats: ['vegetables', 'fruits'] },
   { key: 'sweet', title: 'Sweet Moments', emoji: '🍰', blurb: 'Mithaas & desserts', cats: ['sweets'] },
   { key: 'chai', title: 'Chai Time', emoji: '☕', blurb: 'Snacks & sips', cats: ['snacks', 'dairy'] },
   { key: 'quick', title: 'Quick Bites', emoji: '🍔', blurb: 'Ready in minutes', cats: ['snacks'] },
