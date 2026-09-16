@@ -4,7 +4,6 @@ import {
   MOODS,
   STOREFRONTS,
   PROMO_OFFERS,
-  SEARCH_SUGGESTIONS,
   readSeen,
 } from '../data/catalog';
 import { useShop } from '../store';
@@ -206,14 +205,6 @@ export default function Home() {
             />
             <button type="submit" className="btn-primary">Search</button>
           </form>
-          <div className="mela-hints">
-            <span>Craving something?</span>
-            {SEARCH_SUGGESTIONS.slice(0, 6).map((s) => (
-              <button key={s} className="hint-pill" onClick={() => requireLogin(() => nav(`/food?q=${encodeURIComponent(s)}`))}>
-                {s}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
 
