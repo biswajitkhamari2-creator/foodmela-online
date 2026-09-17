@@ -9,6 +9,7 @@ export interface CatalogItem {
   rating: number;
   image: string;
   isVeg: boolean;
+  unit?: string;
 }
 
 export const CATEGORIES = [
@@ -31,36 +32,62 @@ export const FOOD_MENU_CATS: Set<string> = new Set(['cooked_food', 'non_veg', 's
 
 // ── TEMPORARILY HIDDEN (for now) ───────────────────────────────────────────
 // Cooked food (cf1–cf3), Mutton Curry (cf4), Fish Curry (cf5),
-// raw Chicken (em2), Farm Eggs (em1), Samosa (sn1).
+// raw Chicken (em2), Farm Eggs (em1), Samosa (sn1), Paneer (da2), Refined Oil (gr2).
 // Items stay in code — remove an ID from this set to bring it back.
-export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em1', 'em2', 'sn1']);
+export const HIDDEN_ITEM_IDS: Set<string> = new Set(['cf1', 'cf2', 'cf3', 'cf4', 'cf5', 'em1', 'em2', 'sn1', 'da2', 'gr2']);
 
 export const CATALOG: CatalogItem[] = [
-  { id: 'cf1', name: 'Chicken Biryani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 220, rating: 4.8, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&h=400&fit=crop', isVeg: false },
-  { id: 'cf2', name: 'Paneer Butter Masala', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 180, rating: 4.6, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'cf3', name: 'Dal Makhani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 150, rating: 4.5, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'cf4', name: 'Mutton Curry', category: 'non_veg', categoryLabel: 'Non-Veg', basePrice: 280, rating: 4.7, image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600&h=400&fit=crop', isVeg: false },
-  { id: 'cf5', name: 'Fish Curry', category: 'non_veg', categoryLabel: 'Non-Veg', basePrice: 240, rating: 4.6, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop', isVeg: false },
-  { id: 'sw1', name: 'Rasgulla (6 pcs)', category: 'sweets', categoryLabel: 'Sweets', basePrice: 80, rating: 4.7, image: 'https://images.unsplash.com/photo-1601303516534-61dcef5bc3c5?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'sw2', name: 'Gulab Jamun (6 pcs)', category: 'sweets', categoryLabel: 'Sweets', basePrice: 70, rating: 4.5, image: 'https://images.unsplash.com/photo-1625961332071-f1673bbc4e78?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'sw3', name: 'Kheer (250ml)', category: 'sweets', categoryLabel: 'Sweets', basePrice: 60, rating: 4.4, image: 'https://files.catbox.moe/n9vchw.jpg', isVeg: true },
-  { id: 'sn1', name: 'Samosa (4 pcs)', category: 'snacks', categoryLabel: 'Snacks', basePrice: 40, rating: 4.5, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'sn2', name: 'Aloo Tikki (4 pcs)', category: 'snacks', categoryLabel: 'Snacks', basePrice: 50, rating: 4.3, image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg1', name: 'Fresh Tomato', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 40, rating: 4.6, image: 'https://images.unsplash.com/photo-1546470427-e26264be0b0d?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg2', name: 'Potato', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 30, rating: 4.4, image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg3', name: 'Onion', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 35, rating: 4.3, image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg4', name: 'Brinjal (Baingan)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 30, rating: 4.5, image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg5', name: 'Cabbage (Pattagobi)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 30, rating: 4.4, image: 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg6', name: 'Cauliflower (Phoolgobi)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 35, rating: 4.6, image: 'https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'vg7', name: 'Lady Finger (Bhindi)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 40, rating: 4.3, image: 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'fr1', name: 'Banana (Dozen)', category: 'fruits', categoryLabel: 'Fruits', basePrice: 50, rating: 4.5, image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'fr2', name: 'Apple', category: 'fruits', categoryLabel: 'Fruits', basePrice: 160, rating: 4.6, image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'gr1', name: 'Basmati Rice (India Gate)', category: 'grocery', categoryLabel: 'Grocery', basePrice: 180, rating: 4.7, image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'gr2', name: 'Refined Oil (Fortune)', category: 'grocery', categoryLabel: 'Grocery', basePrice: 145, rating: 4.5, image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'da2', name: 'Paneer (Fresh)', category: 'dairy', categoryLabel: 'Dairy', basePrice: 80, rating: 4.6, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&h=400&fit=crop', isVeg: true },
-  { id: 'em1', name: 'Farm Eggs', category: 'eggs_meat', categoryLabel: 'Eggs & Meat', basePrice: 72, rating: 4.7, image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&h=400&fit=crop', isVeg: false },
-  { id: 'em2', name: 'Chicken (Boneless)', category: 'eggs_meat', categoryLabel: 'Eggs & Meat', basePrice: 320, rating: 4.6, image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&h=400&fit=crop', isVeg: false },
+  { id: 'cf1', name: 'Chicken Biryani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 220, rating: 4.8, image: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&h=400&fit=crop', isVeg: false, unit: '1 Full Plate' },
+  { id: 'cf2', name: 'Paneer Butter Masala', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 180, rating: 4.6, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&h=400&fit=crop', isVeg: true, unit: '1 Portion' },
+  { id: 'cf3', name: 'Dal Makhani', category: 'cooked_food', categoryLabel: 'Cooked Food', basePrice: 150, rating: 4.5, image: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&h=400&fit=crop', isVeg: true, unit: '1 Portion' },
+  { id: 'cf4', name: 'Mutton Curry', category: 'non_veg', categoryLabel: 'Non-Veg', basePrice: 280, rating: 4.7, image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=600&h=400&fit=crop', isVeg: false, unit: '1 Portion' },
+  { id: 'cf5', name: 'Fish Curry', category: 'non_veg', categoryLabel: 'Non-Veg', basePrice: 240, rating: 4.6, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop', isVeg: false, unit: '1 Portion' },
+  { id: 'sw1', name: 'Rasgulla (6 pcs)', category: 'sweets', categoryLabel: 'Sweets', basePrice: 80, rating: 4.7, image: 'https://images.unsplash.com/photo-1601303516534-61dcef5bc3c5?w=600&h=400&fit=crop', isVeg: true, unit: '6 pcs' },
+  { id: 'sw2', name: 'Gulab Jamun (6 pcs)', category: 'sweets', categoryLabel: 'Sweets', basePrice: 70, rating: 4.5, image: 'https://images.unsplash.com/photo-1625961332071-f1673bbc4e78?w=600&h=400&fit=crop', isVeg: true, unit: '6 pcs' },
+  { id: 'sw3', name: 'Kheer (250ml)', category: 'sweets', categoryLabel: 'Sweets', basePrice: 60, rating: 4.4, image: 'https://files.catbox.moe/n9vchw.jpg', isVeg: true, unit: '250 ml' },
+  { id: 'sn1', name: 'Samosa (4 pcs)', category: 'snacks', categoryLabel: 'Snacks', basePrice: 40, rating: 4.5, image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&h=400&fit=crop', isVeg: true, unit: '4 pcs' },
+  { id: 'sn2', name: 'Aloo Tikki (4 pcs)', category: 'snacks', categoryLabel: 'Snacks', basePrice: 50, rating: 4.3, image: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600&h=400&fit=crop', isVeg: true, unit: '4 pcs' },
+  { id: 'vg1', name: 'Fresh Tomato', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 40, rating: 4.6, image: 'https://images.unsplash.com/photo-1546470427-e26264be0b0d?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'vg2', name: 'Potato', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 30, rating: 4.4, image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'vg3', name: 'Onion', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 35, rating: 4.3, image: 'https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'vg4', name: 'Brinjal (Baingan)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 30, rating: 4.5, image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'vg5', name: 'Cabbage (Pattagobi)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 30, rating: 4.4, image: 'https://images.unsplash.com/photo-1594282486552-05b4d80fbb9f?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'vg6', name: 'Cauliflower (Phoolgobi)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 35, rating: 4.6, image: 'https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'vg7', name: 'Lady Finger (Bhindi)', category: 'vegetables', categoryLabel: 'Vegetables', basePrice: 40, rating: 4.3, image: 'https://images.unsplash.com/photo-1425543103986-22abb7d7e8d2?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'fr1', name: 'Banana (Dozen)', category: 'fruits', categoryLabel: 'Fruits', basePrice: 50, rating: 4.5, image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=600&h=400&fit=crop', isVeg: true, unit: '1 Dozen (12 pcs)' },
+  { id: 'fr2', name: 'Apple', category: 'fruits', categoryLabel: 'Fruits', basePrice: 160, rating: 4.6, image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'gr1', name: 'Basmati Rice (India Gate)', category: 'grocery', categoryLabel: 'Grocery', basePrice: 180, rating: 4.7, image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=600&h=400&fit=crop', isVeg: true, unit: '1 kg' },
+  { id: 'gr2', name: 'Refined Oil (Fortune)', category: 'grocery', categoryLabel: 'Grocery', basePrice: 145, rating: 4.5, image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&h=400&fit=crop', isVeg: true, unit: '1 Litre' },
+  { id: 'da2', name: 'Paneer (Fresh)', category: 'dairy', categoryLabel: 'Dairy', basePrice: 80, rating: 4.6, image: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=600&h=400&fit=crop', isVeg: true, unit: '200g' },
+  { id: 'em1', name: 'Farm Eggs', category: 'eggs_meat', categoryLabel: 'Eggs & Meat', basePrice: 72, rating: 4.7, image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&h=400&fit=crop', isVeg: false, unit: '1 Dozen (12 pcs)' },
+  { id: 'em2', name: 'Chicken (Boneless)', category: 'eggs_meat', categoryLabel: 'Eggs & Meat', basePrice: 320, rating: 4.6, image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&h=400&fit=crop', isVeg: false, unit: '1 kg' },
 ];
+
+/**
+ * Returns a clean, user-friendly weight/unit string for any catalog item.
+ * Defaults appropriately by category if unit is omitted.
+ */
+export function getItemWeight(item: CatalogItem): string {
+  if (item.unit && item.unit.trim()) return item.unit.trim();
+  switch (item.category) {
+    case 'vegetables':
+    case 'fruits':
+    case 'grocery':
+      return '1 kg';
+    case 'dairy':
+      return '500 ml';
+    case 'eggs_meat':
+      return '1 kg';
+    case 'sweets':
+    case 'snacks':
+      return '1 pack';
+    case 'cooked_food':
+    case 'non_veg':
+      return '1 Portion';
+    default:
+      return '1 unit';
+  }
+}
 
 /** Circular "What's on your mind?" tiles → each maps to a real catalog category. */
 export interface ShowcaseCategory {
@@ -74,18 +101,14 @@ export interface ShowcaseCategory {
 export const SHOWCASE_CATEGORIES: ShowcaseCategory[] = [
   { key: 'vegetables', label: 'Vegetables', emoji: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop', blurb: 'Farm-fresh, picked daily' },
   { key: 'fruits', label: 'Fruits', emoji: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop', blurb: 'Sweet, juicy & seasonal' },
-  { key: 'grocery', label: 'Groceries', emoji: '🛒', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice, oil & kitchen staples' },
-  { key: 'dairy', label: 'Dairy & Bakery', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Paneer & fresh dairy' },
-  { key: 'eggs_meat', label: 'Eggs & Meat', emoji: '🥚', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop', blurb: 'Farm eggs & fresh chicken' },
+  { key: 'grocery', label: 'Groceries', emoji: '🛒', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice & kitchen staples' },
 ];
 
 /** Grocery aisle tiles (subset of real grocery-ish categories). */
 export const GROCERY_AISLES: ShowcaseCategory[] = [
   { key: 'vegetables', label: 'Vegetables', emoji: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop', blurb: 'Fresh daily' },
   { key: 'fruits', label: 'Fruits', emoji: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=400&h=400&fit=crop', blurb: 'Seasonal picks' },
-  { key: 'dairy', label: 'Dairy', emoji: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop', blurb: 'Paneer & more' },
-  { key: 'grocery', label: 'Staples', emoji: '🌾', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice, oil & more' },
-  { key: 'eggs_meat', label: 'Eggs & Meat', emoji: '🥚', image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400&h=400&fit=crop', blurb: 'Farm fresh' },
+  { key: 'grocery', label: 'Staples', emoji: '🌾', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop', blurb: 'Rice & kitchen staples' },
 ];
 
 /**
@@ -106,8 +129,7 @@ export interface Storefront {
 export const STOREFRONTS: Storefront[] = [
   { key: 'vegetables', name: 'Fresh Sabzi Mandi', cuisine: 'Vegetables • Daily Harvest', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Farm fresh picks' },
   { key: 'fruits', name: 'Fresh Fruit Corner', cuisine: 'Fruits • Seasonal Picks', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Sweet & seasonal' },
-  { key: 'grocery', name: 'Daily Grocery Store', cuisine: 'Rice • Oil • Staples • Dairy', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=500&fit=crop', eta: '25–35 min', offer: 'Best prices near you' },
-  { key: 'dairy', name: 'Daily Dairy Store', cuisine: 'Paneer • Fresh Dairy', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=800&h=500&fit=crop', eta: '20–30 min', offer: 'Fresh every morning' },
+  { key: 'grocery', name: 'Daily Grocery Store', cuisine: 'Rice • Daily Staples', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=500&fit=crop', eta: '25–35 min', offer: 'Best prices near you' },
 ];
 
 /** Static promo cards shown alongside the live admin banner (frontend only). */
@@ -127,7 +149,7 @@ export const PROMO_OFFERS: PromoOffer[] = [
 ];
 
 /** Search suggestions — plain strings that feed the existing local filter. */
-export const SEARCH_SUGGESTIONS = ['eggs', 'rice', 'tomato', 'onion', 'potato', 'apple', 'banana', 'oil', 'paneer'];
+export const SEARCH_SUGGESTIONS = ['rice', 'tomato', 'onion', 'potato', 'apple', 'banana', 'brinjal'];
 
 // ── "What's Your Mood?" — signature discovery (frontend only). ──
 // Each mood maps to REAL catalog categories; counts computed at render time.

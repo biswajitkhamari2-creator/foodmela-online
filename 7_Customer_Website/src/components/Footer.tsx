@@ -90,6 +90,7 @@ export default function Footer() {
         <div className="footer-col">
           <h4>Company</h4>
           <Link to="/page/about">About FoodMela</Link>
+          <Link to="/page/enterprise">Sidheswar Enterprises</Link>
           <Link to="/page/contact">Contact Us &amp; Grievance</Link>
           <a href="tel:8144503650">📞 8144503650</a>
           <Link to="/page/help">Help &amp; Support</Link>
@@ -100,17 +101,10 @@ export default function Footer() {
         </div>
 
         <div className="footer-col">
-          <h4>Partner With Us</h4>
-          <Link to="/page/partner">Partner With Us</Link>
-          <Link to="/page/partner-restaurant">Restaurant Partner</Link>
-          <Link to="/page/partner-rider">Delivery Partner</Link>
-          <Link to="/page/app">Get the App</Link>
-        </div>
-
-        <div className="footer-col">
           <h4>Explore</h4>
           <Link to="/grocery">Shop Grocery</Link>
           <Link to="/offers">Offers</Link>
+          <Link to="/page/app">Get the App</Link>
         </div>
 
         <div className="footer-col">
@@ -125,7 +119,7 @@ export default function Footer() {
       <div className="footer-bottom">
         <div className="tagline">“Freshness Brings People Together”</div>
         <div style={{ marginTop: 8, fontSize: 12, lineHeight: 1.6, opacity: 0.88 }}>
-          © 2026 FoodMela (foodmela.online) · Digital Hyperlocal Delivery Intermediary · Birmaharajpur, Subarnapur, Odisha - 767018
+          © 2026 FoodMela by Sidheswar Enterprises · Owner: Biswajit Khamari · Digital Hyperlocal Delivery Intermediary · Birmaharajpur, Subarnapur, Odisha - 767018
         </div>
         <div style={{ fontSize: 11.5, opacity: 0.75, marginTop: 4 }}>
           Helpline &amp; Grievance Redressal: +91 8144503650 | Email: support@foodmela.online | Goods packed &amp; delivered by licensed merchant partners

@@ -1,0 +1,300 @@
+/* ══════════════════════════════════════════════════════════════════
+   3D STYLE LAYER — hero parallax stage, tilt glare, 3D buttons,
+   3D cards and depth shadows. Pure CSS, no libraries.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Shared 3D tilt glare (driven by useTilt --gx/--gy) ── */
+.tilt-glare { position: relative; }
+.tilt-glare::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    420px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.22),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+.tilt-glare:hover::after { opacity: 1; }
+
+/* ── 3D buttons — chunky pressable depth ── */
+.btn-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+.m-hero-actions .btn-3d.btn-primary {
+  box-shadow: 0 6px 0 #b45309, 0 12px 28px rgba(245, 158, 11, 0.4) !important;
+}
+.m-hero-actions .btn-3d.btn-primary:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 0 #b45309, 0 16px 32px rgba(245, 158, 11, 0.45) !important;
+}
+.m-hero-actions .btn-3d.btn-primary:active {
+  transform: translateY(4px) !important;
+  box-shadow: 0 2px 0 #b45309, 0 6px 14px rgba(245, 158, 11, 0.35) !important;
+}
+.m-hero-actions .btn-3d.btn-ghost {
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+.m-hero-actions .btn-3d.btn-ghost:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+.m-hero-actions .btn-3d.btn-ghost:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28) !important;
+}
+
+/* ── 3D hero — perspective scene ── */
+.hero3d { perspective: 1400px; }
+.hero3d .m-hero-content,
+.hero3d .m-hero-highlights { transform: translateZ(50px); }
+
+/* floating ambient emoji layer */
+.hero3d-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  transform: translateZ(10px);
+}
+.ha {
+  position: absolute;
+  font-size: 30px;
+  opacity: 0.5;
+  filter: blur(0.4px);
+  animation: haFloat 7s ease-in-out infinite;
+}
+.ha-1 { top: 12%; left: 4%; animation-delay: 0s; font-size: 34px; }
+.ha-2 { top: 68%; left: 10%; animation-delay: 1.4s; }
+.ha-3 { top: 20%; left: 46%; animation-delay: 2.6s; font-size: 26px; }
+.ha-4 { bottom: 10%; left: 38%; animation-delay: 3.8s; }
+.ha-5 { top: 8%; right: 6%; animation-delay: 5s; font-size: 26px; }
+@keyframes haFloat {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-18px) rotate(8deg); }
+}
+
+/* parallax dish stage */
+.hero3d-wrap {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  perspective: 1200px;
+}
+.hero3d-stage {
+  --hrx: 0deg;
+  --hry: 0deg;
+  position: relative;
+  width: 340px;
+  height: 340px;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--hrx)) rotateY(var(--hry));
+  transition: transform 0.25s ease-out;
+}
+.hero3d-ring {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  transform: translateZ(10px);
+  pointer-events: none;
+}
+.ring-a {
+  border: 2px dashed rgba(255, 197, 49, 0.45);
+  animation: ringSpin 26s linear infinite;
+}
+.ring-b {
+  inset: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  animation: ringSpinRev 34s linear infinite;
+}
+@keyframes ringSpin { to { transform: translateZ(10px) rotate(360deg); } }
+@keyframes ringSpinRev { to { transform: translateZ(10px) rotate(-360deg); } }
+
+.hero3d-shadow {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 2%;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.45), transparent 70%);
+  transform: translateZ(0px);
+  filter: blur(6px);
+  animation: shadowPulse 4s ease-in-out infinite;
+}
+@keyframes shadowPulse {
+  0%, 100% { transform: translateZ(0) scaleX(1); opacity: 0.9; }
+  50% { transform: translateZ(0) scaleX(0.88); opacity: 0.65; }
+}
+
+.hero3d-dish {
+  position: absolute;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+}
+.dish-main {
+  width: 210px;
+  height: 210px;
+  left: 50%;
+  top: 50%;
+  margin: -105px 0 0 -105px;
+  transform: translateZ(90px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45), 0 0 0 10px rgba(255, 197, 49, 0.15);
+  animation: dishBob 4.5s ease-in-out infinite;
+}
+@keyframes dishBob {
+  0%, 100% { transform: translateZ(90px) translateY(0); }
+  50% { transform: translateZ(110px) translateY(-10px); }
+}
+.dish-top {
+  width: 104px;
+  height: 104px;
+  right: 2%;
+  top: 6%;
+  transform: translateZ(150px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
+  animation: dishOrbitA 6s ease-in-out infinite;
+}
+.dish-side {
+  width: 92px;
+  height: 92px;
+  left: 0;
+  bottom: 12%;
+  transform: translateZ(130px);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.4);
+  animation: dishOrbitB 7s ease-in-out 1s infinite;
+}
+.dish-sweet {
+  width: 76px;
+  height: 76px;
+  right: 8%;
+  bottom: 4%;
+  transform: translateZ(170px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+  animation: dishOrbitA 5.4s ease-in-out 0.6s infinite reverse;
+}
+@keyframes dishOrbitA {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -14px; }
+}
+@keyframes dishOrbitB {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: 12px; }
+}
+
+/* floating glass chips at different depths */
+.hero3d-chip {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  color: #0b3d22;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 8px 14px;
+  border-radius: 14px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.hero3d-chip small { font-size: 10px; font-weight: 600; color: #4b7a5e; }
+.chip-eta { left: -4%; top: 16%; transform: translateZ(190px); animation: chipFloat 3.8s ease-in-out infinite; }
+.chip-rate { right: -6%; top: 44%; transform: translateZ(160px); animation: chipFloat 4.6s ease-in-out 0.8s infinite; }
+.chip-fresh { left: 6%; bottom: 0; transform: translateZ(210px); animation: chipFloat 4.2s ease-in-out 1.6s infinite; }
+@keyframes chipFloat {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -9px; }
+}
+
+/* ── 3D food cards — depth + tilt ── */
+.food-card.tilt-glare,
+.thali.tilt-glare {
+  transform-style: preserve-3d;
+  will-change: transform;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+.food-card.tilt-glare:hover,
+.thali.tilt-glare:hover {
+  box-shadow: 0 24px 48px rgba(14, 159, 78, 0.2), 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #bce1c7;
+}
+.fc-media img { transform: translateZ(30px); }
+
+/* ── 3D offer tickets — stacked-paper depth ── */
+.ticket.tilt-glare {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.ticket.tilt-glare:hover {
+  box-shadow: 0 24px 48px rgba(10, 71, 35, 0.35);
+}
+.ticket-main { transform: translateZ(30px); }
+.ticket-stub { transform: translateZ(15px); }
+
+/* ── 3D category tiles — pop-out press ── */
+.cat-circle {
+  transform-style: preserve-3d;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease !important;
+  box-shadow: 0 3px 0 #d5e5d9;
+}
+.cat-circle:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 7px 0 #c4ddca, 0 14px 26px rgba(14, 159, 78, 0.18) !important;
+}
+.cat-circle:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 2px 0 #d5e5d9 !important;
+}
+
+/* ── 3D benefit cards — layered lift ── */
+.benefit-card {
+  transform-style: preserve-3d;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  box-shadow: 0 4px 0 #e3ece5, 0 8px 18px rgba(15, 23, 42, 0.05) !important;
+}
+.benefit-card:hover {
+  transform: translateY(-5px) rotateX(4deg) !important;
+  box-shadow: 0 9px 0 #cfe3d4, 0 20px 36px rgba(14, 159, 78, 0.16) !important;
+}
+.benefit-card .b-ico {
+  transform: translateZ(24px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+/* ── 3D ticker — inset groove ── */
+.live-ticker-wrap {
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(10, 71, 35, 0.15) !important;
+}
+
+/* ── Section headings — 3D extruded accent ── */
+.section-head h2 {
+  text-shadow: 0 2px 0 rgba(14, 159, 78, 0.1);
+}
+
+/* ── Reduced motion — flatten everything ── */
+@media (prefers-reduced-motion: reduce) {
+  .hero3d-stage { transform: none !important; }
+  .ha, .ring-a, .ring-b, .hero3d-shadow,
+  .dish-main, .dish-top, .dish-side, .dish-sweet,
+  .chip-eta, .chip-rate, .chip-fresh { animation: none !important; }
+  .tilt-glare::after { display: none; }
+}
+
+/* ── Responsive: hide the 3D stage on narrow screens ── */
+@media (max-width: 1080px) {
+  .hero3d-wrap { display: none; }
+}
+@media (max-width: 640px) {
+  .hero3d-ambient { opacity: 0.6; }
+  .ha { font-size: 22px; }
+}

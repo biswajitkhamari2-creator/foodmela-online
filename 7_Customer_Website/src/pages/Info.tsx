@@ -18,6 +18,19 @@ const PAGES: Record<string, InfoPage> = {
     ],
     cta: { label: 'Start Ordering →', to: '/grocery' },
   },
+  enterprise: {
+    title: 'Sidheswar Enterprises — FoodMela',
+    emoji: '🏢',
+    body: [
+      'FoodMela (foodmela.online) is owned and operated by Sidheswar Enterprises.',
+      'Proprietor & Owner: Biswajit Khamari',
+      'Entity Name: Sidheswar Enterprises',
+      'Operating Base: Birmaharajpur, Subarnapur District, Odisha - 767018',
+      'Business Model: Hyperlocal on-demand grocery & daily essentials delivery platform connecting residents of Birmaharajpur with local vendors.',
+      'Helpline: +91 8144503650 | Email: support@foodmela.online',
+    ],
+    cta: { label: 'Explore Grocery →', to: '/grocery' },
+  },
   contact: {
     title: 'Contact Us & Statutory Grievance Redressal',
     emoji: '📞',
@@ -117,33 +130,6 @@ const PAGES: Record<string, InfoPage> = {
       '6. CUSTOMER SUPPORT: For any delivery queries or delays, reach out directly to our Birmaharajpur helpline at +91 8144503650 or email support@foodmela.online.',
     ],
     cta: { label: 'Contact Support: 8144503650 →', to: 'tel:8144503650' },
-  },
-  partner: {
-    title: 'Partner With Us',
-    emoji: '🤝',
-    body: [
-      'Grow with FoodMela — join Birmaharajpur\'s own delivery network as a restaurant, store or rider.',
-      'Zero listing complexity, local support, and payouts you can track.',
-    ],
-    cta: { label: 'Become a Restaurant Partner →', to: '/page/partner-restaurant' },
-  },
-  'partner-restaurant': {
-    title: 'Restaurant Partner',
-    emoji: '🏪',
-    body: [
-      'Put your kitchen on FoodMela and reach thousands of hungry locals.',
-      'Live menu control, instant order alerts, and fair commissions — no platform markup on your food.',
-    ],
-    cta: { label: 'Contact Us to Join →', to: '/page/contact' },
-  },
-  'partner-rider': {
-    title: 'Delivery Partner',
-    emoji: '🛵',
-    body: [
-      'Ride with FoodMela and earn on every delivery across Birmaharajpur.',
-      'Flexible hours, live GPS orders, and weekly payouts.',
-    ],
-    cta: { label: 'Contact Us to Join →', to: '/page/contact' },
   },
   app: {
     title: 'Get the FoodMela App',

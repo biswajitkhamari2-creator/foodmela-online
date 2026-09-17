@@ -124,6 +124,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
           rating: typeof m.rating === 'number' ? m.rating : 4.5,
           image: String(m.image ?? ''),
           isVeg: m.isVeg !== false,
+          unit: m.unit ? String(m.unit) : (m.weight ? String(m.weight) : undefined),
         });
       });
       list.sort((a, b) => a.name.localeCompare(b.name));
@@ -190,12 +191,16 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Admin image overrides applied onto bundled catalog — instant via onSnapshot.
-  // HIDDEN_ITEM_IDS filtered out (cooked food + raw chicken/mutton, for now).
+  // HIDDEN_ITEM_IDS filtered out (cooked food, chicken/mutton, paneer, oil).
   const allItems = useMemo(
-    () => [...CATALOG.filter((c) => !HIDDEN_ITEM_IDS.has(c.id)).map((c) => {
-      const img = images.get(c.id);
-      return img ? { ...c, image: img } : c;
-    }), ...customs],
+    () =>
+      [
+        ...CATALOG.filter((c) => !HIDDEN_ITEM_IDS.has(c.id)).map((c) => {
+          const img = images.get(c.id);
+          return img ? { ...c, image: img } : c;
+        }),
+        ...customs,
+      ].filter((c) => !HIDDEN_ITEM_IDS.has(c.id) && !/\b(paneer|oil)\b/i.test(c.name)),
     [customs, images],
   );
 

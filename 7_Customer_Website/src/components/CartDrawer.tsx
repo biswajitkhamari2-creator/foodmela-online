@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useShop } from '../store';
+import { getItemWeight } from '../data/catalog';
 
 // UI-only reskin. Cart math, delivery-fee rule, placeOrder payload,
 // backend endpoint + Firestore mirror (inside api.placeOrder) — untouched.
@@ -82,7 +83,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             address: orderAddr,
             items: lines.map((l) => ({
               itemId: l.item.id,
-              name: l.item.name,
+              name: `${l.item.name} (${getItemWeight(l.item)})`,
               quantity: l.qty,
               price: priceOf(l.item),
               totalPrice: priceOf(l.item) * l.qty,
@@ -154,7 +155,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
           : `${addr} [${effectiveMode}]`,
         items: lines.map((l) => ({
           itemId: l.item.id,
-          name: l.item.name,
+          name: `${l.item.name} (${getItemWeight(l.item)})`,
           quantity: l.qty,
           price: priceOf(l.item),
           totalPrice: priceOf(l.item) * l.qty,
@@ -184,19 +185,17 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         </div>
         <div className="drawer-body">
           {lines.length === 0 ? (
-            <div className="empty">
-              <div className="empty-icon">🍽️</div>
-              <h3>Cart is empty</h3>
-              <p>Add something delicious!</p>
-              <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => { onClose(); nav('/grocery'); }}>
-                Browse Grocery →
-              </button>
+            <div className="drawer-empty">
+              <span className="empty-ic" aria-hidden="true">🧺</span>
+              <h4>Your mela bag is empty</h4>
+              <p>Explore Birmaharajpur favourites and fill your thali today!</p>
+              <button className="btn-primary" onClick={onClose}>Explore Catalog</button>
             </div>
           ) : (
             <>
-              {deliveryFee > 0 ? (
+              {awayFromFree > 0 ? (
                 <div className="free-del-progress">
-                  Add <strong>₹{awayFromFree}</strong> more for FREE delivery 🛵
+                  <span>Add <strong>₹{awayFromFree}</strong> more for <strong>FREE delivery!</strong></span>
                   <div className="bar" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
                     <i style={{ width: `${progress}%` }} />
                   </div>
@@ -207,21 +206,26 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                   <div className="bar"><i style={{ width: '100%' }} /></div>
                 </div>
               )}
-              {lines.map((l) => (
-                <div key={l.item.id} className="cart-line">
-                  <img src={l.item.image} alt={l.item.name} loading="lazy" />
-                  <div className="cl-info">
-                    <strong>{l.item.name}</strong>
-                    <span className="unit">₹{priceOf(l.item)} each</span>
-                    <div className="cl-total">₹{priceOf(l.item) * l.qty}</div>
+              {lines.map((l) => {
+                const w = getItemWeight(l.item);
+                return (
+                  <div key={l.item.id} className="cart-line">
+                    <img src={l.item.image} alt={l.item.name} loading="lazy" />
+                    <div className="cl-info">
+                      <strong>{l.item.name}</strong>
+                      <span className="unit">
+                        <span className="cl-weight-badge">⚖️ {w}</span> · ₹{priceOf(l.item)}
+                      </span>
+                      <div className="cl-total">₹{priceOf(l.item) * l.qty}</div>
+                    </div>
+                    <div className="qty-ctl mini">
+                      <button onClick={() => removeFromCart(l.item.id)} aria-label={`Remove one ${l.item.name}`}>−</button>
+                      <strong aria-live="polite">{l.qty}</strong>
+                      <button onClick={() => addToCart(l.item.id)} aria-label={`Add one more ${l.item.name}`}>+</button>
+                    </div>
                   </div>
-                  <div className="qty-ctl mini">
-                    <button onClick={() => removeFromCart(l.item.id)} aria-label={`Remove one ${l.item.name}`}>−</button>
-                    <strong aria-live="polite">{l.qty}</strong>
-                    <button onClick={() => addToCart(l.item.id)} aria-label={`Add one more ${l.item.name}`}>+</button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {/* 🏷️ Discount Coupons Section (50 / 60 / 70) */}
               <div
                 style={{

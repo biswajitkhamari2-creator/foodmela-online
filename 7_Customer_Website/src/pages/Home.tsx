@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  CATEGORIES,
+  GROCERY_AISLES,
   MOODS,
   STOREFRONTS,
   PROMO_OFFERS,
@@ -12,8 +14,7 @@ import { useDeliveryLocation } from '../components/location-context';
 import FoodCard from '../components/FoodCard';
 import FestBanner from '../components/FestBanner';
 import OfferCard from '../components/OfferCard';
-
-const GROCERY_CATS = new Set(['vegetables', 'fruits', 'grocery', 'dairy', 'eggs_meat']);
+import Hero3D from '../components/Hero3D';
 
 const BENEFITS = [
   { emoji: '⚡', bg: '#FFF4D6', title: 'Fast Delivery', text: 'Hot & fresh at your door in minutes' },
@@ -24,7 +25,7 @@ const BENEFITS = [
 ];
 
 export default function Home() {
-  const { allItems, customs, priceOf, mrpOf, user, favs } = useShop();
+  const { allItems, priceOf, mrpOf, user, favs } = useShop();
   const { city } = useDeliveryLocation();
   const nav = useNavigate();
 
@@ -34,9 +35,29 @@ export default function Home() {
     () => allItems.filter((c) => !FOOD_MENU_CATS.has(c.category)),
     [allItems],
   );
-  const popular = useMemo(
-    () => [...menuItems].sort((a, b) => b.rating - a.rating).slice(0, 10),
-    [menuItems],
+
+  const categoryMap = useMemo(() => {
+    const map = new Map<string, typeof menuItems>();
+    for (const item of menuItems) {
+      const list = map.get(item.category) ?? [];
+      list.push(item);
+      map.set(item.category, list);
+    }
+    return map;
+  }, [menuItems]);
+
+  const activeCategories = useMemo(() => {
+    return CATEGORIES.filter(
+      (c) => c.key !== 'all' && (categoryMap.get(c.key)?.length ?? 0) > 0,
+    ).map((c) => ({
+      ...c,
+      items: categoryMap.get(c.key) ?? [],
+    }));
+  }, [categoryMap]);
+
+  const availableAisles = useMemo(
+    () => GROCERY_AISLES.filter((c) => (categoryMap.get(c.key)?.length ?? 0) > 0),
+    [categoryMap],
   );
   const bestValue = useMemo(
     () =>
@@ -52,22 +73,6 @@ export default function Home() {
         .slice(0, 8)
         .map((x) => x.c),
     [menuItems, priceOf, mrpOf],
-  );
-  const freshToday = useMemo(
-    () => menuItems.filter((c) => GROCERY_CATS.has(c.category)).sort((a, b) => b.rating - a.rating).slice(0, 8),
-    [menuItems],
-  );
-  const freshAdded = useMemo(
-    () => {
-      const visibleCustoms = customs.filter((c) => !FOOD_MENU_CATS.has(c.category));
-      return (visibleCustoms.length > 0 ? visibleCustoms : [...menuItems].sort((a, b) => b.rating - a.rating)).slice(0, 8);
-    },
-    [menuItems, customs],
-  );
-  // Hidden gems = rated well but not top-10 (real data, second tier).
-  const hiddenGems = useMemo(
-    () => [...menuItems].sort((a, b) => b.rating - a.rating).slice(10, 18),
-    [menuItems],
   );
   const favItems = useMemo(
     () => menuItems.filter((c) => favs.has(c.id)),
@@ -97,6 +102,42 @@ export default function Home() {
   return (
     <div className="page-enter">
       <FestBanner />
+
+      {/* ── 3D HERO SHOWCASE ── */}
+      <div className="section" style={{ paddingTop: 14, paddingBottom: 6 }}>
+        <Hero3D />
+
+        {/* ── LIVE ANIMATED RUNNING TICKER (2D) ── */}
+        <div className="live-ticker-wrap" aria-label="Live announcements">
+          <div className="live-ticker-track">
+            <div className="live-ticker-item"><span>⚡</span> 15–25 Mins Express Delivery in Birmaharajpur</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🥦</span> 100% Farm Fresh Mandi Produce Daily</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🛵</span> FREE Delivery on orders above ₹299</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🏷️</span> Use Festive Coupons for Flat 50% OFF</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>💵</span> COD (≤ ₹100) &amp; Instant UPI Accepted</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🛡️</span> Tamper-Proof Hygienic Packaging with Delivery OTP</div>
+            <div className="live-ticker-dot">•</div>
+            {/* Seamless continuous loop duplicate */}
+            <div className="live-ticker-item"><span>⚡</span> 15–25 Mins Express Delivery in Birmaharajpur</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🥦</span> 100% Farm Fresh Mandi Produce Daily</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🛵</span> FREE Delivery on orders above ₹299</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🏷️</span> Use Festive Coupons for Flat 50% OFF</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>💵</span> COD (≤ ₹100) &amp; Instant UPI Accepted</div>
+            <div className="live-ticker-dot">•</div>
+            <div className="live-ticker-item"><span>🛡️</span> Tamper-Proof Hygienic Packaging with Delivery OTP</div>
+            <div className="live-ticker-dot">•</div>
+          </div>
+        </div>
+      </div>
 
       {user ? (
         <>
@@ -177,23 +218,62 @@ export default function Home() {
           </div>
           )}
 
-          {/* ── POPULAR RIGHT NOW ── */}
-          <div className="section">
+          {/* ── SHOP BY CATEGORY ── */}
+          <div className="section" style={{ paddingBottom: 6 }}>
             <div className="section-head">
               <div>
-                <h2>Popular <span className="accent">right now</span></h2>
-                <p>Top-rated dishes people around you love</p>
+                <h2>Shop by <span className="accent">Category</span></h2>
+                <p>Explore farm-fresh produce &amp; grocery essentials</p>
               </div>
-              <span className="link-more" onClick={() => nav('/grocery')}>View all →</span>
+              <span className="link-more" onClick={() => nav('/grocery')}>
+                All Products ({menuItems.length}) →
+              </span>
             </div>
-            <div className="h-scroll">
-              {popular.map((item) => (
-                <FoodCard key={item.id} item={item} />
+            <div className="cat-circle-row" role="list">
+              {availableAisles.map((c) => (
+                <button
+                  key={c.key}
+                  role="listitem"
+                  className="cat-circle"
+                  onClick={() => nav(`/grocery?cat=${c.key}`)}
+                  aria-label={`Shop ${c.label}`}
+                  title={c.blurb}
+                >
+                  <span className="cc-img">
+                    <img src={c.image} alt={c.label} loading="lazy" />
+                  </span>
+                  <span>{c.emoji} {c.label}</span>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* ── BEST VALUE TODAY ── */}
+          {/* ── ALL ITEMS IN CATEGORIES ── */}
+          {activeCategories.map((catSec) => (
+            <div className="section" key={catSec.key} id={`cat-${catSec.key}`}>
+              <div className="section-head">
+                <div>
+                  <h2>
+                    {catSec.icon} {catSec.label}{' '}
+                    <span className="cat-badge" style={{ marginLeft: 8, verticalAlign: 'middle' }}>
+                      {catSec.items.length} items
+                    </span>
+                  </h2>
+                  <p>Fresh {catSec.label.toLowerCase()} available for delivery</p>
+                </div>
+                <span className="link-more" onClick={() => nav(`/grocery?cat=${catSec.key}`)}>
+                  View all {catSec.label} →
+                </span>
+              </div>
+              <div className="h-scroll">
+                {catSec.items.map((item) => (
+                  <FoodCard key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* ── BEST VALUE TODAY (if any) ── */}
           {bestValue.length > 0 && (
             <div className="section">
               <div className="section-head">
@@ -211,22 +291,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── FRESH FOR YOUR HOME ── */}
-          <div className="section" id="grocery">
-            <div className="section-head">
-              <div>
-                <h2>Fresh for <span className="accent">your home</span></h2>
-                <p>Vegetables, fruits, dairy &amp; staples — one mela, everything fresh</p>
-              </div>
-              <span className="link-more" onClick={() => nav('/grocery')}>Open grocery →</span>
-            </div>
-            <div className="h-scroll">
-              {freshToday.map((item) => (
-                <FoodCard key={item.id} item={item} />
-              ))}
-            </div>
-          </div>
-
           {/* ── TODAY'S MELa PICKS (offers) ── */}
           <div className="section" id="offers">
             <div className="section-head">
@@ -242,38 +306,6 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          {/* ── FRESHLY ADDED ── */}
-          <div className="section">
-            <div className="section-head">
-              <div>
-                <h2>Freshly <span className="accent">added</span></h2>
-                <p>{customs.length > 0 ? 'Just added by your local stores' : 'New to the mela this week'}</p>
-              </div>
-            </div>
-            <div className="h-scroll">
-              {freshAdded.map((item) => (
-                <FoodCard key={item.id} item={item} />
-              ))}
-            </div>
-          </div>
-
-          {/* ── HIDDEN LOCAL GEMS ── */}
-          {hiddenGems.length > 0 && (
-            <div className="section">
-              <div className="section-head">
-                <div>
-                  <h2>Hidden local <span className="accent">gems</span></h2>
-                  <p>Quiet favourites worth discovering</p>
-                </div>
-              </div>
-              <div className="h-scroll">
-                {hiddenGems.map((item) => (
-                  <FoodCard key={item.id} item={item} />
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* ── YOUR MELa FAVOURITES ── */}
           {favItems.length > 0 && (
