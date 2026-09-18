@@ -12,7 +12,6 @@ import {
 import { useShop } from '../store';
 import { useDeliveryLocation } from '../components/location-context';
 import FoodCard from '../components/FoodCard';
-import FestBanner from '../components/FestBanner';
 import OfferCard from '../components/OfferCard';
 
 const BENEFITS = [
