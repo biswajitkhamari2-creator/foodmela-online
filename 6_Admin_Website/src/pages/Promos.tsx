@@ -289,10 +289,43 @@ export default function Promos({ globalSearch }: { globalSearch?: string }) {
             </div>
             <div className="form-group"><label>Sort order (lowest shows first)</label><input type="number" value={form.sortOrder} onChange={(e) => setForm({ ...form, sortOrder: e.target.value })} /></div>
             <div className="form-group">
-              <label>Active</label>
-              <button className={`chip ${form.isActive ? 'chip-active' : ''}`} onClick={() => setForm({ ...form, isActive: !form.isActive })}>
-                {form.isActive ? 'Active ✓' : 'Disabled'}
-              </button>
+              <label>Promo Status (Live on Customer App & Website)</label>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, isActive: true })}
+                  style={{
+                    flex: 1,
+                    padding: '9px 14px',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    border: form.isActive ? '2px solid #059669' : '1px solid #D1D5DB',
+                    background: form.isActive ? '#ECFDF5' : '#F9FAFB',
+                    color: form.isActive ? '#065F46' : '#6B7280',
+                  }}
+                >
+                  ✓ Active (Live)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, isActive: false })}
+                  style={{
+                    flex: 1,
+                    padding: '9px 14px',
+                    borderRadius: 8,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    border: !form.isActive ? '2px solid #DC2626' : '1px solid #D1D5DB',
+                    background: !form.isActive ? '#FEF2F2' : '#F9FAFB',
+                    color: !form.isActive ? '#991B1B' : '#6B7280',
+                  }}
+                >
+                  ✕ Disabled (Hidden)
+                </button>
+              </div>
             </div>
             <div className="dialog-actions">
               <button className="btn btn-ghost" onClick={() => { setForm(null); setFormId(null); }}>Cancel</button>
