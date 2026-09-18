@@ -1,0 +1,386 @@
+/* ══════════════════════════════════════════════════════════════════
+   RIDER RUNNER — FoodMela delivery cyclist zooming across the screen.
+   Pure CSS figure: spinning spoked wheels, pedalling legs, leaning
+   rider, branded delivery bag on the rear rack, speed lines, dust
+   puffs, speech bubble. No image assets.
+   ══════════════════════════════════════════════════════════════════ */
+
+.rider-lane {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 150px;
+  z-index: 60; /* above content, below bottom tabs (70) + drawers */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.rider-track {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  animation: riderCross 14s linear infinite;
+  will-change: transform;
+}
+@keyframes riderCross {
+  0% { transform: translateX(-260px); }
+  8% { transform: translateX(-260px); }   /* pause off-screen */
+  88% { transform: translateX(100vw); }   /* sprint across */
+  100% { transform: translateX(100vw); }  /* pause off-screen */
+}
+
+.rider {
+  position: relative;
+  width: 210px;
+  height: 140px;
+}
+
+/* speech bubble */
+.r-bubble {
+  position: absolute;
+  top: 0;
+  left: 118px;
+  background: #fff;
+  color: #0b3d22;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1.5px solid #0e9f4e;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  animation: bubblePop 0.9s ease-in-out infinite;
+}
+@keyframes bubblePop {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -4px; }
+}
+
+/* speed lines trailing behind */
+.r-speed {
+  position: absolute;
+  left: 0;
+  top: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.r-speed i {
+  display: block;
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, rgba(14, 159, 78, 0.75));
+  animation: speedDash 0.45s linear infinite;
+}
+.r-speed i:nth-child(1) { width: 34px; }
+.r-speed i:nth-child(2) { width: 24px; animation-delay: 0.12s; }
+.r-speed i:nth-child(3) { width: 29px; animation-delay: 0.24s; }
+@keyframes speedDash {
+  0% { transform: translateX(10px); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateX(-12px); opacity: 0; }
+}
+
+/* ── bike frame ── */
+.b-frame {
+  position: absolute;
+  left: 30px;
+  bottom: 12px;
+  width: 150px;
+  height: 100px;
+  animation: bikeBob 0.5s ease-in-out infinite;
+}
+@keyframes bikeBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+.b-frame > div { position: absolute; }
+
+/* frame tubes (dark green) */
+.b-toptube {
+  left: 52px; top: 30px; width: 52px; height: 5px;
+  background: #0a6e38; border-radius: 3px;
+  transform: rotate(-4deg);
+}
+.b-downtube {
+  left: 78px; top: 32px; width: 48px; height: 5px;
+  background: #0e9f4e; border-radius: 3px;
+  transform: rotate(52deg); transform-origin: left center;
+}
+.b-seattube {
+  left: 50px; top: 28px; width: 5px; height: 34px;
+  background: #0a6e38; border-radius: 3px;
+  transform: rotate(12deg);
+}
+.b-chainstay {
+  left: 18px; top: 62px; width: 42px; height: 4px;
+  background: #0a6e38; border-radius: 2px;
+}
+.b-seatstay {
+  left: 30px; top: 34px; width: 4px; height: 32px;
+  background: #0e9f4e; border-radius: 2px;
+  transform: rotate(28deg); transform-origin: bottom center;
+}
+.b-fork {
+  left: 118px; top: 30px; width: 5px; height: 38px;
+  background: #0a6e38; border-radius: 3px;
+  transform: rotate(-14deg); transform-origin: top center;
+}
+.b-headtube {
+  left: 112px; top: 24px; width: 7px; height: 16px;
+  background: #065427; border-radius: 3px;
+  transform: rotate(-14deg);
+}
+.b-stem {
+  left: 116px; top: 18px; width: 12px; height: 5px;
+  background: #333; border-radius: 3px;
+}
+.b-handlebar {
+  left: 122px; top: 12px; width: 5px; height: 12px;
+  background: #333; border-radius: 3px;
+  transform: rotate(18deg);
+}
+.b-handlebar::after {
+  content: ''; position: absolute; top: -2px; left: -5px;
+  width: 14px; height: 5px; border-radius: 3px; background: #111;
+}
+
+/* saddle */
+.b-seatpost {
+  left: 49px; top: 20px; width: 4px; height: 12px; background: #666;
+}
+.b-saddle {
+  left: 40px; top: 15px; width: 22px; height: 7px;
+  background: #1f2937; border-radius: 5px 7px 4px 4px;
+}
+
+/* wheels */
+.b-wheel { width: 44px; height: 44px; }
+.b-wheel.rear { left: 0; top: 52px; }
+.b-wheel.front { left: 104px; top: 52px; }
+.b-tire {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle, transparent 55%, #1f2937 56%, #1f2937 72%, #111 73%);
+}
+.b-rim {
+  position: absolute; inset: 7px; border-radius: 50%;
+  border: 2px solid #9ca3af;
+}
+.b-hub {
+  position: absolute; left: 50%; top: 50%; width: 8px; height: 8px;
+  margin: -4px 0 0 -4px; border-radius: 50%; background: #0e9f4e;
+  border: 1.5px solid #fff; z-index: 2;
+}
+.b-spokes {
+  position: absolute; inset: 4px; border-radius: 50%;
+  animation: wheelSpin 0.6s linear infinite;
+}
+.b-spokes i {
+  position: absolute; left: 50%; top: 50%; width: 1.5px; height: 50%;
+  background: rgba(120, 130, 140, 0.8); transform-origin: top center;
+}
+.b-spokes i:nth-child(1) { transform: rotate(0deg); }
+.b-spokes i:nth-child(2) { transform: rotate(45deg); }
+.b-spokes i:nth-child(3) { transform: rotate(90deg); }
+.b-spokes i:nth-child(4) { transform: rotate(135deg); }
+.b-spokes i:nth-child(5) { transform: rotate(180deg); }
+.b-spokes i:nth-child(6) { transform: rotate(225deg); }
+.b-spokes i:nth-child(7) { transform: rotate(270deg); }
+.b-spokes i:nth-child(8) { transform: rotate(315deg); }
+@keyframes wheelSpin { to { transform: rotate(360deg); } }
+
+/* drivetrain */
+.b-chainring {
+  left: 52px; top: 56px; width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle, #0e9f4e 28%, transparent 29%),
+    repeating-conic-gradient(#374151 0 12deg, #4b5563 12deg 24deg);
+  border: 2px solid #1f2937;
+  animation: wheelSpin 0.6s linear infinite;
+}
+.b-crank {
+  width: 3px; height: 16px; background: #111; border-radius: 2px;
+  left: 60px; top: 62px; transform-origin: top center;
+}
+.b-crank.rear { animation: crankSpin 0.6s linear infinite; }
+.b-crank.front { animation: crankSpin 0.6s linear 0.3s infinite; }
+@keyframes crankSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.b-pedal {
+  width: 10px; height: 4px; background: #111; border-radius: 2px;
+  left: 56px;
+}
+.b-pedal.rear { top: 76px; animation: pedalOrbit 0.6s linear infinite; }
+.b-pedal.front { top: 76px; animation: pedalOrbit 0.6s linear 0.3s infinite; }
+@keyframes pedalOrbit {
+  0% { transform: translate(4px, -14px); }
+  25% { transform: translate(10px, 0); }
+  50% { transform: translate(4px, 14px); }
+  75% { transform: translate(-4px, 0); }
+  100% { transform: translate(4px, -14px); }
+}
+.b-chain {
+  height: 2.5px; background: #4b5563; border-radius: 2px;
+  left: 20px; width: 42px;
+}
+.b-chain.top { top: 58px; }
+.b-chain.bottom { top: 70px; }
+
+/* rear rack + FoodMela bag */
+.b-rack {
+  left: 2px; top: 44px; width: 40px; height: 4px;
+  background: #374151; border-radius: 2px;
+}
+.b-rack::before, .b-rack::after {
+  content: ''; position: absolute; top: 4px; width: 3px; height: 14px; background: #374151;
+}
+.b-rack::before { left: 6px; } .b-rack::after { right: 6px; }
+.b-bag {
+  position: absolute; left: 2px; bottom: 6px; width: 36px; height: 30px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #e63329 0%, #b0231b 60%, #7d1712 100%);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  animation: bagBounce 0.5s ease-in-out infinite;
+}
+.b-bag::before {
+  content: ''; position: absolute; top: -6px; left: 6px; right: 6px; height: 7px;
+  border: 2.5px solid #5c100c; border-bottom: none; border-radius: 5px 5px 0 0;
+}
+.b-badge {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #0e9f4e; color: #fff;
+  font-size: 9px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid #fff; font-style: normal;
+}
+.b-bag em {
+  font-size: 4.5px; font-style: normal; font-weight: 900;
+  letter-spacing: 0.4px; color: #ffe9a8; margin-top: 1px;
+}
+@keyframes bagBounce {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg) translateY(-1px); }
+}
+
+/* ── rider body (leaning forward, pedalling) ── */
+.r-body { position: absolute; inset: 0; }
+
+/* legs — pedalling circles */
+.r-legs > div { position: absolute; }
+.r-thigh {
+  width: 8px; height: 22px; border-radius: 5px; background: #274156;
+  left: 56px; top: 30px; transform-origin: top center;
+}
+.r-thigh.rear { animation: thighPedal 0.6s ease-in-out infinite; }
+.r-thigh.front { animation: thighPedal 0.6s ease-in-out 0.3s infinite; }
+@keyframes thighPedal {
+  0%, 100% { transform: rotate(28deg); }
+  50% { transform: rotate(-32deg); }
+}
+.r-shin {
+  width: 7px; height: 20px; border-radius: 4px; background: #f2b880;
+  left: 56px; top: 48px; transform-origin: top center;
+}
+.r-shin.rear { animation: shinPedal 0.6s ease-in-out infinite; }
+.r-shin.front { animation: shinPedal 0.6s ease-in-out 0.3s infinite; }
+@keyframes shinPedal {
+  0%, 100% { transform: rotate(-18deg) translateY(0); }
+  50% { transform: rotate(30deg) translateY(3px); }
+}
+.r-foot {
+  width: 13px; height: 6px; border-radius: 3px; background: #e63329;
+  left: 52px;
+}
+.r-foot.rear { top: 66px; animation: footPedal 0.6s ease-in-out infinite; }
+.r-foot.front { top: 66px; animation: footPedal 0.6s ease-in-out 0.3s infinite; }
+@keyframes footPedal {
+  0%, 100% { transform: translate(3px, -8px); }
+  50% { transform: translate(-3px, 8px); }
+}
+
+/* torso — leaning forward in green jersey */
+.r-torso { position: absolute; left: 0; top: 0; }
+.r-jersey {
+  position: absolute; left: 52px; top: 8px; width: 30px; height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #12b45c, #0a6e38);
+  transform: rotate(24deg);
+  box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.15);
+}
+.r-logo {
+  position: absolute; top: 5px; left: 6px; width: 13px; height: 13px;
+  border-radius: 50%; background: #fff; color: #0e9f4e;
+  font-size: 9px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; font-style: normal;
+}
+
+/* arms — reaching to handlebar */
+.r-arms > div { position: absolute; }
+.r-upper {
+  width: 7px; height: 18px; border-radius: 4px; background: #12b45c;
+  left: 74px; top: 14px; transform: rotate(-52deg); transform-origin: top center;
+}
+.r-fore {
+  width: 6px; height: 16px; border-radius: 4px; background: #f2b880;
+  left: 88px; top: 22px; transform: rotate(-72deg); transform-origin: top center;
+}
+.r-hand {
+  width: 8px; height: 8px; border-radius: 50%; background: #f2b880;
+  left: 100px; top: 26px;
+}
+.r-upper.front, .r-fore.front { opacity: 0.55; }
+.r-hand.front { opacity: 0.55; left: 97px; }
+
+/* head + helmet */
+.r-head { position: absolute; left: 66px; top: -8px; }
+.r-helmet {
+  position: absolute; left: 0; top: 0; width: 22px; height: 17px;
+  border-radius: 12px 12px 6px 6px;
+  background: linear-gradient(180deg, #ffc531, #e09b00);
+  box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.12);
+}
+.r-helmet::before {
+  content: ''; position: absolute; bottom: 2px; left: 2px;
+  width: 18px; height: 14px; border-radius: 50%; background: #f2b880;
+}
+.r-visor {
+  position: absolute; right: -7px; top: 6px; width: 10px; height: 4px;
+  border-radius: 0 4px 4px 0; background: #1f2937;
+}
+
+/* dust puffs at wheels */
+.r-dust { position: absolute; bottom: 8px; }
+.r-dust.rear { left: 26px; }
+.r-dust.front { left: 128px; }
+.r-dust i {
+  position: absolute; bottom: 0; width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(160, 140, 110, 0.55);
+  animation: dustPuff 0.7s ease-out infinite;
+}
+.r-dust i:nth-child(2) { animation-delay: 0.22s; }
+.r-dust i:nth-child(3) { animation-delay: 0.44s; }
+@keyframes dustPuff {
+  0% { transform: translate(0, 0) scale(0.5); opacity: 0.8; }
+  100% { transform: translate(-22px, -14px) scale(1.5); opacity: 0; }
+}
+
+/* ground shadow */
+.r-shadow {
+  position: absolute; bottom: 4px; left: 40px; width: 130px; height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.28), transparent 70%);
+}
+
+/* reduced motion — cyclist stays off-screen */
+@media (prefers-reduced-motion: reduce) {
+  .rider-lane { display: none; }
+}
+
+/* small screens — slimmer lane, slightly smaller cyclist */
+@media (max-width: 640px) {
+  .rider-lane { height: 130px; }
+  .rider { transform: scale(0.82); transform-origin: bottom left; }
+}

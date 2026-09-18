@@ -1,0 +1,355 @@
+/* ══════════════════════════════════════════════════════════════════
+   BEAUTY LAYER — visual polish over the Mela design language.
+   Overrides only: richer tokens, glassier chrome, glowing cards,
+   refined rails, prettier footer/drawers/modals. No markup changes.
+   Imported LAST so it wins. Backend, cart, auth — untouched.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Richer design tokens ── */
+:root {
+  --cream: #f4f8f5;
+  --line: #dcebe0;
+  --shadow: 0 6px 22px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 20px 44px rgba(15, 23, 42, 0.12);
+  --shadow-leaf: 0 10px 28px rgba(14, 159, 78, 0.28);
+  --shadow-chili: 0 10px 28px rgba(230, 51, 41, 0.28);
+  --r-lg: 22px;
+  --r-md: 16px;
+}
+
+/* ── 2. Ambient page backdrop ── */
+body {
+  background:
+    radial-gradient(900px 340px at 12% -4%, rgba(14, 159, 78, 0.07), transparent 60%),
+    radial-gradient(800px 300px at 88% 6%, rgba(255, 197, 49, 0.1), transparent 60%),
+    var(--cream);
+}
+main { position: relative; }
+
+/* ── 3. Festive top ribbon — shimmer sweep ── */
+.top-strip, .mela-ribbon {
+  background: linear-gradient(90deg, #065427, #0e9f4e 40%, #12b45c 55%, #0e9f4e 70%, #065427);
+  background-size: 220% 100%;
+  animation: ribbonFlow 9s ease infinite;
+  font-size: 12.5px;
+  padding: 9px 16px;
+  box-shadow: inset 0 -2px 6px rgba(0, 0, 0, 0.18);
+}
+@keyframes ribbonFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ── 4. Header — glassier, glowing brand ── */
+.fm-header {
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 6px 24px rgba(6, 84, 39, 0.08);
+}
+.fm-mark {
+  background: linear-gradient(135deg, #12b45c 20%, var(--leaf) 55%, var(--leaf-deep));
+  box-shadow: 0 6px 16px rgba(14, 159, 78, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.35);
+}
+.fm-brand { letter-spacing: -0.03em; }
+.fm-nav a { font-weight: 700; }
+.fm-nav a.active {
+  background: linear-gradient(135deg, var(--leaf-tint), #d9f2e2);
+  box-shadow: inset 0 0 0 1px #bfe6cc;
+}
+.fm-loc {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border-width: 1.5px;
+}
+.fm-loc:hover { box-shadow: 0 6px 16px rgba(14, 159, 78, 0.16); }
+.fm-search {
+  background: #f2f7f3;
+  border-width: 1.5px;
+}
+.fm-search:focus-within {
+  border-color: var(--leaf);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(14, 159, 78, 0.14);
+}
+.fm-cart {
+  background: linear-gradient(135deg, #1a2b20, #070d09);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.fm-login {
+  box-shadow: 0 6px 16px rgba(14, 159, 78, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* ── 5. Buttons — juicier primary ── */
+.btn-primary {
+  background: linear-gradient(135deg, #12b45c, var(--leaf-deep));
+  box-shadow: 0 10px 26px rgba(14, 159, 78, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  letter-spacing: 0.01em;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 32px rgba(14, 159, 78, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.btn-ghost {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+}
+.btn-ghost:hover {
+  box-shadow: 0 6px 16px rgba(14, 159, 78, 0.14);
+}
+
+/* ── 6. Festival banner — cinematic ── */
+.fest-banner {
+  border-radius: 30px;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.fest-overlay {
+  background: linear-gradient(90deg, rgba(10, 20, 14, 0.86) 0%, rgba(10, 20, 14, 0.45) 55%, transparent 100%);
+}
+.fest-overlay h2 { text-shadow: 0 2px 14px rgba(0, 0, 0, 0.4); }
+.fest-badge {
+  box-shadow: 0 4px 12px rgba(255, 197, 49, 0.5);
+}
+
+/* ── 7. Section rhythm — eyebrows + rules ── */
+.section { padding: 42px 20px 8px; }
+.section-head { margin-bottom: 22px; }
+.section-head h2 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.section-head p { font-size: 14px; }
+.link-more {
+  background: var(--leaf-tint);
+  padding: 7px 14px;
+  border-radius: 999px;
+  transition: background 0.15s, transform 0.15s;
+}
+.link-more:hover {
+  text-decoration: none;
+  background: #d9f2e2;
+  transform: translateX(2px);
+}
+
+/* ── 8. Food cards — glow-up ── */
+.food-card, .thali {
+  border-radius: 22px;
+  border: 1px solid #e0ede3;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+.food-card:hover, .thali:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(14, 159, 78, 0.18);
+  border-color: #a9dabb;
+}
+.fc-media, .thali-plate {
+  height: 185px;
+  background: linear-gradient(135deg, #eef6f0, #e2efe6);
+}
+.fc-media::after, .thali-plate::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 44%;
+  background: linear-gradient(180deg, transparent, rgba(6, 40, 20, 0.28));
+  pointer-events: none;
+  z-index: 1;
+}
+.fc-eta-tag {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(6px);
+}
+.fc-rating-pill {
+  background: linear-gradient(135deg, #12b45c, #0a6e38);
+  box-shadow: 0 2px 8px rgba(14, 159, 78, 0.35);
+}
+.fc-name, .thali-body h3 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.fc-current-price, .price {
+  background: linear-gradient(135deg, #111827, #065427);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.fc-add-btn, .add-btn {
+  border-radius: 12px;
+  box-shadow: 0 3px 0 #0a6e38, 0 6px 14px rgba(14, 159, 78, 0.2);
+}
+.fc-add-btn:hover, .add-btn:hover {
+  box-shadow: 0 5px 0 #0a6e38, 0 10px 20px rgba(14, 159, 78, 0.32);
+}
+.fc-add-btn:active, .add-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0a6e38;
+}
+.fc-qty-pill, .qty-ctl {
+  box-shadow: 0 3px 0 #065427, 0 8px 18px rgba(14, 159, 78, 0.3);
+}
+
+/* ── 9. Category tiles — richer ── */
+.cat-circle {
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff, #f4faf6);
+}
+.cat-circle .cc-img {
+  box-shadow: inset 0 0 0 1px rgba(14, 159, 78, 0.12), 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+.cat-circle.on {
+  border-color: var(--leaf);
+  background: linear-gradient(180deg, #f0faf3, #dcf2e3);
+  box-shadow: 0 0 0 2px rgba(14, 159, 78, 0.25), 0 8px 20px rgba(14, 159, 78, 0.18);
+}
+
+/* ── 10. Offer tickets — premium foil ── */
+.ticket {
+  border-radius: 24px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.16);
+}
+.ticket-green { background: linear-gradient(135deg, #12b45c, #065427 80%); }
+.ticket-red { background: linear-gradient(135deg, #f04438, #8f1a13 80%); }
+.ticket-dark { background: linear-gradient(135deg, #33463a, #0d1512 80%); }
+.ticket-gold { background: linear-gradient(135deg, #f0b429, #8a5c00 80%); }
+.ticket-main h3 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ── 11. Benefit cards — softer, airier ── */
+.benefit-grid { gap: 18px; }
+.benefit-card {
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff, #f6fbf7);
+  border: 1px solid #e0ede3;
+  padding: 20px 16px;
+}
+.benefit-card .b-ico {
+  width: 52px;
+  height: 52px;
+  border-radius: 17px;
+  font-size: 25px;
+}
+
+/* ── 12. Local band + mood cards — depth ── */
+.local-band {
+  border-radius: 36px;
+  box-shadow: 0 26px 56px rgba(10, 25, 16, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.local-card {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+.mood-card {
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+}
+.mood-card:hover {
+  transform: translateY(-6px) rotate(-0.5deg);
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.24);
+}
+
+/* ── 13. Footer — premium dark ── */
+.fm-footer {
+  background:
+    radial-gradient(700px 260px at 85% 0%, rgba(14, 159, 78, 0.16), transparent 60%),
+    radial-gradient(600px 240px at 10% 100%, rgba(255, 197, 49, 0.07), transparent 60%),
+    #0d130e;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.footer-cta h3 { letter-spacing: -0.02em; }
+.footer-col a {
+  transition: color 0.15s, padding-left 0.15s;
+}
+.footer-col a:hover {
+  color: var(--haldi);
+  padding-left: 4px;
+}
+.social-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.social-btn:hover {
+  background: var(--leaf);
+  border-color: var(--leaf);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(14, 159, 78, 0.4);
+}
+
+/* ── 14. Bottom tabs — floating pill (mobile) ── */
+.fm-tabs {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 -8px 30px rgba(6, 84, 39, 0.12);
+  border-top: 1px solid var(--line);
+}
+.fm-tabs a.tab.active {
+  background: var(--leaf-tint);
+  border-radius: 14px;
+}
+.tab-fab {
+  box-shadow: 0 10px 24px rgba(14, 159, 78, 0.45), 0 0 0 4px var(--cream) !important;
+}
+
+/* ── 15. Drawers + modals — softer, rounder ── */
+.fm-side-menu-drawer {
+  border-radius: 24px 0 0 24px;
+  box-shadow: -16px 0 48px rgba(0, 0, 0, 0.25);
+}
+.fm-side-menu-head {
+  background: linear-gradient(135deg, #f0faf3, #fdfbf7);
+}
+.fm-side-item {
+  border-radius: 12px;
+}
+.drawer-overlay {
+  backdrop-filter: blur(2px);
+}
+.loc-modal-card, .invoice-modal-card {
+  border-radius: 26px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
+}
+
+/* ── 16. Floating cart — glow ── */
+.fm-floating-cart {
+  box-shadow: 0 14px 34px rgba(14, 159, 78, 0.5), 0 4px 10px rgba(0, 0, 0, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+}
+
+/* ── 17. Horizontal rails — edge fade ── */
+.h-scroll, .local-scroll, .cat-circle-row {
+  mask-image: linear-gradient(90deg, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, black 96%, transparent 100%);
+}
+
+/* ── 18. Grocery page chrome ── */
+.mela-search-box {
+  border-radius: 26px;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.12);
+  border: 1px solid #e0ede3;
+}
+.mela-search-box:focus-within {
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 4px rgba(14, 159, 78, 0.12), 0 16px 38px rgba(15, 23, 42, 0.12);
+}
+.hint-pill {
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+}
+.hint-pill:hover {
+  box-shadow: 0 6px 14px rgba(14, 159, 78, 0.16);
+}
+.menu-lock-card {
+  border-radius: 28px;
+  background: linear-gradient(150deg, #ffffff, #f2faf4);
+  border: 1px solid #dcebe0;
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.1);
+}
+
+/* ── 19. Reduced motion — keep calm ── */
+@media (prefers-reduced-motion: reduce) {
+  .top-strip, .mela-ribbon { animation: none; }
+}
+
+/* ── 20. Mobile tightening ── */
+@media (max-width: 640px) {
+  .section { padding: 32px 14px 6px; }
+  .fest-banner { border-radius: 22px; }
+  .food-card, .thali { border-radius: 18px; }
+}
