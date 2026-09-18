@@ -132,13 +132,13 @@ const PAGES: Record<string, InfoPage> = {
     cta: { label: 'Contact Support: 8144503650 →', to: 'tel:8144503650' },
   },
   app: {
-    title: 'Get the FoodMela App',
+    title: 'Download Our App',
     emoji: '📱',
     body: [
-      'Your favourite food is just a tap away. The Android app brings faster ordering, live rider tracking and app-only deals.',
-      'Search “FoodMela” on Google Play, or keep ordering right here on foodmela.online — same account everywhere.',
+      'Your favourite food is just a tap away. The Android app brings faster ordering, live rider tracking, secure UPI payments and app-only deals.',
+      'Tap below to download the latest FoodMela APK (v3.0.0, free) — or keep ordering right here on foodmela.online. Same account everywhere.',
     ],
-    cta: { label: 'Order on Web →', to: '/grocery' },
+    cta: { label: '⬇ Download Our App →', to: '/apk' },
   },
 };
 

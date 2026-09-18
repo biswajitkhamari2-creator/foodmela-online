@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   CATEGORIES,
   GROCERY_AISLES,
@@ -382,29 +382,26 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── APP BAND — hidden for now (restore by removing this false) ── */}
-      {false && (
+      {/* ── DOWNLOAD OUR APP — direct APK (v3, PayU prepaid inside) ── */}
       <div className="section" id="app">
         <div className="app-band">
           <div>
-            <h2>Your favourite food is just a tap away.</h2>
-            <p>Get the FoodMela app for faster ordering, live rider tracking &amp; exclusive app-only deals.</p>
+            <h2>Download Our App</h2>
+            <p>Your favourite food is just a tap away — faster ordering, live rider tracking, secure UPI payments &amp; exclusive app-only deals.</p>
             <div className="store-row">
-              <a
+              <Link
                 className="store-btn"
-                href="https://play.google.com/store/search?q=foodmela&c=apps"
-                target="_blank"
-                rel="noreferrer"
+                to="/apk"
               >
-                <span className="s-ico" aria-hidden="true">▶️</span>
-                <span><small>GET IT ON</small><strong>Google Play</strong></span>
-              </a>
+                <span className="s-ico" aria-hidden="true">⬇️</span>
+                <span><small>DOWNLOAD OUR APP</small><strong>FoodMela APK</strong></span>
+              </Link>
               <button className="store-btn" onClick={() => nav(user ? '/grocery' : '/login')}>
                 <span className="s-ico" aria-hidden="true">🌐</span>
                 <span><small>OR CONTINUE ON</small><strong>foodmela.online</strong></span>
               </button>
             </div>
-            <div className="qr-hint">📱 Android app available — search “FoodMela” on Google Play.</div>
+            <div className="qr-hint">📱 Android · Free · No Play Store needed · v3 with online payments</div>
           </div>
           <div className="phone-mock" aria-hidden="true">
             <div className="pm-notch" />
@@ -418,7 +415,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-      )}
     </div>
   );
 }

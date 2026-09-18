@@ -4,15 +4,15 @@ import { Link } from 'react-router-dom';
 // Customer app direct download — hosted on Firebase Storage (public link).
 // Update APK_URL + APP_VERSION + APP_SIZE_MB on every new release.
 const APK_URL =
-  'https://firebasestorage.googleapis.com/v0/b/food-mela-notification.firebasestorage.app/o/apk%2Ffoodmela-customer-v2.apk?alt=media&token=a8bac5ed-2ccf-488a-a8c0-78d0bc686716';
-const APP_VERSION = 'v2.0.1';
+  'https://firebasestorage.googleapis.com/v0/b/food-mela-notification.firebasestorage.app/o/apk%2Ffoodmela-customer-v3.apk?alt=media&token=cceeb945-9480-461a-ad00-33fd50824d22';
+const APP_VERSION = 'v3.0.0';
 const APP_SIZE_MB = '69 MB';
 
 const FEATURES = [
+  { emoji: '💳', title: 'Online Payments', text: 'Pay securely with UPI / cards' },
   { emoji: '🛵', title: 'Live Tracking', text: 'Watch your rider on the map' },
   { emoji: '📞', title: 'In-App Calls', text: 'Call rider, numbers hidden' },
   { emoji: '🔑', title: 'OTP Login', text: 'No passwords to remember' },
-  { emoji: '👤', title: 'Same Account', text: 'Website + app in sync' },
 ];
 
 const STEPS = [
