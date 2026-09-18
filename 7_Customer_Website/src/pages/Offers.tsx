@@ -3,7 +3,6 @@ import { PROMO_OFFERS, FOOD_MENU_CATS } from '../data/catalog';
 import { useShop } from '../store';
 import FoodCard from '../components/FoodCard';
 import OfferCard from '../components/OfferCard';
-import FestBanner from '../components/FestBanner';
 
 export default function Offers() {
   const { allItems, priceOf, mrpOf, livePromos } = useShop();
@@ -37,8 +36,6 @@ export default function Offers() {
           <p>Local love deals + festival specials + live store discounts.</p>
         </div>
       </div>
-
-      <FestBanner />
 
       <div className="section">
         <div className="section-head">

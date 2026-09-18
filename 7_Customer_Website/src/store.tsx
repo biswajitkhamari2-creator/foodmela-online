@@ -3,20 +3,6 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { CATALOG, HIDDEN_ITEM_IDS, readFavs, writeFavs, type CatalogItem } from './data/catalog';
 
-export interface Banner {
-  id: string;
-  title?: string;
-  subtitle?: string;
-  badge?: string;
-  imageUrl?: string;
-  frames?: string[];
-  emoji?: string;
-  isActive?: boolean;
-  sortOrder?: number;
-  startAt?: { toDate?: () => Date } | null;
-  endAt?: { toDate?: () => Date } | null;
-}
-
 export interface LivePromo {
   id: string;
   code: string;
@@ -36,7 +22,6 @@ interface ShopState {
   prices: Map<string, number>;
   mrps: Map<string, number>;
   images: Map<string, string>;
-  banner: Banner | null;
   livePromos: LivePromo[];
   customs: CatalogItem[];
   allItems: CatalogItem[];
@@ -59,19 +44,10 @@ interface ShopState {
 const Ctx = createContext<ShopState>(null!);
 export const useShop = () => useContext(Ctx);
 
-function tsToDate(ts: unknown): Date | null {
-  try {
-    const t = ts as { toDate?: () => Date };
-    if (t && typeof t.toDate === 'function') return t.toDate();
-  } catch { /* ignore */ }
-  return null;
-}
-
 export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [prices, setPrices] = useState<Map<string, number>>(new Map());
   const [mrps, setMrps] = useState<Map<string, number>>(new Map());
   const [images, setImages] = useState<Map<string, string>>(new Map());
-  const [banner, setBanner] = useState<Banner | null>(null);
   const [livePromos, setLivePromos] = useState<LivePromo[]>([]);
   const [customs, setCustoms] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<Map<string, number>>(() => {
@@ -146,26 +122,6 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       });
       list.sort((a, b) => a.name.localeCompare(b.name));
       setCustoms(list);
-    });
-    return () => unsub();
-  }, []);
-
-  // Live festival banner — same collection, active + date window, lowest sortOrder
-  useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'app_banners'), (snap) => {
-      const now = new Date();
-      const list = snap.docs
-        .map((d) => ({ id: d.id, ...(d.data() as Omit<Banner, 'id'>) }))
-        .filter((b) => {
-          if (b.isActive !== true) return false;
-          const s = tsToDate(b.startAt);
-          const e = tsToDate(b.endAt);
-          if (s && now < s) return false;
-          if (e && now > e) return false;
-          return true;
-        })
-        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-      setBanner(list[0] ?? null);
     });
     return () => unsub();
   }, []);
@@ -249,7 +205,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       cartTotal += priceOf(item) * qty;
     });
     return {
-      prices, mrps, images, banner, livePromos, cart, customs, allItems, favs, toggleFav,
+      prices, mrps, images, livePromos, cart, customs, allItems, favs, toggleFav,
       isFav: (id: string) => favs.has(id),
       addToCart: (id) => setCart((c) => new Map(c).set(id, (c.get(id) ?? 0) + 1)),
       addManyToCart: (entries) => setCart((c) => {
@@ -266,7 +222,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       clearCart: () => setCart(new Map()),
       priceOf, mrpOf, cartCount, cartTotal, user, setUser,
     };
-  }, [prices, mrps, images, banner, livePromos, cart, user, customs, allItems, favs]);
+  }, [prices, mrps, images, livePromos, cart, user, customs, allItems, favs]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

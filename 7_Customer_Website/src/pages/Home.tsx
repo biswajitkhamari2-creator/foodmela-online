@@ -12,7 +12,6 @@ import {
 import { useShop } from '../store';
 import { useDeliveryLocation } from '../components/location-context';
 import FoodCard from '../components/FoodCard';
-import FestBanner from '../components/FestBanner';
 import OfferCard from '../components/OfferCard';
 import Hero3D from '../components/Hero3D';
 
@@ -110,8 +109,6 @@ export default function Home() {
 
   return (
     <div className="page-enter">
-      <FestBanner />
-
       {/* ── 3D HERO SHOWCASE ── */}
       <div className="section" style={{ paddingTop: 14, paddingBottom: 6 }}>
         <Hero3D />
@@ -407,8 +404,8 @@ export default function Home() {
             <div className="pm-notch" />
             <div className="pm-screen">
               <img
-                src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=460&h=820&fit=crop"
-                alt=""
+                src="https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=460&h=820&fit=crop"
+                alt="Fresh farm vegetables"
                 loading="lazy"
               />
             </div>
