@@ -6,7 +6,11 @@ import OfferCard from '../components/OfferCard';
 import FestBanner from '../components/FestBanner';
 
 export default function Offers() {
-  const { allItems, priceOf, mrpOf } = useShop();
+  const { allItems, priceOf, mrpOf, livePromos } = useShop();
+  const allDeals = useMemo(
+    () => [...livePromos, ...PROMO_OFFERS.filter((s) => !livePromos.some((l) => l.code === s.code))],
+    [livePromos],
+  );
 
   // Live discounted items from REAL backend prices (not hard-coded deals).
   const deals = useMemo(
@@ -43,7 +47,7 @@ export default function Offers() {
           </div>
         </div>
         <div className="ticket-grid">
-          {PROMO_OFFERS.map((o) => (
+          {allDeals.map((o) => (
             <OfferCard key={o.code} offer={o} />
           ))}
         </div>

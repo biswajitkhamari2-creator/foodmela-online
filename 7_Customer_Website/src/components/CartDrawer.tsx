@@ -12,15 +12,15 @@ const DELIVERY_FEE = 39;
 // shown as its own bill row and included in the placed totalAmount.
 const PLATFORM_FEE = 7;
 
-// Special discount coupons (₹50, ₹60, ₹70)
-const COUPONS = [
+// Static fallback coupons — live admin promos (from Firestore) take priority
+const STATIC_COUPONS = [
   { code: 'MEGA70', discount: 70, minOrder: 220, label: 'Mega Feast ₹70 OFF' },
   { code: 'FEAST60', discount: 60, minOrder: 160, label: 'Special Treat ₹60 OFF' },
   { code: 'MELA50', discount: 50, minOrder: 100, label: 'Mela Welcome ₹50 OFF' },
 ] as const;
 
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { cart, addToCart, removeFromCart, clearCart, priceOf, mrpOf, cartTotal, cartCount, user, allItems } = useShop();
+  const { cart, addToCart, removeFromCart, clearCart, priceOf, mrpOf, cartTotal, cartCount, user, allItems, livePromos } = useShop();
   const nav = useNavigate();
   const [address, setAddress] = useState('');
   const [paymentMode, setPaymentMode] = useState<'cod' | 'prepaid'>('prepaid');
@@ -41,6 +41,19 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const savings = Math.max(0, mrpTotal - cartTotal);
   const deliveryFee = cartTotal >= FREE_DELIVERY_OVER || cartTotal === 0 ? 0 : DELIVERY_FEE;
   const platformFee = cartTotal === 0 ? 0 : PLATFORM_FEE;
+
+  // Live admin promos → discount computed from type/value; static fallback below
+  const liveCoupons = livePromos.map((p) => {
+    const raw = p.discountType === 'percent'
+      ? Math.floor((cartTotal * p.discountValue) / 100)
+      : p.discountValue;
+    const discount = p.maxDiscount > 0 ? Math.min(raw, p.maxDiscount) : raw;
+    return { code: p.code, discount, minOrder: p.minOrder, label: `${p.title} — ${p.code}` };
+  });
+  const COUPONS = [
+    ...liveCoupons,
+    ...STATIC_COUPONS.filter((s) => !liveCoupons.some((l) => l.code === s.code)),
+  ];
 
   // Best eligible coupon based on cartTotal
   const bestEligibleCoupon = COUPONS.find((c) => cartTotal >= c.minOrder) || null;

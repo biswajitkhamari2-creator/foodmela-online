@@ -17,11 +17,27 @@ export interface Banner {
   endAt?: { toDate?: () => Date } | null;
 }
 
+export interface LivePromo {
+  id: string;
+  code: string;
+  title: string;
+  text: string;
+  emoji: string;
+  theme: 'offer-green' | 'offer-red' | 'offer-dark' | 'offer-gold';
+  discountType: 'flat' | 'percent';
+  discountValue: number;
+  maxDiscount: number;
+  minOrder: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
 interface ShopState {
   prices: Map<string, number>;
   mrps: Map<string, number>;
   images: Map<string, string>;
   banner: Banner | null;
+  livePromos: LivePromo[];
   customs: CatalogItem[];
   allItems: CatalogItem[];
   cart: Map<string, number>;
@@ -56,6 +72,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   const [mrps, setMrps] = useState<Map<string, number>>(new Map());
   const [images, setImages] = useState<Map<string, string>>(new Map());
   const [banner, setBanner] = useState<Banner | null>(null);
+  const [livePromos, setLivePromos] = useState<LivePromo[]>([]);
   const [customs, setCustoms] = useState<CatalogItem[]>([]);
   const [cart, setCart] = useState<Map<string, number>>(() => {
     try {
@@ -153,6 +170,18 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     return () => unsub();
   }, []);
 
+  // Live promo codes — admin writes app_promos, site reflects instantly
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'app_promos'), (snap) => {
+      const list = snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as Omit<LivePromo, 'id'>) }))
+        .filter((p) => p.isActive === true && p.code && (p.discountValue ?? 0) > 0)
+        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      setLivePromos(list);
+    }, () => setLivePromos([]));
+    return () => unsub();
+  }, []);
+
   useEffect(() => {
     try { localStorage.setItem('fm_cart', JSON.stringify(Object.fromEntries(cart))); } catch { /* ignore */ }
   }, [cart]);
@@ -220,7 +249,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       cartTotal += priceOf(item) * qty;
     });
     return {
-      prices, mrps, images, banner, cart, customs, allItems, favs, toggleFav,
+      prices, mrps, images, banner, livePromos, cart, customs, allItems, favs, toggleFav,
       isFav: (id: string) => favs.has(id),
       addToCart: (id) => setCart((c) => new Map(c).set(id, (c.get(id) ?? 0) + 1)),
       addManyToCart: (entries) => setCart((c) => {
@@ -237,7 +266,7 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
       clearCart: () => setCart(new Map()),
       priceOf, mrpOf, cartCount, cartTotal, user, setUser,
     };
-  }, [prices, mrps, images, banner, cart, user, customs, allItems, favs]);
+  }, [prices, mrps, images, banner, livePromos, cart, user, customs, allItems, favs]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

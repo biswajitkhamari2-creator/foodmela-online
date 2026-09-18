@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PromoOffer } from '../data/catalog';
+import type { LivePromo } from '../store';
 import { useTilt } from '../hooks/useTilt';
 
 const THEME: Record<PromoOffer['theme'], string> = {
@@ -9,8 +10,11 @@ const THEME: Record<PromoOffer['theme'], string> = {
   'offer-gold': 'ticket-gold',
 };
 
-/** Mela ticket — perforated-stub offer card with tap-to-copy */
-export default function OfferCard({ offer }: { offer: PromoOffer }) {
+export type OfferInput = PromoOffer | LivePromo;
+
+/** Mela ticket — perforated-stub offer card with tap-to-copy.
+ * Accepts static catalog promos AND live admin promos (same card). */
+export default function OfferCard({ offer }: { offer: OfferInput }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {

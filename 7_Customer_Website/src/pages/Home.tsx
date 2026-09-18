@@ -25,7 +25,16 @@ const BENEFITS = [
 ];
 
 export default function Home() {
-  const { allItems, priceOf, mrpOf, user, favs } = useShop();
+  const { allItems, priceOf, mrpOf, user, favs, livePromos } = useShop();
+  // Live admin promos first, then static fallback cards
+  const hotDeals = useMemo(
+    () => [...livePromos.slice(0, 3), ...PROMO_OFFERS].slice(0, 3),
+    [livePromos],
+  );
+  const allDeals = useMemo(
+    () => [...livePromos, ...PROMO_OFFERS.filter((s) => !livePromos.some((l) => l.code === s.code))],
+    [livePromos],
+  );
   const { city } = useDeliveryLocation();
   const nav = useNavigate();
 
@@ -151,7 +160,7 @@ export default function Home() {
               <span className="link-more" onClick={() => nav('/offers')}>All Offers (50% OFF) →</span>
             </div>
             <div className="ticket-grid" role="list">
-              {PROMO_OFFERS.slice(0, 3).map((o) => (
+              {hotDeals.map((o) => (
                 <OfferCard key={o.code} offer={o} />
               ))}
             </div>
@@ -301,7 +310,7 @@ export default function Home() {
               <span className="link-more" onClick={() => nav('/offers')}>All offers →</span>
             </div>
             <div className="ticket-grid">
-              {PROMO_OFFERS.map((o) => (
+              {allDeals.map((o) => (
                 <OfferCard key={o.code} offer={o} />
               ))}
             </div>

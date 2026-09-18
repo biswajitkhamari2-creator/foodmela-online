@@ -11,6 +11,7 @@ import OrderDetail from './pages/OrderDetail';
 import Invoices from './pages/Invoices';
 import Products from './pages/Products';
 import Banners from './pages/Banners';
+import Promos from './pages/Promos';
 import Customers from './pages/Customers';
 import Partners from './pages/Partners';
 import Approvals from './pages/Approvals';
@@ -70,6 +71,7 @@ function AdminLayout() {
     '/invoices': { title: 'Invoices', subtitle: 'Billing tracking — collected, pending, COD vs prepaid' },
     '/products': { title: 'Product Prices', subtitle: 'Dynamic pricing — updates the customer app on refresh' },
     '/banners': { title: 'Festival Banners', subtitle: 'Home-screen campaigns — no app update needed' },
+    '/promos': { title: 'Promo Codes', subtitle: 'Discount coupons — live on customer site instantly' },
     '/customers': { title: 'Customers', subtitle: 'Customer management' },
     '/partners': { title: 'Delivery Partners', subtitle: 'Partner management' },
     '/approvals': { title: 'Pending Approvals', subtitle: 'New delivery partners awaiting review' },
@@ -127,6 +129,7 @@ function AdminLayout() {
             <Route path="/invoices" element={<Invoices globalSearch={globalSearch} />} />
             <Route path="/products" element={<Products globalSearch={globalSearch} />} />
             <Route path="/banners" element={<Banners globalSearch={globalSearch} />} />
+            <Route path="/promos" element={<Promos globalSearch={globalSearch} />} />
             <Route path="/customers" element={<Customers globalSearch={globalSearch} />} />
             <Route path="/partners" element={<Partners globalSearch={globalSearch} />} />
             <Route path="/approvals" element={<Approvals />} />
