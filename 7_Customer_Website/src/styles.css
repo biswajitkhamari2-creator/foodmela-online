@@ -46,7 +46,6 @@ body {
   overflow-x: hidden;
   max-width: 100%;
   width: 100%;
-  position: relative;
 }
 #root { overflow-x: hidden; max-width: 100%; width: 100%; }
 h1, h2, h3, h4 { font-family: var(--font-display); }
@@ -72,6 +71,9 @@ img { display: block; max-width: 100%; }
 
 /* ── Buttons ───────────────────────────────────── */
 .btn-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   background: linear-gradient(135deg, var(--leaf), var(--leaf-deep));
   color: #fff; border: none; padding: 15px 30px; border-radius: 999px;
   font-weight: 700; font-size: 15px; cursor: pointer;
@@ -82,8 +84,17 @@ img { display: block; max-width: 100%; }
 .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.05); }
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.6; cursor: wait; transform: none; }
-.btn-chili { background: linear-gradient(135deg, var(--chili), var(--chili-deep)); box-shadow: var(--shadow-chili); }
+.btn-chili {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(135deg, var(--chili), var(--chili-deep));
+  box-shadow: var(--shadow-chili);
+}
 .btn-ghost {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   background: var(--paper); color: var(--ink); border: 1.5px solid var(--line);
   padding: 15px 30px; border-radius: 999px; font-weight: 700; font-size: 15px; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;

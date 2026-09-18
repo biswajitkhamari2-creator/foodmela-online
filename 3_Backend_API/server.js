@@ -778,13 +778,21 @@ const placeOrderHandler = async (req, res) => {
 app.post('/api/orders/place', placeOrderHandler);
 app.post('/api/orders/create', placeOrderHandler);
 
-// ─── PAYTM PAYMENT GATEWAY INTEGRATION ────────────────────────────────────────
-const PaytmChecksum = require('paytmchecksum');
-const PAYTM_MID = process.env.PAYTM_MID || 'mpqYbj50421905800434';
-const PAYTM_MERCHANT_KEY = process.env.PAYTM_MERCHANT_KEY || '%#ZWYa2coc4seWvK';
-const PAYTM_ENV = process.env.PAYTM_ENV || 'staging'; // 'staging' or 'production'
-const PAYTM_HOST = PAYTM_ENV === 'production' ? 'securegw.paytm.in' : 'securegw-stage.paytm.in';
-const PAYTM_WEBSITE = process.env.PAYTM_WEBSITE || (PAYTM_ENV === 'production' ? 'DEFAULT' : 'WEBSTAGING');
+// ─── PAYU PAYMENT GATEWAY INTEGRATION (LIVE) ──────────────────────────────────
+// Secrets ONLY from env (Vercel → Settings → Environment Variables):
+//   PAYU_KEY  = merchant key (e.g. gtKFFx style value from PayU dashboard)
+//   PAYU_SALT = merchant salt (NEVER commit — env only)
+//   PAYU_ENV  = 'production' (live) or 'test'
+const crypto = require('crypto');
+const PAYU_KEY = process.env.PAYU_KEY || '';
+const PAYU_SALT = process.env.PAYU_SALT || '';
+const PAYU_ENV = process.env.PAYU_ENV || 'production';
+const PAYU_BASE = PAYU_ENV === 'production' ? 'https://secure.payu.in' : 'https://test.payu.in';
+const PAYU_PAYMENT_URL = `${PAYU_BASE}/_payment`;
+const PAYU_VERIFY_URL = PAYU_ENV === 'production'
+  ? 'https://info.payu.in/merchant/postservice?form=2'
+  : 'https://test.payu.in/merchant/postservice?form=2';
+if (!PAYU_KEY || !PAYU_SALT) console.warn('⚠️ PAYU_KEY/PAYU_SALT missing — set them in .env / Vercel env');
 
 async function saveDraftOrder(orderId, draftData) {
   try {
@@ -806,22 +814,28 @@ async function getDraftOrder(orderId) {
   return null;
 }
 
-// 1. INITIATE TRANSACTION – Generates Paytm txnToken
-app.post('/api/paytm/initiate', async (req, res) => {
+// 1. INITIATE PAYMENT – Builds PayU hash + form fields for frontend auto-submit
+app.post('/api/payu/initiate', async (req, res) => {
   try {
-    const { customerName, phone, address, items, totalAmount } = req.body || {};
+    if (!PAYU_KEY || !PAYU_SALT) {
+      return res.status(500).json({ success: false, error: 'PayU not configured — contact support' });
+    }
+    const { customerName, phone, email, address, items, totalAmount } = req.body || {};
     const amountNum = Number(totalAmount || 0);
     if (!amountNum || amountNum <= 0) {
       return res.status(400).json({ success: false, error: 'Valid totalAmount required' });
     }
 
-    const orderId = req.body.orderId || `FM-${Date.now().toString().slice(-6)}`;
+    const txnid = req.body.orderId || `FM${Date.now().toString().slice(-8)}`;
     const amtStr = amountNum.toFixed(2);
+    const firstname = (customerName || 'Customer').slice(0, 60);
+    const cleanPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+    const productinfo = 'FoodMela Order';
 
     // Save draft order to Redis for automated reconstruction on callback
     const draftData = {
-      orderId,
-      customerName: customerName || 'Customer',
+      orderId: txnid,
+      customerName: firstname,
       phone: phone || 'unknown',
       address: address || 'Birmaharajpur',
       items: items || 'Food items',
@@ -829,129 +843,83 @@ app.post('/api/paytm/initiate', async (req, res) => {
       total: `₹${Math.floor(amountNum)}`,
       createdAt: new Date().toISOString(),
     };
-    await saveDraftOrder(orderId, draftData);
+    await saveDraftOrder(txnid, draftData);
 
-    const callbackUrl = process.env.PAYTM_CALLBACK_URL || 'https://foodmela.online/api/paytm/callback';
+    const surl = process.env.PAYU_SURL || 'https://foodmela.online/api/payu/callback';
+    const furl = process.env.PAYU_FURL || 'https://foodmela.online/api/payu/callback';
 
-    const paytmParams = {
-      body: {
-        requestType: 'Payment',
-        mid: PAYTM_MID,
-        websiteName: PAYTM_WEBSITE,
-        orderId: orderId,
-        callbackUrl: callbackUrl,
-        txnAmount: {
-          value: amtStr,
-          currency: 'INR',
-        },
-        userInfo: {
-          custId: phone ? `CUST_${String(phone).replace(/[^0-9]/g, '')}` : 'CUST_FOODMELA',
-        },
-      }
-    };
+    // PayU hash sequence: key|txnid|amount|productinfo|firstname|email|udf1..udf10|SALT
+    const udfs = ['', '', '', '', '', '', '', '', '', ''];
+    const hashSeq = [PAYU_KEY, txnid, amtStr, productinfo, firstname, email || '', ...udfs, PAYU_SALT].join('|');
+    const hash = crypto.createHash('sha512').update(hashSeq).digest('hex');
 
-    const checksum = await PaytmChecksum.generateSignature(JSON.stringify(paytmParams.body), PAYTM_MERCHANT_KEY);
-    paytmParams.head = { signature: checksum };
-
-    const postData = JSON.stringify(paytmParams);
-
-    const paytmReq = https.request({
-      hostname: PAYTM_HOST,
-      port: 443,
-      path: `/theia/api/v1/initiateTransaction?mid=${PAYTM_MID}&orderId=${orderId}`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    }, (paytmRes) => {
-      let data = '';
-      paytmRes.on('data', chunk => data += chunk);
-      paytmRes.on('end', () => {
-        try {
-          const resp = JSON.parse(data);
-          const txnToken = resp.body?.txnToken;
-          if (txnToken) {
-            return res.json({
-              success: true,
-              orderId,
-              txnToken,
-              amount: amtStr,
-              mid: PAYTM_MID,
-              host: PAYTM_HOST,
-              env: PAYTM_ENV,
-            });
-          } else {
-            console.warn('Paytm initiate response:', resp.body?.resultInfo);
-            return res.json({
-              success: false,
-              orderId,
-              mid: PAYTM_MID,
-              amount: amtStr,
-              error: resp.body?.resultInfo?.resultMsg || 'Paytm gateway pending activation',
-              code: resp.body?.resultInfo?.resultCode,
-            });
-          }
-        } catch (err) {
-          return res.status(500).json({ success: false, error: 'Invalid response from Paytm gateway' });
-        }
-      });
+    return res.json({
+      success: true,
+      payuUrl: PAYU_PAYMENT_URL,
+      fields: {
+        key: PAYU_KEY,
+        txnid,
+        amount: amtStr,
+        productinfo,
+        firstname,
+        email: email || '',
+        phone: cleanPhone,
+        surl,
+        furl,
+        hash,
+        udf1: '', udf2: '', udf3: '', udf4: '', udf5: '',
+        udf6: '', udf7: '', udf8: '', udf9: '', udf10: '',
+      },
     });
-
-    paytmReq.on('error', (e) => {
-      console.error('Paytm request error:', e);
-      res.status(500).json({ success: false, error: e.message });
-    });
-
-    paytmReq.write(postData);
-    paytmReq.end();
   } catch (err) {
-    console.error('Paytm initiate exception:', err);
+    console.error('PayU initiate exception:', err);
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 2. S2S CALLBACK – Automated Payment Verification & Order Placement
-app.post('/api/paytm/callback', async (req, res) => {
+// 2. SURL/FURL CALLBACK – Verify PayU hash & place order on success
+app.post('/api/payu/callback', async (req, res) => {
   try {
-    const callbackData = req.body || {};
-    const orderId = callbackData.ORDERID;
-    const status = callbackData.STATUS;
-    const txnId = callbackData.TXNID || '';
-    const checksum = callbackData.CHECKSUMHASH || '';
+    const d = req.body || {};
+    const txnid = d.txnid || '';
+    const status = (d.status || '').toLowerCase();
+    const payuMoneyId = d.payuMoneyId || d.mihpayid || '';
 
-    console.log(`🔔 Paytm Callback Received: ${orderId} -> STATUS: ${status}, RESPMSG: ${callbackData.RESPMSG}`);
+    console.log(`🔔 PayU Callback: ${txnid} -> status: ${d.status}, mode: ${d.mode}`);
 
-    if (!orderId) {
+    if (!txnid) {
       return res.redirect(303, 'https://foodmela.online/?payment_error=Missing%20Order%20ID');
     }
 
-    let isSignatureValid = false;
+    // Verify reverse hash: SALT|status|udf10..udf1|email|firstname|productinfo|amount|txnid|key
+    let hashOk = false;
     try {
-      const paramsToVerify = { ...callbackData };
-      delete paramsToVerify.CHECKSUMHASH;
-      isSignatureValid = PaytmChecksum.verifySignature(paramsToVerify, PAYTM_MERCHANT_KEY, checksum);
-    } catch (_) {
-      isSignatureValid = false;
-    }
+      const udfs = [d.udf10 || '', d.udf9 || '', d.udf8 || '', d.udf7 || '', d.udf6 || '',
+                     d.udf5 || '', d.udf4 || '', d.udf3 || '', d.udf2 || '', d.udf1 || ''];
+      const revSeq = [PAYU_SALT, status, ...udfs, d.email || '', d.firstname || '',
+                      d.productinfo || '', d.amount || '', txnid, PAYU_KEY].join('|');
+      const expected = crypto.createHash('sha512').update(revSeq).digest('hex');
+      hashOk = expected === (d.hash || '');
+    } catch (_) { hashOk = false; }
+    if (!hashOk) console.warn(`⚠️ PayU hash mismatch for ${txnid} — still checking status`);
 
-    if (status === 'TXN_SUCCESS') {
-      const draft = await getDraftOrder(orderId);
+    if (status === 'success' && hashOk) {
+      const draft = await getDraftOrder(txnid);
       const orders = await readOrders();
-      let existing = orders.find(o => o.id === orderId);
+      let existing = orders.find(o => o.id === txnid);
 
       if (!existing) {
-        const customerName = draft?.customerName || callbackData.MERC_UNQ_REF || 'Customer';
-        const phone = draft?.phone || 'unknown';
+        const customerName = draft?.customerName || d.firstname || 'Customer';
+        const phone = draft?.phone || d.phone || 'unknown';
         const address = draft?.address || 'Birmaharajpur';
         const items = draft?.items || 'Food items';
-        const totalAmount = draft?.totalAmount || Number(callbackData.TXNAMOUNT || 0);
+        const totalAmount = draft?.totalAmount || Number(d.amount || 0);
 
         const newOrder = {
-          id: orderId,
+          id: txnid,
           customerName,
           phone,
-          address: `${address} [PREPAID - PAID ONLINE (Paytm Txn: ${txnId})]`,
+          address: `${address} [PREPAID - PAID ONLINE (PayU: ${payuMoneyId})]`,
           items,
           total: `₹${Math.floor(totalAmount)}`,
           amountValue: totalAmount,
@@ -959,7 +927,7 @@ app.post('/api/paytm/callback', async (req, res) => {
           status: 'Order Placed & Waiting for Delivery Boy 📝🍳',
           paymentMode: 'PREPAID',
           paymentStatus: 'PAID',
-          paytmTxnId: txnId,
+          payuTxnId: payuMoneyId,
           acceptedBy: null,
           acceptedByName: null,
           deliveryOtp: String(1000 + Math.floor(Math.random() * 9000)),
@@ -979,58 +947,44 @@ app.post('/api/paytm/callback', async (req, res) => {
           await writeUser(phone, user);
         }
 
-        console.log(`✅ AUTOMATIC PAID ORDER CREATED: ${orderId} by ${customerName} (₹${totalAmount}) via Txn: ${txnId}`);
+        console.log(`✅ AUTOMATIC PAID ORDER CREATED: ${txnid} by ${customerName} (₹${totalAmount}) via PayU: ${payuMoneyId}`);
         pushNewOrderToRiders(newOrder);
       }
 
-      return res.redirect(303, `https://foodmela.online/track/${encodeURIComponent(orderId)}?paid=1`);
+      return res.redirect(303, `https://foodmela.online/track/${encodeURIComponent(txnid)}?paid=1`);
     } else {
-      console.warn(`❌ Paytm Payment Not Successful: ${orderId} (${callbackData.RESPMSG})`);
-      return res.redirect(303, `https://foodmela.online/?payment_error=${encodeURIComponent(callbackData.RESPMSG || 'Payment Failed')}&orderId=${encodeURIComponent(orderId)}`);
+      console.warn(`❌ PayU Payment Not Successful: ${txnid} (${d.error_Message || d.error || 'failed'})`);
+      return res.redirect(303, `https://foodmela.online/?payment_error=${encodeURIComponent(d.error_Message || 'Payment Failed')}&orderId=${encodeURIComponent(txnid)}`);
     }
   } catch (err) {
-    console.error('Paytm callback exception:', err);
+    console.error('PayU callback exception:', err);
     return res.redirect(303, 'https://foodmela.online/?payment_error=Callback%20processing%20error');
   }
 });
 
-// 3. TRANSACTION STATUS CHECK
-app.get('/api/paytm/status/:orderId', async (req, res) => {
+// 3. TRANSACTION STATUS CHECK via PayU verify API
+app.get('/api/payu/status/:txnid', async (req, res) => {
   try {
-    const { orderId } = req.params;
-    const paytmParams = {
-      body: {
-        mid: PAYTM_MID,
-        orderId: orderId,
-      }
-    };
-    const checksum = await PaytmChecksum.generateSignature(JSON.stringify(paytmParams.body), PAYTM_MERCHANT_KEY);
-    paytmParams.head = { signature: checksum };
-
-    const postData = JSON.stringify(paytmParams);
-    const paytmReq = https.request({
-      hostname: PAYTM_HOST,
-      port: 443,
-      path: '/v3/order/status',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    }, (paytmRes) => {
+    if (!PAYU_KEY || !PAYU_SALT) return res.status(500).json({ success: false, error: 'PayU not configured' });
+    const { txnid } = req.params;
+    const hashSeq = [PAYU_KEY, 'verify_payment', txnid, PAYU_SALT].join('|');
+    const hash = crypto.createHash('sha512').update(hashSeq).digest('hex');
+    const body = new URLSearchParams({ key: PAYU_KEY, hash, var1: txnid, command: 'verify_payment' }).toString();
+    const u = new URL(PAYU_VERIFY_URL);
+    const verifyReq = https.request({
+      hostname: u.hostname, port: 443, path: u.pathname + u.search, method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) },
+    }, (verifyRes) => {
       let data = '';
-      paytmRes.on('data', chunk => data += chunk);
-      paytmRes.on('end', () => {
-        try {
-          res.json(JSON.parse(data));
-        } catch (_) {
-          res.status(500).json({ success: false, error: 'Failed parsing status' });
-        }
+      verifyRes.on('data', (c) => (data += c));
+      verifyRes.on('end', () => {
+        try { res.json(JSON.parse(data)); }
+        catch (_) { res.status(500).json({ success: false, error: 'Failed parsing status' }); }
       });
     });
-    paytmReq.on('error', e => res.status(500).json({ success: false, error: e.message }));
-    paytmReq.write(postData);
-    paytmReq.end();
+    verifyReq.on('error', (e) => res.status(500).json({ success: false, error: e.message }));
+    verifyReq.write(body);
+    verifyReq.end();
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }

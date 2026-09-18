@@ -79,6 +79,9 @@ main { position: relative; }
 
 /* ── 5. Buttons — juicier primary ── */
 .btn-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   background: linear-gradient(135deg, #12b45c, var(--leaf-deep));
   box-shadow: 0 10px 26px rgba(14, 159, 78, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   letter-spacing: 0.01em;
@@ -411,6 +414,14 @@ main { position: relative; }
   .footer-col h4 { font-size: 10.5px; margin-bottom: 6px; letter-spacing: 0.8px; }
   .footer-col a { font-size: 11.5px; padding: 3px 0; }
   .footer-bottom { margin-top: 14px; padding: 12px; font-size: 11px; }
+  /* HARD FIX: bottom legal text wraps to 3 lines (151px) on phones.
+     Shrink + hide the merchant-partners line on small screens. */
+  .footer-bottom .tagline { font-size: 12px; }
+  .footer-bottom div:nth-child(2) { font-size: 10.5px; line-height: 1.5; }
+  .footer-bottom div:nth-child(3) { display: none; }
+  /* HARD FIX: footer CTA stacks tall — side-by-side compact */
+  .footer-cta { flex-wrap: nowrap; gap: 12px; }
+  .footer-cta h3 { font-size: 16px; flex: 1; }
 
   /* FIX: page scrolls sideways infinitely — lock it */
   html, body, #root { overflow-x: clip; max-width: 100vw; }
@@ -430,6 +441,7 @@ main { position: relative; }
   .m-stat-pill strong, .m-stat-pill small { white-space: nowrap; }
 
   /* safety: any stray wide element stays inside */
-  .modern-hero-card, .section, .fest-wrap { max-width: 100vw; overflow-x: clip; }
+  .modern-hero-card { overflow: hidden; max-width: 100vw; }
+  .section, .fest-wrap { max-width: 100vw; overflow-x: clip; }
   img { max-width: 100%; }
 }

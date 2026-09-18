@@ -67,19 +67,20 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     setPlacing(true);
     setErr('');
 
-    // If PREPAID, initiate automated Paytm Payment Gateway
+    // If PREPAID, redirect to PayU payment page via auto-submit form
     if (effectiveMode === 'PREPAID') {
       try {
         const orderAddr = effectiveCoupon
           ? `${addr} [PREPAID] [Coupon: ${effectiveCoupon.code} (-₹${discountAmount})]`
           : `${addr} [PREPAID]`;
 
-        const initResp = await fetch('/api/paytm/initiate', {
+        const initResp = await fetch('/api/payu/initiate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             customerName: user.name,
             phone: user.phone,
+            email: `${String(user.phone).replace(/[^0-9]/g, '')}@foodmela.online`,
             address: orderAddr,
             items: lines.map((l) => ({
               itemId: l.item.id,
@@ -94,55 +95,29 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
 
         const initData = await initResp.json();
 
-        if (initData.success && initData.txnToken) {
-          const scriptId = 'paytm-checkoutjs';
-          const host = initData.host || 'securegw-stage.paytm.in';
-          if (!document.getElementById(scriptId)) {
-            const script = document.createElement('script');
-            script.id = scriptId;
-            script.type = 'application/javascript';
-            script.crossOrigin = 'anonymous';
-            script.src = `https://${host}/merchantpgpui/checkoutjs/merchants/${initData.mid}.js`;
-            document.head.appendChild(script);
-            await new Promise((resolve) => {
-              script.onload = resolve;
-              script.onerror = resolve;
-            });
+        if (initData.success && initData.payuUrl && initData.fields) {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = initData.payuUrl;
+          for (const [k, v] of Object.entries(initData.fields as Record<string, string>)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = k;
+            input.value = v ?? '';
+            form.appendChild(input);
           }
-
-          // @ts-expect-error Paytm CheckoutJS dynamically injected
-          if (window.Paytm && window.Paytm.CheckoutJS) {
-            const config = {
-              root: '',
-              flow: 'DEFAULT',
-              data: {
-                orderId: initData.orderId,
-                token: initData.txnToken,
-                tokenType: 'TXN_TOKEN',
-                amount: String(initData.amount),
-              },
-              handler: {
-                notifyMerchant: function (eventName: string, d: unknown) {
-                  console.log('Paytm notifyMerchant:', eventName, d);
-                },
-                transactionStatus: function (status: unknown) {
-                  console.log('Paytm transactionStatus:', status);
-                },
-              },
-            };
-            // @ts-expect-error Paytm CheckoutJS dynamically injected
-            window.Paytm.CheckoutJS.init(config).then(() => {
-              // @ts-expect-error Paytm CheckoutJS dynamically injected
-              window.Paytm.CheckoutJS.invoke();
-              setPlacing(false);
-            }).catch(() => {
-              setPlacing(false);
-            });
-            return;
-          }
+          document.body.appendChild(form);
+          form.submit();
+          return;
         }
+        setErr(initData.error || 'Payment gateway unavailable — try COD (≤ ₹100)');
+        setPlacing(false);
+        return;
       } catch (e) {
-        console.warn('Paytm initiate error, continuing to place order:', e);
+        console.warn('PayU initiate error:', e);
+        setErr('Payment gateway unreachable — try again or use COD (≤ ₹100)');
+        setPlacing(false);
+        return;
       }
     }
 
