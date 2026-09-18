@@ -347,9 +347,30 @@ main { position: relative; }
   .top-strip, .mela-ribbon { animation: none; }
 }
 
-/* ── 20. Mobile tightening ── */
+/* ── 20. Mobile tightening + horizontal-overflow kill ── */
 @media (max-width: 640px) {
   .section { padding: 32px 14px 6px; }
   .fest-banner { border-radius: 22px; }
   .food-card, .thali { border-radius: 18px; }
+
+  /* FIX: page scrolls sideways infinitely — lock it */
+  html, body, #root { overflow-x: clip; max-width: 100vw; }
+  main { overflow-x: clip; }
+
+  /* FIX 1: header right cluster overflowed +13px — compact it */
+  .fm-header-inner { gap: 6px; padding: 8px 10px; }
+  .fm-loc-text { max-width: 70px; }
+  .fm-login { padding: 8px 10px; font-size: 12px; }
+  .fm-cart { padding: 8px 10px; font-size: 12px; }
+  .fm-menu-btn { padding: 8px 9px; }
+
+  /* FIX 2: hero stat pills stretched +155px past viewport —
+     pills already scroll-x, but flex children refused to shrink */
+  .m-hero-highlights { max-width: 100%; overflow-x: auto; }
+  .m-stat-pill { flex: 0 0 auto; min-width: 150px; }
+  .m-stat-pill strong, .m-stat-pill small { white-space: nowrap; }
+
+  /* safety: any stray wide element stays inside */
+  .modern-hero-card, .section, .fest-wrap { max-width: 100vw; overflow-x: clip; }
+  img { max-width: 100%; }
 }

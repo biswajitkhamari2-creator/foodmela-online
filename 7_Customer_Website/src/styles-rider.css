@@ -14,6 +14,11 @@
   z-index: 60; /* above content, below bottom tabs (70) + drawers */
   pointer-events: none;
   overflow: hidden;
+  /* FIX: off-screen waiting rider must not widen the page on phones —
+     clip it hard at the lane box */
+  overflow: clip;
+  max-width: 100vw;
+  contain: strict;
 }
 
 .rider-track {
@@ -22,12 +27,16 @@
   left: 0;
   animation: riderCross 14s linear infinite;
   will-change: transform;
+  /* FIX: keep the whole figure inside the lane while waiting off-screen */
+  visibility: hidden;
 }
 @keyframes riderCross {
-  0% { transform: translateX(-260px); }
-  8% { transform: translateX(-260px); }   /* pause off-screen */
-  88% { transform: translateX(100vw); }   /* sprint across */
-  100% { transform: translateX(100vw); }  /* pause off-screen */
+  0% { transform: translateX(-260px); visibility: hidden; }
+  8% { transform: translateX(-260px); visibility: hidden; }   /* pause off-screen */
+  9% { transform: translateX(-260px); visibility: visible; }  /* enter */
+  88% { transform: translateX(100vw); visibility: visible; }   /* sprint across */
+  89% { transform: translateX(100vw); visibility: hidden; }    /* exit */
+  100% { transform: translateX(100vw); visibility: hidden; }  /* pause off-screen */
 }
 
 .rider {
