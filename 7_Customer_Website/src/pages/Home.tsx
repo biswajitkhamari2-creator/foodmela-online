@@ -12,8 +12,8 @@ import {
 import { useShop } from '../store';
 import { useDeliveryLocation } from '../components/location-context';
 import FoodCard from '../components/FoodCard';
+import FestBanner from '../components/FestBanner';
 import OfferCard from '../components/OfferCard';
-import Hero3D from '../components/Hero3D';
 
 const BENEFITS = [
   { emoji: '⚡', bg: '#FFF4D6', title: 'Fast Delivery', text: 'Hot & fresh at your door in minutes' },
@@ -109,10 +109,7 @@ export default function Home() {
 
   return (
     <div className="page-enter">
-      {/* ── 3D HERO SHOWCASE ── */}
       <div className="section" style={{ paddingTop: 14, paddingBottom: 6 }}>
-        <Hero3D />
-
         {/* ── LIVE ANIMATED RUNNING TICKER (2D) ── */}
         <div className="live-ticker-wrap" aria-label="Live announcements">
           <div className="live-ticker-track">

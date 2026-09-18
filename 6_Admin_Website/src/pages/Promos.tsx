@@ -109,19 +109,30 @@ export default function Promos({ globalSearch }: { globalSearch?: string }) {
       } else {
         await setDoc(doc(db, 'app_promos', id), { ...payload, createdAt: serverTimestamp() });
       }
-      await addDoc(collection(db, 'admin_audit_logs'), {
-        adminPhone: user?.uid ?? 'admin',
-        adminName: adminName || 'Admin',
-        action: formId ? 'promoUpdated' : 'promoCreated',
-        targetId: id,
-        targetType: 'promo',
-        metadata: { code: payload.code, isActive: payload.isActive },
-        timestamp: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      });
+      try {
+        await addDoc(collection(db, 'admin_audit_logs'), {
+          adminPhone: user?.uid ?? 'admin',
+          adminName: adminName || 'Admin',
+          action: formId ? 'promoUpdated' : 'promoCreated',
+          targetId: id,
+          targetType: 'promo',
+          metadata: { code: payload.code, isActive: payload.isActive },
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        });
+      } catch {
+        // Audit log is best-effort — never block or mask promo save
+      }
       setToast({ message: formId ? 'Promo updated ✅' : `Promo ${code} created ✅ — customer site par live!`, type: 'success' });
     } catch (e: unknown) {
-      setToast({ message: e instanceof Error ? e.message : 'Save failed', type: 'error' });
+      const msg = e instanceof Error ? e.message : 'Save failed';
+      const denied = /permission|denied|insufficient/i.test(msg);
+      setToast({
+        message: denied
+          ? '❌ Permission denied — please log out and log back in as admin.'
+          : `❌ Save failed: ${msg}`,
+        type: 'error',
+      });
     }
     setSaving(false);
     setForm(null);
@@ -131,19 +142,30 @@ export default function Promos({ globalSearch }: { globalSearch?: string }) {
   const handleToggle = async (r: PromoRow) => {
     try {
       await updateDoc(doc(db, 'app_promos', r.id), { isActive: !(r.isActive ?? true), updatedAt: serverTimestamp() });
-      await addDoc(collection(db, 'admin_audit_logs'), {
-        adminPhone: user?.uid ?? 'admin',
-        adminName: adminName || 'Admin',
-        action: r.isActive ? 'promoDisabled' : 'promoEnabled',
-        targetId: r.id,
-        targetType: 'promo',
-        metadata: {},
-        timestamp: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      });
+      try {
+        await addDoc(collection(db, 'admin_audit_logs'), {
+          adminPhone: user?.uid ?? 'admin',
+          adminName: adminName || 'Admin',
+          action: r.isActive ? 'promoDisabled' : 'promoEnabled',
+          targetId: r.id,
+          targetType: 'promo',
+          metadata: {},
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        });
+      } catch {
+        // Audit log is best-effort
+      }
       setToast({ message: r.isActive ? 'Promo disabled' : 'Promo enabled ✅ — live on site!', type: 'success' });
     } catch (e: unknown) {
-      setToast({ message: e instanceof Error ? e.message : 'Action failed', type: 'error' });
+      const msg = e instanceof Error ? e.message : 'Action failed';
+      const denied = /permission|denied|insufficient/i.test(msg);
+      setToast({
+        message: denied
+          ? '❌ Permission denied — please log in as admin.'
+          : `❌ Action failed: ${msg}`,
+        type: 'error',
+      });
     }
   };
 
@@ -151,19 +173,30 @@ export default function Promos({ globalSearch }: { globalSearch?: string }) {
     if (!deleting) return;
     try {
       await deleteDoc(doc(db, 'app_promos', deleting.id));
-      await addDoc(collection(db, 'admin_audit_logs'), {
-        adminPhone: user?.uid ?? 'admin',
-        adminName: adminName || 'Admin',
-        action: 'promoDeleted',
-        targetId: deleting.id,
-        targetType: 'promo',
-        metadata: {},
-        timestamp: serverTimestamp(),
-        createdAt: serverTimestamp(),
-      });
-      setToast({ message: 'Promo deleted', type: 'success' });
+      try {
+        await addDoc(collection(db, 'admin_audit_logs'), {
+          adminPhone: user?.uid ?? 'admin',
+          adminName: adminName || 'Admin',
+          action: 'promoDeleted',
+          targetId: deleting.id,
+          targetType: 'promo',
+          metadata: {},
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+        });
+      } catch {
+        // Audit log is best-effort
+      }
+      setToast({ message: 'Promo deleted ✅', type: 'success' });
     } catch (e: unknown) {
-      setToast({ message: e instanceof Error ? e.message : 'Delete failed', type: 'error' });
+      const msg = e instanceof Error ? e.message : 'Delete failed';
+      const denied = /permission|denied|insufficient/i.test(msg);
+      setToast({
+        message: denied
+          ? '❌ Permission denied — please log in as admin.'
+          : `❌ Delete failed: ${msg}`,
+        type: 'error',
+      });
     }
     setDeleting(null);
   };
