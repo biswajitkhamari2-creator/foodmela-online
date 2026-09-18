@@ -167,7 +167,11 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
     let dead = false;
     const sync = async () => {
       try {
-        const res = await fetch(`/api/user/${encodeURIComponent(phone)}`);
+        const { getApiToken } = await import('./api');
+        const token = getApiToken();
+        const res = await fetch(`/api/user/${encodeURIComponent(phone)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!res.ok || dead) return;
         const data = (await res.json()) as { user?: Record<string, unknown> };
         const u = data.user ?? {};

@@ -1,8 +1,11 @@
 // Same-domain backend: foodmela.online/api in production (no CORS),
 // VITE_BACKEND_URL override for local dev, legacy vercel.app URL as fallback.
 // Order anywhere (app or website) → same kitchen, same riders, same admin.
-const BASE = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.replace(/\/$/, '')
-  ?? (import.meta.env.PROD ? '' : 'https://food-mela-backend.vercel.app');
+//
+// SECURITY (2026-09-18): sensitive endpoints require the apiToken minted at
+// OTP login (bound to the verified phone). The token is stored in
+// sessionStorage and sent as a Bearer header — the backend rejects
+// cross-user access (IDOR kill) and strips OTP/FCM tokens for strangers.
 
 // Orders ALSO mirror to Firestore so rider apps (Firestore listeners) see
 // website orders instantly — same doc shape the apps use.
@@ -40,11 +43,33 @@ async function mirrorToFirestore(order: BackendOrder, body: {
   }
 }
 
+const BASE = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.replace(/\/$/, '')
+  ?? (import.meta.env.PROD ? '' : 'https://food-mela-backend.vercel.app');
+
+// ─── Session token (minted by backend at OTP verify, bound to phone) ────
+export function getApiToken(): string | null {
+  try { return sessionStorage.getItem('fm_api_token'); } catch { return null; }
+}
+export function setApiToken(t: string | null) {
+  try {
+    if (t) sessionStorage.setItem('fm_api_token', t);
+    else sessionStorage.removeItem('fm_api_token');
+  } catch { /* ignore */ }
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getApiToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...headers, ...(init?.headers as Record<string, string> | undefined) },
     ...init,
   });
+  if (res.status === 401) {
+    // Session expired/invalid — force re-login on next protected call.
+    setApiToken(null);
+    throw new Error('Session expired — please login again');
+  }
   if (!res.ok) throw new Error(`Backend ${res.status}`);
   return res.json() as Promise<T>;
 }
@@ -112,9 +137,11 @@ export const api = {
 
   // OTP verification via backend proxy (phone.email blocks browser CORS).
   // Official widget flow sends { user_json_url }; legacy redirect flow sends
-  // { access_token } — the backend accepts both.
+  // { access_token } — the backend accepts both. Returns apiToken +
+  // firebaseToken on success — callers must persist both via setApiToken
+  // and signIntoFirestore.
   verifyPhoneEmail: (body: { user_json_url: string } | { access_token: string }) =>
-    req<{ success: boolean; phone: string; name: string | null; jwt: string | null }>('/api/auth/phone-email/verify', {
+    req<{ success: boolean; phone: string; name: string | null; jwt: string | null; apiToken?: string; firebaseToken?: string }>('/api/auth/phone-email/verify', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

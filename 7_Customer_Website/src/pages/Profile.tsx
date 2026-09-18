@@ -45,10 +45,14 @@ export default function Profile() {
     setSavingName(true);
     setNameMsg('');
     try {
-      const { api } = await import('../api');
+      const { api, getApiToken } = await import('../api');
+      const token = getApiToken();
       const res = await fetch(`/api/user/${encodeURIComponent(user.phone)}/profile`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ name: clean }),
       });
       if (!res.ok) throw new Error('save failed');
@@ -131,6 +135,10 @@ export default function Profile() {
             onClick={() => {
               if (confirm('Log out?')) {
                 setUser(null);
+                try {
+                  import('../api').then((m) => m.setApiToken(null));
+                  import('../firebase').then((m) => m.signOutFirestore());
+                } catch { /* ignore */ }
                 nav('/');
               }
             }}

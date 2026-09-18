@@ -120,6 +120,14 @@ export default function Login() {
         if (widgetName) sessionStorage.setItem('fm_pe_name', widgetName);
         if (data.jwt) sessionStorage.setItem('fm_pe_jwt', data.jwt);
       } catch { /* ignore */ }
+      // SECURITY: persist the backend session token (all sensitive API calls
+      // need it) + sign into Firestore (hardened rules need Auth).
+      try {
+        const { setApiToken } = await import('../api');
+        const { signIntoFirestore } = await import('../firebase');
+        if (data.apiToken) setApiToken(data.apiToken);
+        await signIntoFirestore(data.firebaseToken ?? null);
+      } catch { /* backend API still works without Firestore auth */ }
     } catch {
       setErr('Could not reach verification server. Check your internet and try again.');
       setBusy(false);
