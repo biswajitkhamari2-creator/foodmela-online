@@ -348,7 +348,13 @@ main { position: relative; }
 }
 
 /* ── 20. Mobile tightening + horizontal-overflow kill ── */
+
+/* FIX: bottom tabs render ONLY when logged in, but body always kept
+   68px bottom pad on mobile = dead white gap for guests. Default to 0;
+   JS adds .has-tabs on body when BottomNav mounts (see App.tsx). */
 @media (max-width: 640px) {
+  body { padding-bottom: 0; }
+  body.has-tabs { padding-bottom: var(--tabs-h); }
   .section { padding: 32px 14px 6px; }
   .fest-banner { border-radius: 22px; }
   .food-card, .thali { border-radius: 18px; }
@@ -378,17 +384,27 @@ main { position: relative; }
   .benefit-card strong { font-size: 13px; }
   .benefit-card small { font-size: 11px; }
 
-  /* FIX: footer too tall on phones — brand row + 3-col link row */
+  /* FIX: footer too tall on phones — brand row + wide 2-col links.
+     (3-col at 375px = 106px each, links wrap tall. 2-col breathes.) */
   .footer-cta { padding: 28px 14px 4px; }
   .footer-cta h3 { font-size: 19px; }
   .footer-cta .btn-primary { padding: 12px 22px; font-size: 14px; }
   .footer-grid {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 14px;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
     padding: 18px 14px 4px;
   }
   .footer-brand { grid-column: 1 / -1; }
   .footer-brand p { max-width: none; font-size: 12px; margin-top: 6px; line-height: 1.5; }
+  /* FIX: Company col has 9 links — full row, links in 2 inner cols */
+  .footer-grid .footer-col:nth-child(2) {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+    align-content: start;
+  }
+  .footer-grid .footer-col:nth-child(2) h4 { grid-column: 1 / -1; }
   .footer-brand p + p { display: none; } /* helpline already in bottom bar */
   .social-row { margin-top: 10px; gap: 8px; }
   .social-btn { width: 34px; height: 34px; font-size: 15px; }

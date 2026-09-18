@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { ShopProvider, useShop } from './store';
 import { DeliveryLocationProvider } from './components/location-context';
@@ -36,6 +36,14 @@ function Shell() {
 
   const showFloatingCart = cartCount > 0 && !cartOpen && loc.pathname !== '/login';
 
+  // Bottom tabs render only when logged in — toggle body pad so guests
+  // don't get a dead 68px white gap below the footer on mobile.
+  const showTabs = Boolean(user);
+  useEffect(() => {
+    document.body.classList.toggle('has-tabs', showTabs);
+    return () => document.body.classList.remove('has-tabs');
+  }, [showTabs]);
+
   return (
     <>
       <div className="top-strip">
@@ -59,7 +67,7 @@ function Shell() {
         </Routes>
       </main>
       <Footer />
-      {Boolean(user) && <BottomNav onCartOpen={openCart} />}
+      {showTabs && <BottomNav onCartOpen={openCart} />}
       {showFloatingCart && (
         <aside
           className="fm-floating-cart"
