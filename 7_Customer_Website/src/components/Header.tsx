@@ -121,8 +121,7 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
                 <span className="fm-mark" aria-hidden="true">F</span>
                 <div>
                   <div className="fm-side-title">FoodMela</div>
-                  <div className="fm-side-subtitle">by <strong>Sidheswar Enterprises</strong></div>
-                  <div className="fm-side-owner">Owner: <strong>Biswajit Khamari</strong></div>
+                  <div className="fm-side-subtitle">Daily Essentials. Delivered Happier.</div>
                 </div>
               </div>
               <button className="drawer-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">✕</button>
@@ -148,33 +147,6 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
                 </button>
               </div>
 
-              <div className="fm-side-menu-section enterprise-section">
-                <div className="fm-side-sec-title">Business &amp; Ownership</div>
-                <div className="fm-enterprise-card">
-                  <div className="enterprise-badge">🏢 Business Entity</div>
-                  <div className="enterprise-row">
-                    <span className="lbl">Brand:</span>
-                    <span className="val">FoodMela (foodmela.online)</span>
-                  </div>
-                  <div className="enterprise-row">
-                    <span className="lbl">Operated by:</span>
-                    <span className="val bold">Sidheswar Enterprises</span>
-                  </div>
-                  <div className="enterprise-row">
-                    <span className="lbl">Owner:</span>
-                    <span className="val highlight">Biswajit Khamari</span>
-                  </div>
-                  <div className="enterprise-row">
-                    <span className="lbl">Location:</span>
-                    <span className="val">Birmaharajpur, Subarnapur, Odisha - 767018</span>
-                  </div>
-                  <div className="enterprise-row">
-                    <span className="lbl">Helpline:</span>
-                    <a href="tel:8144503650" className="val link">📞 8144503650</a>
-                  </div>
-                </div>
-              </div>
-
               <div className="fm-side-menu-section">
                 <div className="fm-side-sec-title">Support &amp; Legal</div>
                 <Link to="/page/help" className="fm-side-link" onClick={() => setMenuOpen(false)}>💬 Help &amp; Customer Support</Link>
@@ -186,8 +158,8 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
             </div>
 
             <div className="fm-side-menu-foot">
-              <div>FoodMela by <strong>Sidheswar Enterprises</strong></div>
-              <small>Owner: Biswajit Khamari · Birmaharajpur, Odisha</small>
+              <div><strong>FoodMela</strong> · Birmaharajpur</div>
+              <small>Daily Essentials. Delivered Happier.</small>
             </div>
           </div>
         </>

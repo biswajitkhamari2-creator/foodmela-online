@@ -19,12 +19,10 @@ const PAGES: Record<string, InfoPage> = {
     cta: { label: 'Start Ordering →', to: '/grocery' },
   },
   enterprise: {
-    title: 'Sidheswar Enterprises — FoodMela',
+    title: 'About FoodMela Platform',
     emoji: '🏢',
     body: [
-      'FoodMela (foodmela.online) is owned and operated by Sidheswar Enterprises.',
-      'Proprietor & Owner: Biswajit Khamari',
-      'Entity Name: Sidheswar Enterprises',
+      'FoodMela (foodmela.online) is your trusted hyperlocal daily essentials delivery platform.',
       'Operating Base: Birmaharajpur, Subarnapur District, Odisha - 767018',
       'Business Model: Hyperlocal on-demand grocery & daily essentials delivery platform connecting residents of Birmaharajpur with local vendors.',
       'Helpline: +91 8144503650 | Email: support@foodmela.online',

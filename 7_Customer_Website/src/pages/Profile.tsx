@@ -68,7 +68,6 @@ export default function Profile() {
     { icon: '❤️', bg: '#FDECEA', title: 'My Favourites', sub: favItems.length > 0 ? `${favItems.length} saved items` : 'Items you heart', to: '/profile#favs' },
     { icon: '📍', bg: '#FFF4D6', title: 'Delivery Address', sub: user.address || 'Add your address', to: '/page/help' },
     { icon: '🎁', bg: '#FFF4D6', title: 'Offers For You', sub: "Today's mela picks", to: '/offers' },
-    { icon: '🏢', bg: '#EDE9FE', title: 'Sidheswar Enterprises', sub: 'FoodMela by Sidheswar Enterprises · Owner: Biswajit Khamari', to: '/page/enterprise' },
     { icon: '💬', bg: '#E3F0FF', title: 'Help & Support', sub: 'Helpline 8144503650', to: '/page/help' },
     { icon: '📜', bg: '#F1F3F0', title: 'Terms & Privacy', sub: 'Know your rights', to: '/page/terms' },
   ];
@@ -143,11 +142,6 @@ export default function Profile() {
             </span>
             <span className="go" aria-hidden="true">›</span>
           </button>
-        </div>
-
-        <div className="pf-enterprise-footer">
-          <div className="pf-ent-brand">FoodMela by <strong>Sidheswar Enterprises</strong></div>
-          <div className="pf-ent-owner">Owner: <strong>Biswajit Khamari</strong> · Birmaharajpur, Subarnapur, Odisha</div>
         </div>
 
         <div id="favs" className="section" style={{ paddingLeft: 0, paddingRight: 0 }}>
