@@ -25,6 +25,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
   const [address, setAddress] = useState('');
   const [paymentMode, setPaymentMode] = useState<'cod' | 'prepaid'>('prepaid');
   const [selectedCouponCode, setSelectedCouponCode] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [placing, setPlacing] = useState(false);
   const [err, setErr] = useState('');
 
@@ -48,11 +50,23 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
       ? Math.floor((cartTotal * p.discountValue) / 100)
       : p.discountValue;
     const discount = p.maxDiscount > 0 ? Math.min(raw, p.maxDiscount) : raw;
-    return { code: p.code, discount, minOrder: p.minOrder, label: `${p.title} — ${p.code}` };
+    return {
+      code: p.code.toUpperCase(),
+      discount,
+      minOrder: p.minOrder,
+      label: `${p.title} — ${p.code}`,
+      title: p.title,
+    };
   });
   const COUPONS = [
     ...liveCoupons,
-    ...STATIC_COUPONS.filter((s) => !liveCoupons.some((l) => l.code === s.code)),
+    ...STATIC_COUPONS.filter((s) => !liveCoupons.some((l) => l.code === s.code.toUpperCase())).map((s) => ({
+      code: s.code,
+      discount: s.discount,
+      minOrder: s.minOrder,
+      label: s.label,
+      title: s.label,
+    })),
   ];
 
   // Best eligible coupon based on cartTotal
@@ -61,9 +75,40 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     selectedCouponCode === 'NONE'
       ? null
       : selectedCouponCode
-      ? COUPONS.find((c) => c.code === selectedCouponCode && cartTotal >= c.minOrder) ?? bestEligibleCoupon
+      ? COUPONS.find((c) => c.code.toUpperCase() === selectedCouponCode.toUpperCase() && cartTotal >= c.minOrder) ?? null
       : bestEligibleCoupon;
   const discountAmount = effectiveCoupon ? effectiveCoupon.discount : 0;
+
+  const handleApplyCoupon = (codeToApply?: string) => {
+    const code = (codeToApply ?? couponInput).trim().toUpperCase();
+    if (!code) {
+      setCouponError('Please enter a promo code');
+      return;
+    }
+    if (cartTotal <= 0) {
+      setCouponError('Add items to cart first');
+      return;
+    }
+    const found = COUPONS.find((c) => c.code.toUpperCase() === code);
+    if (!found) {
+      setCouponError(`Promo code "${code}" is invalid or expired`);
+      return;
+    }
+    if (cartTotal < found.minOrder) {
+      const diff = found.minOrder - cartTotal;
+      setCouponError(`Add items worth ₹${diff} more to apply ${found.code} (Min order ₹${found.minOrder})`);
+      return;
+    }
+    setSelectedCouponCode(found.code);
+    setCouponInput(found.code);
+    setCouponError(null);
+  };
+
+  const handleRemoveCoupon = () => {
+    setSelectedCouponCode('NONE');
+    setCouponInput('');
+    setCouponError(null);
+  };
 
   const grand = Math.max(0, cartTotal + deliveryFee + platformFee - discountAmount);
   const awayFromFree = Math.max(0, FREE_DELIVERY_OVER - cartTotal);
@@ -214,7 +259,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                   </div>
                 );
               })}
-              {/* 🏷️ Discount Coupons Section (50 / 60 / 70) */}
+              {/* 🏷️ Discount Coupons Section (Admin live promos + manual code input) */}
               <div
                 style={{
                   background: 'linear-gradient(135deg, #FFFDF8 0%, #FEF9EE 100%)',
@@ -225,7 +270,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                   marginBottom: '8px',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                   <span
                     style={{
                       fontSize: '12px',
@@ -238,12 +283,12 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                       gap: '5px',
                     }}
                   >
-                    🏷️ Available Coupons (Save ₹50–₹70)
+                    🏷️ Promo Code & Offers
                   </span>
                   {effectiveCoupon && (
                     <button
                       type="button"
-                      onClick={() => setSelectedCouponCode('NONE')}
+                      onClick={handleRemoveCoupon}
                       style={{
                         fontSize: '11px',
                         color: '#DC2626',
@@ -259,84 +304,91 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                   )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  {COUPONS.map((c) => {
-                    const isEligible = cartTotal >= c.minOrder;
-                    const isApplied = effectiveCoupon?.code === c.code;
-                    return (
-                      <button
-                        key={c.code}
-                        type="button"
-                        disabled={!isEligible}
-                        onClick={() => setSelectedCouponCode(c.code)}
-                        style={{
-                          padding: '8px 4px',
-                          borderRadius: '10px',
-                          border: isApplied
-                            ? '2px solid #0e9f4e'
-                            : isEligible
-                              ? '1.5px solid #F59E0B'
-                              : '1px solid #E5E7EB',
-                          background: isApplied
-                            ? '#E7F6EC'
-                            : isEligible
-                              ? '#FFFFFF'
-                              : '#F3F4F6',
-                          color: isApplied ? '#0a5c2f' : isEligible ? '#1F2937' : '#9CA3AF',
-                          cursor: isEligible ? 'pointer' : 'not-allowed',
-                          textAlign: 'center',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: isApplied ? '0 2px 6px rgba(14, 159, 78, 0.18)' : 'none',
-                          transition: 'all 0.15s ease',
-                          fontFamily: 'inherit',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 800,
-                            color: isApplied ? '#0e9f4e' : isEligible ? '#D97706' : '#9CA3AF',
-                          }}
-                        >
-                          {c.code}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 900,
-                            color: isApplied ? '#0a5c2f' : isEligible ? '#111827' : '#9CA3AF',
-                          }}
-                        >
-                          ₹{c.discount} OFF
-                        </span>
-                        <span
-                          style={{
-                            fontSize: '9.5px',
-                            fontWeight: 600,
-                            color: isApplied ? '#0e9f4e' : isEligible ? '#059669' : '#9CA3AF',
-                            marginTop: '2px',
-                          }}
-                        >
-                          {isApplied ? '✓ Applied' : isEligible ? 'Tap to apply' : `Min ₹${c.minOrder}`}
-                        </span>
-                      </button>
-                    );
-                  })}
+                {/* Manual Promo Code Input Box */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase());
+                      setCouponError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleApplyCoupon();
+                      }
+                    }}
+                    placeholder="Enter promo code (e.g. MEGA70)"
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      border: '1.5px solid #F59E0B',
+                      borderRadius: '8px',
+                      outline: 'none',
+                      background: '#FFFFFF',
+                      color: '#1F2937',
+                      letterSpacing: '0.6px',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleApplyCoupon()}
+                    style={{
+                      padding: '8px 14px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      backgroundColor: '#D97706',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'background 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Apply
+                  </button>
                 </div>
+
+                {couponError && (
+                  <div
+                    style={{
+                      padding: '6px 10px',
+                      background: '#FEF2F2',
+                      border: '1px solid #FCA5A5',
+                      borderRadius: '6px',
+                      color: '#DC2626',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      marginBottom: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>⚠️</span>
+                    <span>{couponError}</span>
+                  </div>
+                )}
 
                 {effectiveCoupon ? (
                   <div
                     style={{
-                      marginTop: '8px',
-                      fontSize: '11.5px',
+                      padding: '6px 10px',
+                      background: '#E7F6EC',
+                      border: '1px solid #A7F3D0',
+                      borderRadius: '6px',
+                      color: '#047857',
+                      fontSize: '11px',
                       fontWeight: 700,
-                      color: '#059669',
+                      marginBottom: '10px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px',
+                      gap: '6px',
                     }}
                   >
                     <span>🎉</span>
@@ -344,20 +396,87 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
                       Coupon <strong>{effectiveCoupon.code}</strong> applied! You save <strong>₹{discountAmount}</strong>!
                     </span>
                   </div>
-                ) : (
-                  <div
-                    style={{
-                      marginTop: '8px',
-                      fontSize: '11px',
-                      color: '#B45309',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <span>💡</span>
-                    <span>Add items to cart (min ₹100) to get flat ₹50, ₹60, ₹70 discounts!</span>
-                  </div>
+                ) : null}
+
+                {COUPONS.length > 0 && (
+                  <>
+                    <div style={{ fontSize: '10.5px', fontWeight: 700, color: '#92400E', marginBottom: '6px' }}>
+                      ⚡ Or tap to apply:
+                    </div>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: `repeat(${Math.min(COUPONS.length, 3)}, 1fr)`,
+                        gap: '6px',
+                      }}
+                    >
+                      {COUPONS.map((c) => {
+                        const isEligible = cartTotal >= c.minOrder;
+                        const isApplied = effectiveCoupon?.code === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            disabled={!isEligible}
+                            onClick={() => handleApplyCoupon(c.code)}
+                            style={{
+                              padding: '8px 4px',
+                              borderRadius: '10px',
+                              border: isApplied
+                                ? '2px solid #0e9f4e'
+                                : isEligible
+                                  ? '1.5px solid #F59E0B'
+                                  : '1px solid #E5E7EB',
+                              background: isApplied
+                                ? '#E7F6EC'
+                                : isEligible
+                                  ? '#FFFFFF'
+                                  : '#F3F4F6',
+                              color: isApplied ? '#0a5c2f' : isEligible ? '#1F2937' : '#9CA3AF',
+                              cursor: isEligible ? 'pointer' : 'not-allowed',
+                              textAlign: 'center',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: isApplied ? '0 2px 6px rgba(14, 159, 78, 0.18)' : 'none',
+                              transition: 'all 0.15s ease',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '11px',
+                                fontWeight: 800,
+                                color: isApplied ? '#0e9f4e' : isEligible ? '#D97706' : '#9CA3AF',
+                              }}
+                            >
+                              {c.code}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '13px',
+                                fontWeight: 900,
+                                color: isApplied ? '#0a5c2f' : isEligible ? '#111827' : '#9CA3AF',
+                              }}
+                            >
+                              ₹{c.discount} OFF
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '9.5px',
+                                fontWeight: 600,
+                                color: isApplied ? '#0e9f4e' : isEligible ? '#059669' : '#9CA3AF',
+                                marginTop: '2px',
+                              }}
+                            >
+                              {isApplied ? '✓ Applied' : isEligible ? 'Tap to apply' : `Min ₹${c.minOrder}`}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
 

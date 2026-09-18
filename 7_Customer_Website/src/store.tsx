@@ -130,8 +130,24 @@ export function ShopProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'app_promos'), (snap) => {
       const list = snap.docs
-        .map((d) => ({ id: d.id, ...(d.data() as Omit<LivePromo, 'id'>) }))
-        .filter((p) => p.isActive === true && p.code && (p.discountValue ?? 0) > 0)
+        .map((d) => {
+          const m = d.data();
+          return {
+            id: d.id,
+            code: String(m.code ?? '').trim().toUpperCase(),
+            title: String(m.title ?? ''),
+            text: String(m.text ?? ''),
+            emoji: String(m.emoji ?? '🔥'),
+            theme: (m.theme ?? 'offer-green') as LivePromo['theme'],
+            discountType: (m.discountType === 'percent' ? 'percent' : 'flat') as 'flat' | 'percent',
+            discountValue: Number(m.discountValue ?? 0),
+            maxDiscount: Number(m.maxDiscount ?? 0),
+            minOrder: Number(m.minOrder ?? 0),
+            isActive: m.isActive !== false,
+            sortOrder: Number(m.sortOrder ?? 0),
+          };
+        })
+        .filter((p) => p.isActive !== false && p.code && p.discountValue > 0)
         .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       setLivePromos(list);
     }, () => setLivePromos([]));
