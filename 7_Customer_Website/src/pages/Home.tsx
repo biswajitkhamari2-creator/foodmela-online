@@ -400,16 +400,6 @@ export default function Home() {
             </div>
             <div className="qr-hint">📱 Android · Free · No Play Store needed · v3 with online payments</div>
           </div>
-          <div className="phone-mock" aria-hidden="true">
-            <div className="pm-notch" />
-            <div className="pm-screen">
-              <img
-                src="https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=460&h=820&fit=crop"
-                alt="Fresh farm vegetables"
-                loading="lazy"
-              />
-            </div>
-          </div>
         </div>
       </div>
     </div>
