@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { doc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { api } from '../api';
@@ -48,6 +49,14 @@ export default function Track() {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedOtp, setCopiedOtp] = useState(false);
   const [remainingCancelSeconds, setRemainingCancelSeconds] = useState<number>(0);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('Ordered by mistake');
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, '0');
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   const cleanOrderId = useMemo(() => {
     if (!orderId) return '';
@@ -138,8 +147,7 @@ export default function Track() {
   const otp = order?.deliveryOtp ? String(order.deliveryOtp) : '';
   const canCancel = !isCancelled && stage < 2 && remainingCancelSeconds > 0;
 
-  const cancelOrder = async () => {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
+  const executeCancel = async () => {
     setCancelling(true);
     setErr('');
     try {
@@ -151,14 +159,16 @@ export default function Track() {
         await updateDoc(doc(db, 'orders', orderId), {
           stage: -1,
           status: 'Cancelled by Customer',
+          cancelReason,
           cancelledAt: serverTimestamp(),
         });
       } catch { /* backend mirror handled it */ }
       setOrder((prev) => (prev ? { ...prev, stage: -1, status: 'Cancelled by Customer' } : prev));
+      setShowCancelModal(false);
     } catch (e) {
       const msg = e instanceof Error ? e.message : '';
       setErr(
-        msg.includes('Too late') ? 'Too late to cancel — rider is already assigned. Call 8144503650 for assistance.'
+        msg.includes('Too late') ? 'Too late to cancel — rider is already assigned or 2-minute limit expired. Call 8144503650 for assistance.'
         : msg.includes('Not your order') ? 'This order belongs to another phone number.'
         : msg.includes('Session expired') ? 'Session expired. Please log in again.'
         : 'Could not cancel order. Please check your internet or call 8144503650.',
@@ -319,6 +329,36 @@ export default function Track() {
           </div>
         )}
       </div>
+
+      {/* 2-Minute Cancellation Window Banner */}
+      {!isCancelled && stage < 2 && (
+        remainingCancelSeconds > 0 ? (
+          <div className="track-cancel-hero-banner">
+            <div className="track-cancel-banner-left">
+              <div className="track-cancel-timer-circle">⏱️</div>
+              <div>
+                <div className="track-cancel-banner-title">Need to cancel this order?</div>
+                <div className="track-cancel-banner-sub">
+                  Free cancellation window closes in <strong>{formatTimer(remainingCancelSeconds)}</strong>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-premium-cancel-trigger"
+              onClick={() => setShowCancelModal(true)}
+            >
+              <span>🛑</span>
+              <span>Cancel Order ({formatTimer(remainingCancelSeconds)})</span>
+            </button>
+          </div>
+        ) : (
+          <div className="track-cancel-closed-banner">
+            <span style={{ fontSize: 16 }}>🔒</span>
+            <span>2-minute cancellation window closed. The kitchen has begun preparing your fresh meal. For urgent help, call Helpline: 8144503650.</span>
+          </div>
+        )
+      )}
 
       {/* Visual Journey Stepper */}
       <div className="track-card-section">
@@ -528,15 +568,14 @@ export default function Track() {
         {canCancel && (
           <div className="track-cancel-box">
             <div className="track-cancel-text">
-              ⏱️ You can cancel within <strong>{Math.floor(remainingCancelSeconds / 60)}m {remainingCancelSeconds % 60}s</strong> before kitchen preparation starts.
+              ⏱️ You can cancel within <strong>{formatTimer(remainingCancelSeconds)}</strong> before kitchen preparation starts.
             </div>
             <button
               type="button"
               className="track-cancel-btn"
-              disabled={cancelling}
-              onClick={cancelOrder}
+              onClick={() => setShowCancelModal(true)}
             >
-              {cancelling ? 'Cancelling…' : 'Cancel Order'}
+              Cancel Order
             </button>
           </div>
         )}
@@ -572,6 +611,75 @@ export default function Track() {
         order={showInvoice && order ? { ...order, oid: cleanOrderId } : null}
         onClose={() => setShowInvoice(false)}
       />
+
+      {/* Premium Cancellation Bottom Sheet / Modal */}
+      {showCancelModal && createPortal(
+        <div className="cancel-sheet-overlay" onClick={() => !cancelling && setShowCancelModal(false)}>
+          <div className="cancel-sheet-card" onClick={(e) => e.stopPropagation()}>
+            <div className="cancel-sheet-drag-handle" />
+            <div className="cancel-sheet-icon-wrap">🚨</div>
+            <h3 className="cancel-sheet-title">Cancel this Order?</h3>
+            <p className="cancel-sheet-sub">
+              Free cancellation is available within 2 minutes of placing your order.
+              <br />
+              Time remaining: <strong style={{ color: '#dc2626' }}>{formatTimer(remainingCancelSeconds)}</strong>
+            </p>
+
+            <div className="cancel-sheet-order-box">
+              <div className="cancel-sheet-order-row">
+                <span>Order ID: <strong>{cleanOrderId}</strong></span>
+                <span style={{ color: '#097337', fontWeight: 900, fontSize: 15 }}>₹{totalAmount}</span>
+              </div>
+              {parsedItems.length > 0 && (
+                <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6, lineHeight: 1.4 }}>
+                  {parsedItems.map((p) => `${p.qty}x ${p.name}`).join(', ')}
+                </div>
+              )}
+              <div style={{ marginTop: 10, padding: '9px 12px', background: '#ffffff', borderRadius: 12, border: '1px solid var(--line)', fontSize: 12, color: '#374151', lineHeight: 1.45 }}>
+                {order?.paymentMethod?.toUpperCase() === 'PHONEPE' || (!order?.address?.includes('[COD]') && !order?.paymentMethod)
+                  ? '⚡ Prepaid Online (PhonePe): Full refund will be automatically credited back.'
+                  : '💵 Cash On Delivery: Order will be cancelled with no payment required.'}
+              </div>
+            </div>
+
+            <div className="cancel-sheet-reasons">
+              <div className="cancel-sheet-reasons-label">Reason for cancellation:</div>
+              <div className="cancel-sheet-chips">
+                {['Ordered by mistake', 'Wrong address', 'Want to change items', 'Change of mind'].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    className={`cancel-sheet-chip ${cancelReason === r ? 'selected' : ''}`}
+                    onClick={() => setCancelReason(r)}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="cancel-sheet-actions">
+              <button
+                type="button"
+                className="btn-keep-order"
+                disabled={cancelling}
+                onClick={() => setShowCancelModal(false)}
+              >
+                Don't Cancel (Keep Order)
+              </button>
+              <button
+                type="button"
+                className="btn-confirm-cancel"
+                disabled={cancelling}
+                onClick={executeCancel}
+              >
+                {cancelling ? 'Cancelling Order…' : 'Yes, Cancel Order'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

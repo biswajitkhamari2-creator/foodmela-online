@@ -792,8 +792,14 @@ app.post('/api/auth/rider/token', async (req, res) => {
     try { decoded = await authAdmin.verifyIdToken(idToken); }
     catch { return res.status(401).json({ success: false, error: 'Invalid session — login again' }); }
     const project = process.env.FIRESTORE_PROJECT_ID || 'food-mela-notification';
-    const docPath = `/v1/projects/${project}/databases/(default)/documents/users/${decoded.uid}`;
-    const resp = await new Promise((resolve) => {
+    // Rider accounts are phone-keyed (users/{10-digit-phone}); the Auth uid
+    // doc usually does NOT exist. Try uid doc first, then the phone-keyed doc
+    // from the request body (app sends the logged-in phone).
+    const bodyPhone = String((req.body && req.body.phone) || '').replace(/[^0-9]/g, '').slice(-10);
+    const docIds = [decoded.uid];
+    if (bodyPhone.length >= 10 && !docIds.includes(bodyPhone)) docIds.push(bodyPhone);
+    const fetchUserDoc = (docId) => new Promise((resolve) => {
+      const docPath = `/v1/projects/${project}/databases/(default)/documents/users/${docId}`;
       const r = https.request({ hostname: 'firestore.googleapis.com', path: docPath, method: 'GET' }, (rs) => {
         let d = '';
         rs.on('data', (c) => { d += c; });
@@ -803,11 +809,16 @@ app.post('/api/auth/rider/token', async (req, res) => {
       r.setTimeout(10000, () => { r.destroy(); resolve(null); });
       r.end();
     });
-    const f = (resp && resp.fields) || {};
+    let resp = await fetchUserDoc(docIds[0]);
+    let f = (resp && resp.fields) || {};
+    if ((!f.role || !f.role.stringValue) && docIds.length > 1) {
+      resp = await fetchUserDoc(docIds[1]);
+      f = (resp && resp.fields) || {};
+    }
     const role = (f.role && f.role.stringValue) || '';
     const approval = (f.approvalStatus && f.approvalStatus.stringValue) || '';
     const blocked = (f.accountStatus && f.accountStatus.stringValue) === 'blocked';
-    const phone = ((f.phone && f.phone.stringValue) || '').replace(/[^0-9]/g, '').slice(-10);
+    const phone = (((f.phone && f.phone.stringValue) || '') || (docIds.length > 1 ? docIds[1] : '')).replace(/[^0-9]/g, '').slice(-10);
     if (role !== 'delivery_partner') return res.status(403).json({ success: false, error: 'Rider account required' });
     if (blocked) return res.status(403).json({ success: false, error: 'Account is blocked' });
     if (approval !== 'approved') return res.status(403).json({ success: false, error: 'Account awaiting approval' });
@@ -2096,6 +2107,21 @@ app.post('/api/orders/cancel', async (req, res) => {
     }
     if (stage >= 2) {
       return res.status(409).json({ success: false, error: 'Too late to cancel — rider is already on the way' });
+    }
+
+    // 2-minute cancellation window (120s + 15s grace period for clock skew/network = 135s)
+    const orderTimeStr = cur.placedAt || cur.createdAt || cur.timestamp;
+    if (orderTimeStr && viewer.role !== 'admin') {
+      const placedMs = new Date(orderTimeStr).getTime();
+      if (!isNaN(placedMs) && placedMs > 0) {
+        const elapsedSecs = (Date.now() - placedMs) / 1000;
+        if (elapsedSecs > 135) {
+          return res.status(409).json({
+            success: false,
+            error: 'Too late to cancel — the 2-minute cancellation window has expired. Call 8144503650 for help.'
+          });
+        }
+      }
     }
 
     const stamp = new Date().toISOString();

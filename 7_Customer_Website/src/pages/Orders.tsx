@@ -110,6 +110,12 @@ export default function Orders() {
   const [cancelErr, setCancelErr] = useState<string | null>(null);
   const [reordered, setReordered] = useState<string | null>(null);
   const [invoiceOrder, setInvoiceOrder] = useState<UnifiedOrder | null>(null);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setTick((v) => v + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   useEffect(() => {
     if (!user) { nav('/login'); return; }
@@ -272,7 +278,9 @@ export default function Orders() {
         shown.map((o) => {
           const stage = stageOf(o);
           const cancelled = stage === -1;
-          const canCancel = !cancelled && stage < 2;
+          const elapsedSecs = o.createdMs > 0 ? (Date.now() - o.createdMs) / 1000 : 999;
+          const cancelSecs = Math.max(0, 120 - Math.floor(elapsedSecs));
+          const canCancel = !cancelled && stage < 2 && cancelSecs > 0;
           const canReorder = (stage === 3 || cancelled) && Array.isArray(o.items) && (o.items as unknown[]).length > 0;
           const meta = statusMeta(stage, cancelled);
           const journey = journeyNodes(stage, cancelled);
@@ -321,11 +329,13 @@ export default function Orders() {
                 {canCancel && (
                   <button
                     className="btn-ghost"
-                    style={{ padding: '9px 16px', fontSize: 13, color: '#C4271F' }}
+                    style={{ padding: '9px 16px', fontSize: 13, color: '#C4271F', fontWeight: 700 }}
                     disabled={cancelling === o.oid}
                     onClick={() => cancelOrder(o.oid)}
                   >
-                    {cancelling === o.oid ? 'Cancelling…' : 'Cancel Order'}
+                    {cancelling === o.oid
+                      ? 'Cancelling…'
+                      : `⏱️ Cancel (${Math.floor(cancelSecs / 60)}:${(cancelSecs % 60).toString().padStart(2, '0')})`}
                   </button>
                 )}
                 {canReorder && (
