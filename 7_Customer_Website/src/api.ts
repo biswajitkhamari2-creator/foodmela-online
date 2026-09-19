@@ -47,19 +47,31 @@ const BASE = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.replace(/
   ?? (import.meta.env.PROD ? '' : 'https://food-mela-backend.vercel.app');
 
 // ─── Session token (minted by backend at OTP verify, bound to phone) ────
+// localStorage (NOT sessionStorage) so login + payment survive tab close.
 export function getApiToken(): string | null {
-  try { return sessionStorage.getItem('fm_api_token'); } catch { return null; }
+  try {
+    return localStorage.getItem('fm_api_token')
+      ?? sessionStorage.getItem('fm_api_token');
+  } catch { return null; }
 }
 export function setApiToken(t: string | null) {
   try {
-    if (t) sessionStorage.setItem('fm_api_token', t);
-    else sessionStorage.removeItem('fm_api_token');
+    if (t) {
+      localStorage.setItem('fm_api_token', t);
+      sessionStorage.removeItem('fm_api_token'); // drop legacy copy
+    } else {
+      localStorage.removeItem('fm_api_token');
+      sessionStorage.removeItem('fm_api_token');
+    }
   } catch { /* ignore */ }
 }
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getApiToken();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-app-source': 'customer-website',
+  };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${BASE}${path}`, {
     headers: { ...headers, ...(init?.headers as Record<string, string> | undefined) },
@@ -68,10 +80,14 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 401) {
     // Session expired/invalid — force re-login on next protected call.
     setApiToken(null);
-    throw new Error('Session expired — please login again');
+    throw new Error('Login required');
   }
   if (!res.ok) throw new Error(`Backend ${res.status}`);
-  return res.json() as Promise<T>;
+  const data = await res.json();
+  if (data && typeof data === 'object' && 'apiToken' in data && data.apiToken) {
+    setApiToken(String(data.apiToken));
+  }
+  return data as T;
 }
 
 export interface BackendOrder {

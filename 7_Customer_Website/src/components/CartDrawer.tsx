@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, getApiToken } from '../api';
+import { api, getApiToken, setApiToken } from '../api';
 import { useShop } from '../store';
 import { getItemWeight } from '../data/catalog';
 
@@ -139,6 +139,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-app-source': 'customer-website',
             ...(ppToken ? { 'Authorization': `Bearer ${ppToken}` } : {}),
           },
           body: JSON.stringify({
@@ -159,6 +160,10 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         });
 
         const initData = await initResp.json();
+
+        if (initData.apiToken) {
+          setApiToken(initData.apiToken);
+        }
 
         if (initData.success && initData.redirectUrl) {
           window.location.href = initData.redirectUrl as string;
@@ -192,6 +197,9 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         })),
         totalAmount: grand,
       });
+      if ((res as any)?.apiToken) {
+        setApiToken((res as any).apiToken);
+      }
       clearCart();
       onClose();
       const oid = res.order.orderId ?? res.order.id;
@@ -618,9 +626,18 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         {lines.length > 0 && (
           <div className="drawer-foot">
             {err && (
-              <p style={{ color: '#DC2626', fontSize: '12px', marginBottom: '8px', fontWeight: 700, background: '#FEF2F2', padding: '6px 10px', borderRadius: '8px' }}>
-                ⚠️ {err}
-              </p>
+              <div style={{ color: '#DC2626', fontSize: '12px', marginBottom: '10px', fontWeight: 700, background: '#FEF2F2', padding: '8px 12px', borderRadius: '10px', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <span>⚠️ {err}</span>
+                {err.toLowerCase().includes('login') && (
+                  <button
+                    type="button"
+                    onClick={() => { onClose(); nav('/login'); }}
+                    style={{ background: '#DC2626', color: '#fff', border: 'none', padding: '5px 12px', borderRadius: '8px', fontSize: '11.5px', fontWeight: 800, cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    Login Now →
+                  </button>
+                )}
+              </div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div>

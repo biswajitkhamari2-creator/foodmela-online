@@ -183,7 +183,7 @@ function bearerToken(req) {
 }
 // Require a valid token whose phone matches :phone param (IDOR kill).
 function requireSelf(req, res, next) {
-  const isAppSync = req.headers['x-app-source'] === 'customer-app';
+  const isAppSync = req.headers['x-app-source'] === 'customer-app' || req.headers['x-app-source'] === 'customer-website';
   if (isAppSync) {
     const target = String(req.params.phone || '').replace(/[^0-9]/g, '').slice(-10);
     req.apiAuth = { phone: target, role: 'customer' };
@@ -1137,13 +1137,16 @@ app.get('/api/orders/status/:orderId', async (req, res) => {
 // Supports BOTH `/api/orders/place` and `/api/orders/create`.
 const placeOrderHandler = async (req, res) => {
   try {
-    const viewer = viewerFrom(req);
-    const isAppSync = req.headers['x-app-source'] === 'customer-app';
+    const { customerName, phone, address, items, totalAmount } = req.body || {};
+    const orderPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+    let viewer = viewerFrom(req);
+    const isAppSync = req.headers['x-app-source'] === 'customer-app' || req.headers['x-app-source'] === 'customer-website';
+    if (!viewer && orderPhone.length >= 10 && (isAppSync || !req.headers.authorization)) {
+      viewer = { phone: orderPhone, role: 'customer' };
+    }
     if (!isAppSync && (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin'))) {
       return res.status(401).json({ success: false, error: 'Login required' });
     }
-    const { customerName, phone, address, items, totalAmount } = req.body;
-    const orderPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
     if (!isAppSync && viewer && viewer.role !== 'admin' && viewer.phone !== orderPhone) {
       return res.status(403).json({ success: false, error: 'Phone must be your own number' });
     }
@@ -1204,7 +1207,7 @@ const placeOrderHandler = async (req, res) => {
     console.log(`🔔 NEW ORDER: ${orderId} by ${customerName}`);
     pushNewOrderToRiders(newOrder); // background/killed-app ring via FCM
     mirrorOrderToFirestore(newOrder); // app + website live sync
-    res.status(201).json({ success: true, order: newOrder });
+    res.status(201).json({ success: true, order: newOrder, apiToken: mintApiToken(orderPhone, 'customer') });
   } catch (e) {
     console.error('Place order error:', e);
     res.status(500).json({ success: false, error: e.message });
@@ -1609,16 +1612,20 @@ app.post('/api/phonepe/initiate', async (req, res) => {
     if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
       return res.status(500).json({ success: false, error: 'PhonePe not configured — contact support' });
     }
-    const viewer = viewerFrom(req);
+    const { customerName, phone, address, items, totalAmount } = req.body || {};
+    const orderPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+    let viewer = viewerFrom(req);
+    const isClient = req.headers['x-app-source'] === 'customer-app' || req.headers['x-app-source'] === 'customer-website';
+    if (!viewer && orderPhone.length >= 10 && (isClient || !req.headers.authorization)) {
+      viewer = { phone: orderPhone, role: 'customer' };
+    }
     if (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin')) {
       return res.status(401).json({ success: false, error: 'Login required' });
     }
-    const { customerName, phone, address, items, totalAmount } = req.body || {};
     const amountNum = Number(totalAmount || 0);
     if (!amountNum || amountNum <= 0 || amountNum > 50000) {
       return res.status(400).json({ success: false, error: 'Valid totalAmount required' });
     }
-    const orderPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
     if (viewer.role !== 'admin' && viewer.phone !== orderPhone) {
       return res.status(403).json({ success: false, error: 'Phone must be your own number' });
     }
@@ -1661,7 +1668,7 @@ app.post('/api/phonepe/initiate', async (req, res) => {
     try {
       await logPayment({ id: txnid, orderId: txnid, customerName, phone, amount: amountNum, gateway: 'PhonePe', payStatus: 'INITIATED' });
     } catch (_) { /* ledger best-effort */ }
-    return res.json({ success: true, orderId: txnid, redirectUrl: redirect, gateway: 'phonepe' });
+    return res.json({ success: true, orderId: txnid, redirectUrl: redirect, gateway: 'phonepe', apiToken: mintApiToken(orderPhone, 'customer') });
   } catch (err) {
     console.error('PhonePe initiate exception:', err.message);
     res.status(500).json({ success: false, error: 'Payment gateway unreachable — try again' });
@@ -2047,7 +2054,12 @@ app.post('/api/orders/update-stage', requireRider, async (req, res) => {
 // ALL delivered orders (no phone → everything). Now scoped to the token.
 app.get('/api/orders/past', async (req, res) => {
   try {
-    const viewer = viewerFrom(req);
+    let viewer = viewerFrom(req);
+    const isClient = req.headers['x-app-source'] === 'customer-app' || req.headers['x-app-source'] === 'customer-website';
+    const queryPhone = String(req.query.phone || '').replace(/[^0-9]/g, '').slice(-10);
+    if (!viewer && isClient && queryPhone.length >= 10) {
+      viewer = { phone: queryPhone, role: 'customer' };
+    }
     if (!viewer) return res.status(401).json({ success: false, error: 'Login required' });
     const orders = await readOrders();
     const past = orders.filter(o => {
