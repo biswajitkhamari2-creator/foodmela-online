@@ -19,12 +19,6 @@
       ]
     },
     {
-      "source": "/sitemap.xml",
-      "headers": [
-        { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
-      ]
-    },
-    {
       "source": "/robots.txt",
       "headers": [
         { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
@@ -34,6 +28,7 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/[...all]" },
     { "source": "/admin/:path*", "destination": "/admin/index.html" },
+    { "source": "/sitemap.xml", "destination": "/api/[...all]" },
     { "source": "/((?!api|admin|.*\\..*).*)", "destination": "/index.html" }
   ]
 }

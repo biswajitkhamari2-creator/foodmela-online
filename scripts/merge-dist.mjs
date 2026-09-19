@@ -24,4 +24,13 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, 'admin'), { recursive: true });
 cpSync(customerDist, out, { recursive: true });
 cpSync(adminDist, join(out, 'admin'), { recursive: true });
-console.log('✅ Merged single-domain build → dist/ (+ dist/admin/)');
+
+// Guarantee sitemap.xml and robots.txt are at output root
+const customerPublic = join(root, '7_Customer_Website', 'public');
+if (existsSync(join(customerPublic, 'sitemap.xml'))) {
+  cpSync(join(customerPublic, 'sitemap.xml'), join(out, 'sitemap.xml'));
+}
+if (existsSync(join(customerPublic, 'robots.txt'))) {
+  cpSync(join(customerPublic, 'robots.txt'), join(out, 'robots.txt'));
+}
+console.log('✅ Merged single-domain build → dist/ (+ dist/admin/ + sitemap + robots)');

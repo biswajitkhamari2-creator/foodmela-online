@@ -108,6 +108,34 @@ function otpPhoneAllowed(phone) {
   } catch (_) { return true; }
 }
 
+// ─── XML SITEMAP FOR SEARCH ENGINE INDEXING (Google, Bing) ────────
+const SITEMAP_XML = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://foodmela.online/</loc><lastmod>2026-09-19</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://foodmela.online/grocery</loc><lastmod>2026-09-19</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://foodmela.online/offers</loc><lastmod>2026-09-19</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://foodmela.online/apk</loc><lastmod>2026-09-19</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://foodmela.online/page/about</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://foodmela.online/page/contact</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://foodmela.online/page/help</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://foodmela.online/page/faq</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://foodmela.online/contact.html</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://foodmela.online/page/privacy</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://foodmela.online/page/terms</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://foodmela.online/page/refund</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://foodmela.online/page/shipping</loc><lastmod>2026-09-19</lastmod><changefreq>monthly</changefreq><priority>0.5</priority></url>
+</urlset>`;
+
+const serveSitemap = (req, res) => {
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  res.send(SITEMAP_XML);
+};
+
+app.get('/sitemap.xml', serveSitemap);
+app.get('/api/sitemap.xml', serveSitemap);
+
+
 const ORDERS_KEY    = 'fm_orders_v1';
 
 // ─── API AUTH (phone-based session tokens) ──────────────────────────────────
