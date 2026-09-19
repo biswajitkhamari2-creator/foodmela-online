@@ -884,6 +884,12 @@ img { display: block; max-width: 100%; }
 }
 /* ── APK download hub (foodmela.online/apk) — MAXIMUM HIGHLIGHT ── */
 .apk-page { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+.apk-wrap { max-width: 720px; margin: 0 auto; padding: 8px 16px 64px; }
+.apk-icon { font-size: 64px; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4)); }
+.apk-sub { font-size: 15px; color: rgba(255,255,255,0.85); margin: 0 auto 26px; max-width: 480px; }
+.apk-step-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+@media (max-width: 600px) { .apk-step-grid { grid-template-columns: 1fr; } }
+.apk-steps h2 { font-size: 22px; font-weight: 800; margin: 32px 0 0; text-align: center; }
 .apk-hero {
   text-align: center; border-radius: 28px; padding: 48px 24px 40px; margin-top: 20px;
   background: linear-gradient(160deg, #06281A 0%, #0B3D24 45%, #0e9f4e 100%);

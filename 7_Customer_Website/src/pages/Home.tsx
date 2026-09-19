@@ -476,15 +476,22 @@ export default function Home() {
       <div className="section" id="app">
         <div className="app-band">
           <div>
-            <h2>Download Our App</h2>
+            <h2>Download Our Apps</h2>
             <p>Your favourite food is just a tap away — faster ordering, live rider tracking, secure UPI payments &amp; exclusive app-only deals.</p>
             <div className="store-row">
               <Link
                 className="store-btn"
                 to="/apk"
               >
-                <span className="s-ico" aria-hidden="true">⬇️</span>
-                <span><small>DOWNLOAD OUR APP</small><strong>FoodMela APK</strong></span>
+                <span className="s-ico" aria-hidden="true">📱</span>
+                <span><small>CUSTOMER APP</small><strong>FoodMela APK</strong></span>
+              </Link>
+              <Link
+                className="store-btn"
+                to="/rider"
+              >
+                <span className="s-ico" aria-hidden="true">🚴‍♂️</span>
+                <span><small>DELIVERY PARTNER</small><strong>Rider App APK</strong></span>
               </Link>
               <button className="store-btn" onClick={() => nav(user ? '/grocery' : '/login')}>
                 <span className="s-ico" aria-hidden="true">🌐</span>

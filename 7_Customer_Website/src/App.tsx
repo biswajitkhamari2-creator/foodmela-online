@@ -12,6 +12,7 @@ import Offers from './pages/Offers';
 import Info from './pages/Info';
 import Login from './pages/Login';
 import Apk from './pages/Apk';
+import RiderApk from './pages/RiderApk';
 import Orders from './pages/Orders';
 import Track from './pages/Track';
 import Profile from './pages/Profile';
@@ -59,6 +60,7 @@ function Shell() {
           <Route path="/page/:slug" element={<Info />} />
           <Route path="/login" element={<Login />} />
           <Route path="/apk" element={<Apk />} />
+          <Route path="/rider" element={<RiderApk />} />
           <Route path="/orders" element={user ? <Orders /> : <Navigate to="/login" replace />} />
           <Route path="/track/:orderId" element={<Track />} />
           <Route path="/profile" element={<Profile />} />

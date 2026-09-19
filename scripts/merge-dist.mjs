@@ -25,6 +25,12 @@ mkdirSync(join(out, 'admin'), { recursive: true });
 cpSync(customerDist, out, { recursive: true });
 cpSync(adminDist, join(out, 'admin'), { recursive: true });
 
+// Rider Flutter web → dist/rider (the SPA route /rider/ serves this)
+const riderWebDist = join(root, '2_Rider_App', 'build', 'web');
+if (existsSync(riderWebDist)) {
+  cpSync(riderWebDist, join(out, 'rider'), { recursive: true });
+}
+
 // Guarantee sitemap.xml and robots.txt are at output root
 const customerPublic = join(root, '7_Customer_Website', 'public');
 if (existsSync(join(customerPublic, 'sitemap.xml'))) {
@@ -33,4 +39,6 @@ if (existsSync(join(customerPublic, 'sitemap.xml'))) {
 if (existsSync(join(customerPublic, 'robots.txt'))) {
   cpSync(join(customerPublic, 'robots.txt'), join(out, 'robots.txt'));
 }
-console.log('✅ Merged single-domain build → dist/ (+ dist/admin/ + sitemap + robots)');
+
+const riderPresent = existsSync(join(out, 'rider'));
+console.log(`✅ Merged single-domain build → dist/ (+ dist/admin/${riderPresent ? ' + dist/rider/' : ''} + sitemap + robots)`);
