@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase';
 import { adminFetch } from '../utils/adminApi';
+import { tsToDate } from '../utils/helpers';
 import { EmptyState, Pagination } from '../components/UI';
+import type { OrderRecord } from '../types';
 
 const PAGE_SIZE = 20;
 
@@ -31,6 +35,11 @@ function statusBadge(st: string): { label: string; cls: string } {
   }
   if (s === 'PENDING' || s === 'INITIATED') return { label: '⏳ Pending', cls: 'pay-pending' };
   if (s === 'INIT_FAILED') return { label: '⚠️ Not started', cls: 'pay-failed' };
+  if (s.includes('REFUND')) {
+    return s.includes('FAIL')
+      ? { label: '❌ Refund failed', cls: 'pay-failed' }
+      : { label: '↩ Refunded', cls: 'pay-pending' };
+  }
   if (s.includes('FAIL') || s.includes('CANCEL') || s.includes('EXPIRE') || s.includes('DECLINE')) {
     return { label: '❌ Failed', cls: 'pay-failed' };
   }
@@ -43,6 +52,50 @@ function fmtDate(iso: string): string {
     if (Number.isNaN(d.getTime())) return '—';
     return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
   } catch { return '—'; }
+}
+
+// Gateway + status derived from a Firestore order (history BEFORE the ledger
+// existed, plus COD orders which never touch a gateway). Ledger entries win
+// on conflict (they carry verified gateway states).
+function orderGateway(o: OrderRecord): string {
+  const addr = (o.address ?? '').toUpperCase();
+  const pm = (o.paymentMethod ?? '').toLowerCase();
+  const gw = ((o as unknown as Record<string, unknown>).paymentGateway as string | undefined ?? '').toLowerCase();
+  if (gw.includes('phonepe')) return 'PhonePe';
+  if (gw.includes('payu')) return 'PayU';
+  if (pm.includes('phonepe') || addr.includes('PHONEPE')) return 'PhonePe';
+  if (pm.includes('payu') || addr.includes('PAYU')) return 'PayU';
+  if (pm.includes('cod') || pm.includes('cash') || addr.includes('[COD]')) return 'COD';
+  if (pm.includes('upi') || pm.includes('online') || pm.includes('prepaid') || addr.includes('[PREPAID]')) return 'Prepaid';
+  return 'COD';
+}
+
+function orderPayStatus(o: OrderRecord): string {
+  if ((o.stage ?? 0) === -1) return 'CANCELLED';
+  const ps = (o.paymentStatus ?? '').toUpperCase();
+  if (ps.includes('PAID')) return 'PAID';
+  if (ps.includes('REFUND')) return ps;
+  if (ps.includes('FAIL')) return 'FAILED';
+  if (ps.includes('PEND')) return 'PENDING';
+  const gw = orderGateway(o);
+  if (gw === 'COD') return (o.stage ?? 0) === 3 ? 'PAID' : 'PENDING';
+  return (o.stage ?? 0) >= 0 ? 'PAID' : 'PENDING';
+}
+
+function orderToRec(o: OrderRecord): PayRec {
+  const d = tsToDate(o.createdAt);
+  const oid = String(o.orderId ?? o.id ?? '');
+  return {
+    id: `order-${oid}`,
+    orderId: oid,
+    customerName: o.customerName ?? '',
+    phone: o.customerPhone ?? '',
+    amount: Number(o.totalAmount ?? 0),
+    gateway: orderGateway(o),
+    payStatus: orderPayStatus(o),
+    gatewayRef: String((o as unknown as Record<string, unknown>).payuTxnId ?? ''),
+    at: d ? d.toISOString() : '',
+  };
 }
 
 export default function Payments({ globalSearch }: { globalSearch?: string }) {
@@ -61,11 +114,13 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
   const [refunding, setRefunding] = useState(false);
   const [refundMsg, setRefundMsg] = useState('');
 
+  // Ledger (verified gateway trail) + Firestore orders (full history incl.
+  // pre-ledger + COD). Ledger wins per orderId; the rest fill the gaps.
   const load = useCallback(async () => {
     setLoading(true);
     setErr('');
     try {
-      const res = await adminFetch('/api/admin/payments?limit=200');
+      const res = await adminFetch('/api/admin/payments?limit=500');
       const data = (await res.json()) as { success: boolean; payments?: PayRec[]; error?: string };
       if (!res.ok || !data.success) {
         const hint = res.status === 403
@@ -73,7 +128,30 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
           : '';
         throw new Error(`${data.error || `Server ${res.status}`}${hint}`);
       }
-      setRows(Array.isArray(data.payments) ? data.payments : []);
+      const ledger = Array.isArray(data.payments) ? data.payments : [];
+      const seen = new Set(ledger.map((p) => p.orderId).filter(Boolean));
+      const fromOrders: PayRec[] = [];
+      try {
+        const snap = await new Promise<OrderRecord[]>((resolve, reject) => {
+          const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(300));
+          const unsub = onSnapshot(q, (s) => {
+            unsub();
+            resolve(s.docs.map((d) => ({ id: d.id, ...d.data() } as OrderRecord)));
+          }, reject);
+          setTimeout(() => { unsub(); reject(new Error('orders timeout')); }, 12000);
+        });
+        for (const o of snap) {
+          if (o.isDeleted) continue;
+          const oid = String(o.orderId ?? o.id ?? '');
+          if (!oid || seen.has(oid)) continue;
+          fromOrders.push(orderToRec(o));
+        }
+      } catch {
+        // Firestore blocked/offline — ledger alone still shows gateway trail.
+      }
+      const merged = [...ledger, ...fromOrders].sort((a, b) =>
+        String(b.at || '').localeCompare(String(a.at || '')));
+      setRows(merged);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not load payments');
     } finally {
