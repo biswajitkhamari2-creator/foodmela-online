@@ -55,6 +55,11 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
   const [page, setPage] = useState(1);
   const [verifying, setVerifying] = useState<string | null>(null);
   const [verifyMsg, setVerifyMsg] = useState('');
+  const [refundFor, setRefundFor] = useState<PayRec | null>(null);
+  const [refundAmt, setRefundAmt] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [refunding, setRefunding] = useState(false);
+  const [refundMsg, setRefundMsg] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,6 +91,33 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
       setVerifyMsg(e instanceof Error ? e.message : 'Verify failed');
     } finally {
       setVerifying(null);
+    }
+  };
+
+  const submitRefund = async () => {
+    if (!refundFor) return;
+    const amt = Number(refundAmt);
+    if (!amt || amt <= 0) { setRefundMsg('Kitna refund karna hai — amount likho (₹ me).'); return; }
+    if (!refundReason.trim()) { setRefundMsg('Reason likhna zaroori hai (audit ke liye).'); return; }
+    if (!confirm(`₹${amt} refund karna hai order ${refundFor.orderId} pe?\nReason: ${refundReason.trim()}\n\nPaise wapas jayenge — undo nahi hoga!`)) return;
+    setRefunding(true);
+    setRefundMsg('');
+    try {
+      const res = await adminFetch(`/api/admin/payments/refund/${encodeURIComponent(refundFor.orderId)}`, {
+        method: 'POST',
+        body: JSON.stringify({ amount: amt, reason: refundReason.trim() }),
+      });
+      const data = (await res.json()) as { success: boolean; refundId?: string; state?: string; error?: string };
+      if (!res.ok || !data.success) throw new Error(data.error || `Server ${res.status}`);
+      setRefundMsg(`✅ Refund shuru: ₹${amt} (ID: ${data.refundId ?? '—'}). Paise 24–48h me customer ko milenge.`);
+      setRefundFor(null);
+      setRefundAmt('');
+      setRefundReason('');
+      await load();
+    } catch (e) {
+      setRefundMsg(e instanceof Error ? e.message : 'Refund fail ho gaya');
+    } finally {
+      setRefunding(false);
     }
   };
 
@@ -187,6 +219,7 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
                   <th>Status</th>
                   <th>Time</th>
                   <th>Verify</th>
+                  <th>Refund</th>
                 </tr>
               </thead>
               <tbody>
@@ -218,6 +251,25 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
                           <span className="cell-sub">—</span>
                         )}
                       </td>
+                      <td>
+                        {isPhonePe && b.label.includes('PAID') ? (
+                          <button
+                            className="btn btn-sm btn-ghost"
+                            style={{ color: '#C4271F' }}
+                            onClick={() => {
+                              setRefundFor(r);
+                              setRefundAmt(String(Number(r.amount || 0)));
+                              setRefundReason('');
+                              setRefundMsg('');
+                            }}
+                            title="Refund (full ya partial) — amount puchega"
+                          >
+                            ↩ Refund
+                          </button>
+                        ) : (
+                          <span className="cell-sub">—</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -226,6 +278,54 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
           </div>
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </>
+      )}
+
+      {refundFor && (
+        <div className="dialog-overlay" onClick={() => !refunding && setRefundFor(null)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+            <h3 style={{ marginBottom: 4 }}>↩ Refund — #{String(refundFor.orderId).replace(/^FM-/, '')}</h3>
+            <p style={{ fontSize: 13, color: '#66707D', marginBottom: 14 }}>
+              {refundFor.customerName} · Paid ₹{Number(refundFor.amount || 0).toLocaleString('en-IN')} via PhonePe.
+              Kitna refund karna hai — full ya partial, amount likho:
+            </p>
+            <label style={{ fontSize: 12.5, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+              Refund amount (₹)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={Number(refundFor.amount || 0)}
+              value={refundAmt}
+              onChange={(e) => setRefundAmt(e.target.value)}
+              placeholder={`Max ₹${Number(refundFor.amount || 0)}`}
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border, #D8DED6)', fontSize: 15, marginBottom: 12 }}
+            />
+            <label style={{ fontSize: 12.5, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+              Reason (zaroori — audit me likha jayega)
+            </label>
+            <input
+              type="text"
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              placeholder="e.g. Customer ko galat item gaya"
+              style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border, #D8DED6)', fontSize: 14, marginBottom: 12 }}
+            />
+            {refundMsg && (
+              <p style={{ fontSize: 13, marginBottom: 12, color: refundMsg.startsWith('✅') ? '#0a5c2f' : '#C4271F', background: refundMsg.startsWith('✅') ? '#E7F6EC' : '#FDECEA', borderRadius: 10, padding: '8px 12px' }}>
+                {refundMsg}
+              </p>
+            )}
+            <div className="dialog-actions">
+              <button className="btn btn-ghost" disabled={refunding} onClick={() => setRefundFor(null)}>Cancel</button>
+              <button className="btn btn-primary" disabled={refunding} onClick={() => void submitRefund()} style={{ background: '#C4271F' }}>
+                {refunding ? 'Processing…' : `₹${refundAmt || '0'} Refund karo`}
+              </button>
+            </div>
+            <p style={{ fontSize: 11.5, color: '#9AA3AF', marginTop: 10, textAlign: 'center' }}>
+              Paise 24–48h me customer ke account me ayenge (PhonePe). Undo nahi hoga.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

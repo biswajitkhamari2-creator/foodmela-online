@@ -1394,6 +1394,82 @@ app.get('/api/admin/payments/verify/:txnid', async (req, res) => {
     res.status(500).json({ success: false, error: e.message });
   }
 });
+// Admin-only REFUND — initiates a PhonePe refund (full or partial) with server
+// keys. Body: { amount: rupees (<= paid amount), reason: string (required) }.
+// Double-confirm happens in the UI; every refund is ledger-logged with the
+// admin phone + reason (audit trail). Money moves in 24-48h (PhonePe side).
+app.post('/api/admin/payments/refund/:txnid', async (req, res) => {
+  try {
+    const viewer = viewerFrom(req);
+    if (!viewer || viewer.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+    if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+      return res.status(500).json({ success: false, error: 'PhonePe not configured' });
+    }
+    const txnid = String(req.params.txnid || '');
+    const amountNum = Number(req.body?.amount || 0);
+    const reason = String(req.body?.reason || '').trim().slice(0, 200);
+    if (!txnid) return res.status(400).json({ success: false, error: 'Order ID required' });
+    if (!amountNum || amountNum <= 0 || amountNum > 50000) {
+      return res.status(400).json({ success: false, error: 'Valid refund amount required (₹1–₹50000)' });
+    }
+    if (!reason) return res.status(400).json({ success: false, error: 'Refund reason required' });
+    // Guard: refund only against a PAID ledger entry, never more than paid.
+    const ledger = await readPayments();
+    const paidEntries = ledger.filter((p) =>
+      (p.orderId === txnid || p.id === txnid) &&
+      ['PAID', 'COMPLETED', 'SUCCESS', 'PAYMENT_SUCCESS'].includes(String(p.payStatus || '').toUpperCase()) &&
+      Number(p.amount || 0) > 0);
+    const paidTotal = paidEntries.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const refundedSoFar = ledger
+      .filter((p) => (p.orderId === txnid || p.id === txnid) &&
+        ['REFUND_INITIATED', 'REFUNDED', 'REFUND_SUCCESS'].includes(String(p.payStatus || '').toUpperCase()))
+      .reduce((s, p) => s + Number(p.amount || 0), 0);
+    if (paidTotal <= 0) {
+      return res.status(409).json({ success: false, error: 'No PAID record for this order — refund not allowed' });
+    }
+    if (amountNum > paidTotal - refundedSoFar) {
+      return res.status(409).json({
+        success: false,
+        error: `Only ₹${Math.max(0, paidTotal - refundedSoFar)} refundable (paid ₹${paidTotal}, already refunded ₹${refundedSoFar})`,
+      });
+    }
+    const merchantRefundId = `RFD-${txnid.replace(/[^A-Za-z0-9]/g, '').slice(-10)}-${Date.now().toString().slice(-6)}`;
+    const token = await phonepeToken();
+    const refundBase = PHONEPE_ENV === 'production'
+      ? 'https://api.phonepe.com/apis/pg/checkout/v2/refund'
+      : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/refund';
+    let refundRes;
+    try {
+      refundRes = await ppPostJson(refundBase, {
+        merchantOrderId: txnid,
+        merchantRefundId,
+        amount: Math.round(amountNum * 100),
+        message: reason,
+      }, token);
+    } catch (e) {
+      return res.status(502).json({ success: false, error: `PhonePe refund call failed: ${e.message}` });
+    }
+    const rj = refundRes.json || {};
+    const rState = String(rj.state || rj?.data?.state || rj.status || rj.code || '').toUpperCase();
+    const ok = refundRes.status === 200 && !/FAIL|ERROR|REJECT|DECLINE/.test(rState);
+    try {
+      await logPayment({
+        id: merchantRefundId, orderId: txnid, gateway: 'PhonePe',
+        payStatus: ok ? 'REFUND_INITIATED' : 'REFUND_FAILED',
+        amount: amountNum, gatewayRef: merchantRefundId,
+        customerName: `Refund by ${viewer.phone}: ${reason}`,
+      });
+    } catch (_) { /* ledger best-effort */ }
+    if (!ok) {
+      return res.status(502).json({ success: false, error: `PhonePe rejected refund (${rState || refundRes.status})` });
+    }
+    res.json({ success: true, refundId: merchantRefundId, state: rState || 'REFUND_INITIATED', amount: amountNum });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // 1. INITIATE — returns the PhonePe checkout redirect URL (website navigates,
 // app opens it in the payment WebView). Draft saved for callback reconstruction.
