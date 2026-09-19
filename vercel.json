@@ -28,9 +28,9 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/[...all]" },
     { "source": "/admin/:path*", "destination": "/admin/index.html" },
-    { "source": "/rider-app", "destination": "/2_Rider_Web/index.html" },
-    { "source": "/rider-app/:path*", "destination": "/2_Rider_Web/:path*" },
+    { "source": "/rider-app", "destination": "/rider-app/index.html" },
+    { "source": "/rider-app/:path*", "destination": "/rider-app/:path*" },
     { "source": "/sitemap.xml", "destination": "/api/[...all]" },
-    { "source": "/((?!api|admin|rider|2_Rider_Web|.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/((?!api|admin|rider-app|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
