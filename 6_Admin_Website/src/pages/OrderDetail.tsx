@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { tsToDate, fmtDateTime } from '../utils/helpers';
+import { tsToDate, fmtDateTime, formatOrderId } from '../utils/helpers';
 import { StageBadge, ConfirmDialog, Toast } from '../components/UI';
 import CallLogsPlayer from '../components/CallLogsPlayer';
 import type { OrderRecord } from '../types';
@@ -121,7 +121,7 @@ export default function OrderDetail() {
 
       <Card title="Order Information">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ fontWeight: 700 }}>{(order.orderId ?? order.id ?? '').replace(/^FM-/, '')}</span>
+          <span style={{ fontWeight: 700 }}>{formatOrderId(order.orderId ?? order.id)}</span>
           <StageBadge stage={order.stage ?? 0} />
         </div>
         {(order.stage === 0 || order.stage === 1 || order.stage === 2 || order.stage === -1) && (
@@ -137,7 +137,7 @@ export default function OrderDetail() {
             )}
           </div>
         )}
-        <Row label="Order ID" value={(order.orderId ?? order.id ?? '').replace(/^FM-/, '')} />
+        <Row label="Order ID" value={formatOrderId(order.orderId ?? order.id)} />
         <Row label="Category" value={`${order.orderCategoryLabel ?? 'GENERAL'} (${order.orderCategory ?? 'general'})`} />
         <Row label="Status" value={order.status || '—'} />
         <Row label="Stage" value={String(order.stage ?? 0)} />
@@ -202,7 +202,7 @@ export default function OrderDetail() {
         ) : (
           <>
             <Row label="Name" value={order.riderName ?? '—'} />
-            <Row label="Partner ID" value={(order.riderId ?? '—').replace(/^FM-/, '')} />
+            <Row label="Partner ID" value={order.riderId ?? '—'} />
             <Row label="Accepted At" value={fmtDateTime(acceptedAt)} />
           </>
         )}

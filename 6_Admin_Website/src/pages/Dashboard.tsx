@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
-import { tsToDate, fmtDateTime } from '../utils/helpers';
+import { tsToDate, fmtDateTime, formatOrderId } from '../utils/helpers';
 import { useCustomerNames, freshName } from '../hooks/useCustomerNames';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ export default function Dashboard() {
                 const st = stageStyle(o.stage ?? 0);
                 return (
                   <div key={o.id as string} className="dash-live-row" onClick={() => nav(`/orders/${o.orderId ?? o.id}`)}>
-                    <span className="dash-live-id">{String(o.orderId ?? o.id).replace(/^FM-/, '')}</span>
+                    <span className="dash-live-id">{formatOrderId(o.orderId ?? o.id)}</span>
                     <span className="dash-live-customer">{freshName(names, o.customerPhone, o.customerName)}</span>
                     <span className="dash-live-partner">{String(o.riderName ?? '—')}</span>
                     <span className="dash-live-badge" style={{ background: st.bg, color: st.color, border: `1px solid ${st.dot}30` }}>

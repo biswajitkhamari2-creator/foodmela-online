@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { adminFetch } from '../utils/adminApi';
 import { EmptyState, Pagination } from '../components/UI';
+import { formatOrderId } from '../utils/helpers';
 
 const PAGE_SIZE = 20;
 
@@ -241,7 +242,7 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
                   const isPhonePe = (r.gateway || '').toLowerCase().includes('phonepe');
                   return (
                     <tr key={`${r.id}-${r.at}`}>
-                      <td><span className="order-id">#{String(r.orderId).replace(/^FM-/, '')}</span><div className="cell-sub">{r.gatewayRef || ''}</div></td>
+                      <td><span className="order-id">{formatOrderId(r.orderId)}</span><div className="cell-sub">{r.gatewayRef || ''}</div></td>
                       <td>
                         <div className="cell-main">{r.customerName || '—'}</div>
                         <div className="cell-sub">{r.phone || ''}</div>
@@ -296,7 +297,7 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
       {refundFor && (
         <div className="dialog-overlay" onClick={() => !refunding && setRefundFor(null)}>
           <div className="dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
-            <h3 style={{ marginBottom: 4 }}>↩ Refund — #{String(refundFor.orderId).replace(/^FM-/, '')}</h3>
+            <h3 style={{ marginBottom: 4 }}>↩ Refund — {formatOrderId(refundFor.orderId)}</h3>
             <p style={{ fontSize: 13, color: '#66707D', marginBottom: 14 }}>
               {refundFor.customerName} · Paid ₹{Number(refundFor.amount || 0).toLocaleString('en-IN')} via PhonePe.
               Kitna refund karna hai — full ya partial, amount likho:

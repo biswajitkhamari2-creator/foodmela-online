@@ -3,7 +3,7 @@ import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc, serverTi
 import { useNavigate } from 'react-router-dom';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
-import { tsToDate, fmtDateTime } from '../utils/helpers';
+import { tsToDate, fmtDateTime, formatOrderId } from '../utils/helpers';
 import { StageBadge, EmptyState, Pagination, ConfirmDialog, Toast } from '../components/UI';
 import type { OrderRecord } from '../types';
 import { useCustomerNames, freshName } from '../hooks/useCustomerNames';
@@ -159,7 +159,7 @@ export default function Orders({ globalSearch }: { globalSearch?: string }) {
                 {paged.map((o) => {
                   const stage = o.stage ?? 0;
                   const docId = o.id;
-                  const label = (o.orderId ?? o.id ?? '').replace(/^FM-/, '');
+                  const label = formatOrderId(o.orderId ?? o.id);
                   const actionable = stage === 0 || stage === 1 || stage === 2 || stage === -1;
                   return (
                   <tr key={o.id} className="clickable" onClick={() => nav(`/orders/${o.orderId ?? o.id}`)}>
@@ -173,7 +173,7 @@ export default function Orders({ globalSearch }: { globalSearch?: string }) {
                     <td><StageBadge stage={stage} /></td>
                     <td>
                       <div className="cell-main">{o.riderName || '—'}</div>
-                      <div className="cell-sub">{(o.riderId || '').replace(/^FM-/, '')}</div>
+                      <div className="cell-sub">{o.riderId || ''}</div>
                     </td>
                     <td className="cell-sub">{fmtDateTime(tsToDate(o.createdAt))}</td>
                     <td onClick={(e) => e.stopPropagation()}>
