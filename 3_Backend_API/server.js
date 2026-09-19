@@ -650,13 +650,16 @@ function adminDb() {
   try {
     const sa = fcmServiceAccount();
     if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) return null;
-    const admin = require('firebase-admin');
+    // firebase-admin v14+: modular API — admin.apps / app.firestore() no longer
+    // exist on the top-level export (was crashing every admin call).
+    const { initializeApp, getApps, cert } = require('firebase-admin/app');
+    const { getFirestore } = require('firebase-admin/firestore');
     if (!_adminApp) {
-      _adminApp = admin.apps.length
-        ? admin.app()
-        : admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.project_id });
+      _adminApp = getApps().length
+        ? getApps()[0]
+        : initializeApp({ credential: cert(sa), projectId: sa.project_id });
     }
-    return _adminApp.firestore();
+    return getFirestore(_adminApp);
   } catch (e) {
     console.error('adminDb init notice:', e.message);
     return null;
@@ -695,14 +698,17 @@ function mirrorOrderToFirestore(o) {
 }
 function adminAuth() {
   try {
-    if (_adminApp) return _adminApp.auth();
-    const sa = fcmServiceAccount();
-    if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) return null;
-    const admin = require('firebase-admin');
-    _adminApp = admin.apps.length
-      ? admin.app()
-      : admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.project_id });
-    return _adminApp.auth();
+    // firebase-admin v14+: modular API (see adminDb above).
+    const { initializeApp, getApps, cert } = require('firebase-admin/app');
+    const { getAuth } = require('firebase-admin/auth');
+    if (!_adminApp) {
+      const sa = fcmServiceAccount();
+      if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) return null;
+      _adminApp = getApps().length
+        ? getApps()[0]
+        : initializeApp({ credential: cert(sa), projectId: sa.project_id });
+    }
+    return getAuth(_adminApp);
   } catch (e) {
     console.error('adminAuth init notice:', e.message);
     return null;
