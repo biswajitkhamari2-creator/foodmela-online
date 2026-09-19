@@ -1367,15 +1367,90 @@ async function readPayments() {
   return [];
 }
 // Admin-only payment trail. Same admin apiToken guard as other admin reads.
+// Merges THREE sources so history is never empty:
+//  1) gateway ledger (verified PhonePe/PayU states + refunds),
+//  2) Firestore orders via Admin SDK (rules bypassed — full history + COD),
+//  3) Redis website orders (stage/amount fallback).
+// Ledger wins per orderId; the rest fill the gaps.
+function orderPayRec(o) {
+  const oid = String(o.orderId || o.id || '');
+  const addr = String(o.address || '').toUpperCase();
+  const pm = String(o.paymentMethod || '').toLowerCase();
+  const gwRaw = String(o.paymentGateway || '').toLowerCase();
+  let gateway = 'COD';
+  if (gwRaw.includes('phonepe') || pm.includes('phonepe') || addr.includes('PHONEPE')) gateway = 'PhonePe';
+  else if (gwRaw.includes('payu') || pm.includes('payu') || addr.includes('PAYU')) gateway = 'PayU';
+  else if (pm.includes('upi') || pm.includes('online') || pm.includes('prepaid') || addr.includes('[PREPAID]')) gateway = 'Prepaid';
+  else if (pm.includes('cod') || pm.includes('cash') || addr.includes('[COD]')) gateway = 'COD';
+  const stage = Number(o.stage ?? 0);
+  let payStatus = 'PENDING';
+  const ps = String(o.paymentStatus || '').toUpperCase();
+  if (stage === -1) payStatus = 'CANCELLED';
+  else if (ps.includes('REFUND')) payStatus = ps;
+  else if (ps.includes('PAID')) payStatus = 'PAID';
+  else if (ps.includes('FAIL')) payStatus = 'FAILED';
+  else if (ps.includes('PEND')) payStatus = 'PENDING';
+  else if (gateway === 'COD') payStatus = stage === 3 ? 'PAID' : 'PENDING';
+  else payStatus = stage >= 0 ? 'PAID' : 'PENDING';
+  let at = o.placedAt || o.timestamp || o.updatedAt || o.createdAt || '';
+  try {
+    if (at && typeof at === 'object') {
+      if (typeof at.toDate === 'function') at = at.toDate().toISOString();
+      else if (at._seconds) at = new Date(at._seconds * 1000).toISOString();
+      else at = String(at);
+    }
+  } catch (_) { at = ''; }
+  return {
+    id: `order-${oid}`,
+    orderId: oid,
+    customerName: o.customerName || 'Customer',
+    phone: String(o.customerPhone || o.phone || ''),
+    amount: Number(o.amountValue ?? o.totalAmount ?? 0),
+    gateway,
+    payStatus,
+    gatewayRef: String(o.payuTxnId || ''),
+    at: String(at || ''),
+  };
+}
 app.get('/api/admin/payments', async (req, res) => {
   try {
     const viewer = viewerFrom(req);
     if (!viewer || viewer.role !== 'admin') {
       return res.status(403).json({ success: false, error: 'Admin only' });
     }
-    const limit = Math.min(200, Math.max(1, Number(req.query.limit || 100)));
-    const list = await readPayments();
-    res.json({ success: true, payments: list.slice(0, limit), total: list.length });
+    const limit = Math.min(300, Math.max(1, Number(req.query.limit || 200)));
+    const ledger = await readPayments();
+    const seen = new Set(ledger.map((p) => p.orderId).filter(Boolean));
+    const extra = [];
+    // Firestore via Admin SDK (bypasses rules — guaranteed full history)
+    try {
+      const db = adminDb();
+      if (db) {
+        const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(300).get();
+        snap.forEach((d) => {
+          const o = { id: d.id, ...d.data() };
+          if (o.isDeleted === true) return;
+          const oid = String(o.orderId || o.id || '');
+          if (!oid || seen.has(oid)) return;
+          seen.add(oid);
+          extra.push(orderPayRec(o));
+        });
+      }
+    } catch (e) { console.error('admin payments fs notice:', e.message); }
+    // Redis website orders (covers anything the mirror missed)
+    try {
+      const orders = await readOrders();
+      for (const o of orders) {
+        if (o.isDeleted === true) continue;
+        const oid = String(o.orderId || o.id || '');
+        if (!oid || seen.has(oid)) continue;
+        seen.add(oid);
+        extra.push(orderPayRec(o));
+      }
+    } catch (e) { console.error('admin payments redis notice:', e.message); }
+    const merged = [...ledger, ...extra].sort((a, b) =>
+      String(b.at || '').localeCompare(String(a.at || '')));
+    res.json({ success: true, payments: merged.slice(0, limit), total: merged.length });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
