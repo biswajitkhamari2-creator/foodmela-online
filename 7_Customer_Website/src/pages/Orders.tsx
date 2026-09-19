@@ -121,7 +121,8 @@ export default function Orders() {
       .finally(() => setLoading(false));
 
     // App orders — same Firestore collection the app writes to.
-    // Publicly readable per firestore.rules (allow read: if true).
+    // Rules allow only my own docs (per-doc customerPhone check); the user
+    // is signed in via the backend-minted custom token at login.
     // The app may store the number with or without country code, so listen
     // to both variants and merge (dedupe happens in the memo below).
     const digits = phone.replace(/[^0-9]/g, '').slice(-10);
