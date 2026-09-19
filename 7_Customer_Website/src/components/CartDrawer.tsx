@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api';
+import { api, getApiToken } from '../api';
 import { useShop } from '../store';
 import { getItemWeight } from '../data/catalog';
 
@@ -132,9 +132,13 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
           ? `${addr} [PREPAID] [Coupon: ${effectiveCoupon.code} (-₹${discountAmount})]`
           : `${addr} [PREPAID]`;
 
+        const payuToken = getApiToken();
         const initResp = await fetch('/api/payu/initiate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(payuToken ? { 'Authorization': `Bearer ${payuToken}` } : {}),
+          },
           body: JSON.stringify({
             customerName: user.name,
             phone: user.phone,
