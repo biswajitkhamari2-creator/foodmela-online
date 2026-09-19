@@ -88,6 +88,7 @@ app.use('/api/auth/', limitAuth);
 app.use('/api/admin/', limitAuth);
 app.use('/api/auth/phone-email/verify', limitOtpVerify);
 app.use('/api/payu/initiate', rateLimit({ windowMs: 60 * 1000, max: 30, prefix: 'payu' }));
+app.use('/api/phonepe/initiate', rateLimit({ windowMs: 60 * 1000, max: 30, prefix: 'phonepe' }));
 // Per-phone OTP cooldown: phone → last successful verify timestamp (2 min).
 // In-memory + serverless-safe (each instance throttles independently — a bot
 // hitting many instances still faces the per-IP bucket on every instance).
@@ -1163,6 +1164,319 @@ const placeOrderHandler = async (req, res) => {
 
 app.post('/api/orders/place', placeOrderHandler);
 app.post('/api/orders/create', placeOrderHandler);
+
+// ─── PHONEPE PG v2 INTEGRATION (Standard Checkout) ───────────────────────────
+// Secrets ONLY from env (Vercel → Settings → Environment Variables):
+//   PHONEPE_CLIENT_ID     = from PhonePe dashboard → Developer Settings → API Keys
+//   PHONEPE_CLIENT_SECRET = (NEVER commit — env only)
+//   PHONEPE_CLIENT_VERSION = usually "1" (as shown in dashboard)
+//   PHONEPE_ENV           = 'production' (live) or 'uat' (sandbox testing)
+//   PHONEPE_CALLBACK_URL  = https://foodmela.online/api/phonepe/callback (override ok)
+// PayU endpoints below are KEPT as fallback — nothing removed.
+const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID || '';
+const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET || '';
+const PHONEPE_CLIENT_VERSION = process.env.PHONEPE_CLIENT_VERSION || '1';
+const PHONEPE_ENV = process.env.PHONEPE_ENV || 'production';
+const PHONEPE_OAUTH_URL = PHONEPE_ENV === 'production'
+  ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
+  : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+const PHONEPE_PAY_URL = PHONEPE_ENV === 'production'
+  ? 'https://api.phonepe.com/apis/pg/checkout/v2/pay'
+  : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/pay';
+const PHONEPE_STATUS_URL = PHONEPE_ENV === 'production'
+  ? 'https://api.phonepe.com/apis/pg/checkout/v2/order'
+  : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order';
+if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+  console.warn('⚠️ PHONEPE_CLIENT_ID/SECRET missing — PhonePe checkout disabled until set in env');
+}
+
+// Cached OAuth token (in-memory; refetched on expiry — serverless-safe).
+let _ppToken = null;
+let _ppTokenExp = 0;
+function ppPostJson(urlStr, bodyObj, bearer) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(bodyObj);
+    const u = new URL(urlStr);
+    const req = https.request({
+      hostname: u.hostname, port: 443, path: u.pathname + u.search, method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+        ...(bearer ? { 'Authorization': `O-Bearer ${bearer}` } : {}),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (c) => (data += c));
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, json: JSON.parse(data) }); }
+        catch (_) { reject(new Error('PhonePe bad response')); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+function ppPostForm(urlStr, params) {
+  return new Promise((resolve, reject) => {
+    const body = new URLSearchParams(params).toString();
+    const u = new URL(urlStr);
+    const req = https.request({
+      hostname: u.hostname, port: 443, path: u.pathname + u.search, method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(body),
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', (c) => (data += c));
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, json: JSON.parse(data) }); }
+        catch (_) { reject(new Error('PhonePe token bad response')); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+async function phonepeToken() {
+  const now = Date.now();
+  if (_ppToken && now < _ppTokenExp - 60000) return _ppToken;
+  const { json } = await ppPostForm(PHONEPE_OAUTH_URL, {
+    client_id: PHONEPE_CLIENT_ID,
+    client_secret: PHONEPE_CLIENT_SECRET,
+    client_version: PHONEPE_CLIENT_VERSION,
+    grant_type: 'client_credentials',
+  });
+  const token = json.access_token || json.encrypted_access_token;
+  if (!token) throw new Error('PhonePe auth failed');
+  _ppToken = token;
+  _ppTokenExp = now + Number(json.expires_at || json.expires_in || 3600) * 1000;
+  return _ppToken;
+}
+async function phonepeOrderStatus(merchantOrderId) {
+  const token = await phonepeToken();
+  return new Promise((resolve, reject) => {
+    const u = new URL(`${PHONEPE_STATUS_URL}/${encodeURIComponent(merchantOrderId)}/status`);
+    const req = https.request({
+      hostname: u.hostname, port: 443, path: u.pathname + u.search, method: 'GET',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `O-Bearer ${token}` },
+    }, (res) => {
+      let data = '';
+      res.on('data', (c) => (data += c));
+      res.on('end', () => {
+        try { resolve({ status: res.statusCode, json: JSON.parse(data) }); }
+        catch (_) { reject(new Error('PhonePe status bad response')); }
+      });
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+// Shared paid-order writer — same shape as PayU callback (COD/cart/rider/admin untouched).
+async function createPaidOrder({ txnid, customerName, phone, address, items, totalAmount, gatewayRef, gateway }) {
+  const orders = await readOrders();
+  const existing = orders.find(o => o.id === txnid || o.orderId === txnid);
+  if (existing) return { order: existing, duplicate: true };
+  const newOrder = {
+    id: txnid,
+    customerName: customerName || 'Customer',
+    phone: phone || 'unknown',
+    address: `${address || 'Birmaharajpur'} [PREPAID - PAID ONLINE (${gateway}: ${gatewayRef})]`,
+    items: items || 'Food items',
+    total: `₹${Math.floor(Number(totalAmount) || 0)}`,
+    amountValue: Number(totalAmount) || 0,
+    stage: 0,
+    status: 'Order Placed & Waiting for Delivery Boy 📝🍳',
+    paymentMode: 'PREPAID',
+    paymentStatus: 'PAID',
+    payuTxnId: gatewayRef,
+    paymentGateway: gateway,
+    acceptedBy: null,
+    acceptedByName: null,
+    deliveryOtp: String(1000 + Math.floor(Math.random() * 9000)),
+    timestamp: new Date().toISOString(),
+    placedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  orders.unshift(newOrder);
+  await writeOrders(orders);
+  if (phone && phone !== 'unknown') {
+    try {
+      const user = await readUser(phone);
+      if (!user.orderHistory) user.orderHistory = [];
+      user.orderHistory.unshift({ ...newOrder, orderStatus: 'placed' });
+      if (user.orderHistory.length > 50) user.orderHistory = user.orderHistory.slice(0, 50);
+      await writeUser(phone, user);
+    } catch (e) { console.error('paid order history notice:', e.message); }
+  }
+  pushNewOrderToRiders(newOrder);
+  mirrorOrderToFirestore(newOrder);
+  return { order: newOrder, duplicate: false };
+}
+
+// 1. INITIATE — returns the PhonePe checkout redirect URL (website navigates,
+// app opens it in the payment WebView). Draft saved for callback reconstruction.
+app.post('/api/phonepe/initiate', async (req, res) => {
+  try {
+    if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+      return res.status(500).json({ success: false, error: 'PhonePe not configured — contact support' });
+    }
+    const viewer = viewerFrom(req);
+    if (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin')) {
+      return res.status(401).json({ success: false, error: 'Login required' });
+    }
+    const { customerName, phone, address, items, totalAmount } = req.body || {};
+    const amountNum = Number(totalAmount || 0);
+    if (!amountNum || amountNum <= 0 || amountNum > 50000) {
+      return res.status(400).json({ success: false, error: 'Valid totalAmount required' });
+    }
+    const orderPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
+    if (viewer.role !== 'admin' && viewer.phone !== orderPhone) {
+      return res.status(403).json({ success: false, error: 'Phone must be your own number' });
+    }
+    const txnid = req.body.orderId || `FM${Date.now().toString().slice(-8)}`;
+    const amountPaise = Math.round(amountNum * 100);
+    await saveDraftOrder(txnid, {
+      orderId: txnid,
+      customerName: String(customerName || 'Customer').slice(0, 60),
+      phone: phone || 'unknown',
+      address: address || 'Birmaharajpur',
+      items: items || 'Food items',
+      totalAmount: amountNum,
+      total: `₹${Math.floor(amountNum)}`,
+      createdAt: new Date().toISOString(),
+    });
+    const redirectUrl = `https://foodmela.online/api/phonepe/return?orderId=${encodeURIComponent(txnid)}`;
+    const token = await phonepeToken();
+    const { status, json } = await ppPostJson(PHONEPE_PAY_URL, {
+      merchantOrderId: txnid,
+      amount: amountPaise,
+      paymentFlow: {
+        type: 'PG_CHECKOUT',
+        message: 'FoodMela Order Payment',
+        merchantUrls: { redirectUrl },
+      },
+    }, token);
+    const redirect = json.redirectUrl || json?.data?.redirectUrl;
+    if (status !== 200 || !redirect) {
+      console.error('PhonePe pay failed:', status, JSON.stringify(json).slice(0, 300));
+      return res.status(502).json({ success: false, error: 'PhonePe could not start payment — try again' });
+    }
+    return res.json({ success: true, orderId: txnid, redirectUrl: redirect, gateway: 'phonepe' });
+  } catch (err) {
+    console.error('PhonePe initiate exception:', err.message);
+    res.status(500).json({ success: false, error: 'Payment gateway unreachable — try again' });
+  }
+});
+
+// 2. RETURN — user lands here after PhonePe checkout. Server checks the REAL
+// order status (never trusts the redirect alone), creates the paid order on
+// success, then sends the browser to /track/:id?paid=1 or ?payment_error=…
+app.get('/api/phonepe/return', async (req, res) => {
+  try {
+    const txnid = String(req.query.orderId || '');
+    if (!txnid) return res.redirect(303, 'https://foodmela.online/?payment_error=Missing%20Order%20ID');
+    let state = '';
+    try {
+      const { json } = await phonepeOrderStatus(txnid);
+      state = String(json.state || json?.data?.state || json.status || '').toUpperCase();
+      console.log(`🔔 PhonePe return: ${txnid} -> ${state}`);
+    } catch (e) {
+      console.error('PhonePe status check failed:', e.message);
+      return res.redirect(303, `https://foodmela.online/?payment_error=${encodeURIComponent('Could not verify payment — check My Orders')}&orderId=${encodeURIComponent(txnid)}`);
+    }
+    if (state === 'COMPLETED' || state === 'SUCCESS' || state === 'PAYMENT_SUCCESS') {
+      const draft = await getDraftOrder(txnid);
+      const { order } = await createPaidOrder({
+        txnid,
+        customerName: draft?.customerName,
+        phone: draft?.phone,
+        address: draft?.address,
+        items: draft?.items,
+        totalAmount: draft?.totalAmount,
+        gatewayRef: txnid,
+        gateway: 'PhonePe',
+      });
+      console.log(`✅ PAID ORDER via PhonePe: ${txnid} by ${order.customerName}`);
+      return res.redirect(303, `https://foodmela.online/track/${encodeURIComponent(txnid)}?paid=1`);
+    }
+    return res.redirect(303, `https://foodmela.online/?payment_error=${encodeURIComponent(state === 'PENDING' ? 'Payment pending — check My Orders in a minute' : 'Payment Failed')}&orderId=${encodeURIComponent(txnid)}`);
+  } catch (err) {
+    console.error('PhonePe return exception:', err.message);
+    return res.redirect(303, 'https://foodmela.online/?payment_error=Callback%20processing%20error');
+  }
+});
+
+// 3. CALLBACK (webhook) — PhonePe server-to-server notify. Verifies via a live
+// status fetch (source of truth), then creates the paid order idempotently.
+app.all('/api/phonepe/callback', async (req, res) => {
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    return res.status(200).json({ success: true, message: 'PhonePe webhook endpoint active' });
+  }
+  try {
+    const d = req.body || {};
+    let payload = d;
+    if (typeof d.response === 'string') {
+      try {
+        payload = JSON.parse(Buffer.from(d.response, 'base64').toString('utf8'));
+      } catch (_) {}
+    }
+    const txnid = String(
+      payload.merchantOrderId ||
+      payload.orderId ||
+      payload.transactionId ||
+      payload.data?.merchantTransactionId ||
+      payload.data?.merchantOrderId ||
+      payload.payload?.merchantOrderId ||
+      d.merchantOrderId ||
+      d.orderId ||
+      ''
+    );
+    console.log(`🔔 PhonePe callback: ${txnid} event=${d.event || payload.event || payload.type || ''}`);
+    if (!txnid) {
+      // Test ping / setup handshake from PhonePe dashboard
+      return res.status(200).json({ success: true, message: 'Webhook endpoint active' });
+    }
+    try {
+      const { json } = await phonepeOrderStatus(txnid);
+      const state = String(json.state || json?.data?.state || json.status || '').toUpperCase();
+      if (state === 'COMPLETED' || state === 'SUCCESS' || state === 'PAYMENT_SUCCESS') {
+        const draft = await getDraftOrder(txnid);
+        await createPaidOrder({
+          txnid,
+          customerName: draft?.customerName,
+          phone: draft?.phone,
+          address: draft?.address,
+          items: draft?.items,
+          totalAmount: draft?.totalAmount,
+          gatewayRef: txnid,
+          gateway: 'PhonePe',
+        });
+        console.log(`✅ PAID ORDER via PhonePe webhook: ${txnid}`);
+      }
+    } catch (e) { console.error('PhonePe callback verify notice:', e.message); }
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('PhonePe callback exception:', err.message);
+    return res.status(200).json({ success: false });
+  }
+});
+
+// 4. STATUS CHECK — LOGIN REQUIRED (same guard as PayU status; no oracle).
+app.get('/api/phonepe/status/:txnid', async (req, res) => {
+  try {
+    if (!viewerFrom(req)) return res.status(401).json({ success: false, error: 'Login required' });
+    if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+      return res.status(500).json({ success: false, error: 'PhonePe not configured' });
+    }
+    const { json } = await phonepeOrderStatus(req.params.txnid);
+    res.json({ success: true, ...json });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // ─── PAYU PAYMENT GATEWAY INTEGRATION (LIVE) ──────────────────────────────────
 // Secrets ONLY from env (Vercel → Settings → Environment Variables):
