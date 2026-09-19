@@ -16,7 +16,7 @@ export default function RiderApk() {
         <div className="apk-icon">🚴‍♂️</div>
         <h1>FoodMela Rider App</h1>
         <p className="apk-sub">Delivery partner ka app — orders accept karo, deliver karo, earnings dekho</p>
-        <a href="https://foodmela.online/rider/" className="apk-dl-btn">
+        <a href="https://foodmela.online/rider-app/" className="apk-dl-btn">
           🚴 BECOME A DELIVERY PARTNER
         </a>
         <div className="apk-meta">💻 Works in browser · No download needed · v{APP_VERSION}</div>
