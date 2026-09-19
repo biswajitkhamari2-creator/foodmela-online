@@ -25,10 +25,16 @@ mkdirSync(join(out, 'admin'), { recursive: true });
 cpSync(customerDist, out, { recursive: true });
 cpSync(adminDist, join(out, 'admin'), { recursive: true });
 
-// Rider Flutter web → dist/rider (the SPA route /rider/ serves this)
-const riderWebDist = join(root, '2_Rider_App', 'build', 'web');
-if (existsSync(riderWebDist)) {
-  cpSync(riderWebDist, join(out, 'rider'), { recursive: true });
+// Rider Flutter web (prebuilt 2_Rider_Web folder) → dist/rider-app (SPA route /rider-app/)
+const riderWebPrebuilt = join(root, '2_Rider_Web');
+if (existsSync(join(riderWebPrebuilt, 'index.html'))) {
+  cpSync(riderWebPrebuilt, join(out, 'rider-app'), { recursive: true });
+} else {
+  // Fallback: raw Flutter source build output (if available)
+  const riderWebDist = join(root, '2_Rider_App', 'build', 'web');
+  if (existsSync(riderWebDist)) {
+    cpSync(riderWebDist, join(out, 'rider-app'), { recursive: true });
+  }
 }
 
 // Guarantee sitemap.xml and robots.txt are at output root
@@ -40,5 +46,5 @@ if (existsSync(join(customerPublic, 'robots.txt'))) {
   cpSync(join(customerPublic, 'robots.txt'), join(out, 'robots.txt'));
 }
 
-const riderPresent = existsSync(join(out, 'rider'));
-console.log(`✅ Merged single-domain build → dist/ (+ dist/admin/${riderPresent ? ' + dist/rider/' : ''} + sitemap + robots)`);
+const riderPresent = existsSync(join(out, 'rider-app'));
+console.log(`✅ Merged single-domain build → dist/ (+ dist/admin/${riderPresent ? ' + dist/rider-app/' : ''} + sitemap + robots)`);
