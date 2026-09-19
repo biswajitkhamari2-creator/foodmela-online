@@ -230,6 +230,7 @@ export default function Orders() {
 
       {shown.length === 0 ? (
         <div className="mela-empty">
+          <img src="/foodmela-f-logo.webp" alt="FoodMela" className="mela-empty-logo" width={64} height={64} />
           <div className="mela-empty-icon">{tab === 'active' ? '🛵' : '🧾'}</div>
           <h3>{tab === 'active' ? 'Nothing cooking right now' : 'No mela memories yet'}</h3>
           <p>{tab === 'active' ? 'Place a new order from the menu and follow its journey live here.' : 'Your completed orders will live here — reorder in one tap.'}</p>

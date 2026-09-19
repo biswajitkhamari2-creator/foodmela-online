@@ -66,10 +66,10 @@ export default function Footer() {
       <div className="footer-grid">
         <div className="footer-brand">
           <Link to="/" className="fm-brand" style={{ color: '#fff' }} aria-label="FoodMela home">
-            <span className="fm-mark" aria-hidden="true">F</span>
-            <span>
-              FoodMela
-              <small style={{ color: '#8a948d' }}>LOCAL · FRESH · FAST</small>
+            <img src="/foodmela-f-logo.webp" alt="FoodMela" className="fm-mark-img" width={46} height={46} />
+            <span className="fm-word">
+              <span className="fm-w-food">Food</span><span className="fm-w-mela">Mela</span>
+              <small style={{ color: '#8a948d' }}>Good Food · Happy People</small>
             </span>
           </Link>
           <p>

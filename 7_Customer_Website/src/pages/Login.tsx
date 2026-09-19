@@ -241,7 +241,7 @@ export default function Login() {
     <div className="page-enter">
       <div className="auth-wrap">
         <div className="auth-card">
-          <div className="auth-logo" aria-hidden="true">F</div>
+          <img src="/foodmela-f-logo.webp" alt="FoodMela" className="auth-logo-img" width={76} height={76} />
           <h2 style={{ textAlign: 'center', margin: '16px 0 4px', fontSize: 24 }}>
             {needProfile ? 'Almost there! 🎉' : 'Welcome to FoodMela'}
           </h2>

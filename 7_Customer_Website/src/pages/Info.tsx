@@ -149,6 +149,7 @@ export default function Info() {
     return (
       <div className="section page-enter" style={{ maxWidth: 720 }}>
         <div className="mela-empty">
+          <img src="/foodmela-f-logo.webp" alt="FoodMela" className="mela-empty-logo" width={64} height={64} />
           <div className="mela-empty-icon">🔍</div>
           <h3>Page not found</h3>
           <p>The page you&apos;re looking for doesn&apos;t exist.</p>

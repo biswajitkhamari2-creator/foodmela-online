@@ -130,6 +130,15 @@ img { display: block; max-width: 100%; }
   width: 100%; box-sizing: border-box;
 }
 .fm-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 21px; letter-spacing: -0.02em; flex-shrink: 0; }
+/* Official FoodMela "F" brand mark — single source: /foodmela-f-logo.webp */
+.fm-mark-img {
+  width: 46px; height: 46px; border-radius: 12px; object-fit: contain;
+  box-shadow: 0 4px 14px rgba(230, 51, 41, 0.3); flex-shrink: 0;
+  background: #fff;
+}
+.fm-word { line-height: 1.05; }
+.fm-w-food { color: var(--chili); }
+.fm-w-mela { color: var(--leaf); }
 .fm-mark {
   width: 42px; height: 42px; border-radius: 50% 50% 50% 12px; position: relative;
   background: linear-gradient(135deg, var(--leaf) 55%, var(--leaf-deep));
@@ -2024,6 +2033,12 @@ img { display: block; max-width: 100%; }
   width: 20px; height: 20px; border-radius: 50%; background: var(--haldi);
   border: 3px solid #fff;
 }
+/* Official F mark on login — same asset, no distortion */
+.auth-logo-img {
+  width: 76px; height: 76px; border-radius: 18px; object-fit: contain;
+  margin: 0 auto; display: block; background: #fff;
+  box-shadow: 0 8px 24px rgba(230, 51, 41, 0.28);
+}
 .auth-perks { display: flex; gap: 8px; justify-content: center; margin: 18px 0 4px; flex-wrap: wrap; }
 .auth-perks span {
   font-size: 11.5px; font-weight: 700; background: var(--cream); border: 1px solid var(--line);
@@ -2102,6 +2117,13 @@ img { display: block; max-width: 100%; }
 }
 .mela-empty h3 { color: var(--ink); margin-bottom: 6px; font-size: 19px; }
 .mela-empty p { font-size: 13.5px; max-width: 340px; margin: 0 auto; line-height: 1.6; }
+/* Official F mark inside empty states (cart, 404, orders) — no distortion */
+.mela-empty-logo {
+  width: 64px; height: 64px; border-radius: 16px; object-fit: contain;
+  margin: 0 auto 12px; display: block; background: #fff;
+  box-shadow: 0 8px 22px rgba(230, 51, 41, 0.22);
+  border: 1px solid var(--line);
+}
 
 /* ── Toast ─────────────────────────────────────── */
 .toast {
@@ -2317,6 +2339,7 @@ img { display: block; max-width: 100%; }
   .fm-brand { font-size: 18px; }
   .fm-brand small { display: none; } /* tagline off on phones — saves ~90px */
   .fm-mark { width: 38px; height: 38px; font-size: 20px; }
+  .fm-mark-img { width: 40px; height: 40px; border-radius: 10px; }
   .fm-loc { padding: 7px 10px; font-size: 12px; min-width: 0; }
   .fm-loc small { display: none; }
   .fm-loc-text { max-width: 92px; } /* address truncates instead of pushing cart off */
@@ -2537,14 +2560,14 @@ img { display: block; max-width: 100%; }
   font-size: 24px;
   box-shadow: 0 4px 12px rgba(14, 159, 78, 0.25);
 }
-/* Brand logo image (replaces the "F" tile) — black badge blends with header */
+/* Official F brand mark on invoice — keep aspect, no distortion */
 .inv-logo-img {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  background: #000;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  object-fit: contain;
+  box-shadow: 0 4px 12px rgba(230, 51, 41, 0.25);
+  background: #fff;
 }
 /* Authorized signature row — handwritten-style sign-off */
 .inv-sign-row {

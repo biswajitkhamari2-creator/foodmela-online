@@ -265,6 +265,15 @@
   display: flex; align-items: center; justify-content: center;
   border: 1.5px solid #fff; font-style: normal;
 }
+/* Official F mark on the delivery bag + jersey — same asset */
+.b-badge-img {
+  width: 15px; height: 15px; border-radius: 4px; object-fit: contain;
+  background: #fff; border: 1px solid #fff;
+}
+.r-logo-img {
+  position: absolute; top: 4px; left: 5px; width: 14px; height: 14px;
+  border-radius: 4px; object-fit: contain; background: #fff;
+}
 .b-bag em {
   font-size: 4.5px; font-style: normal; font-weight: 900;
   letter-spacing: 0.4px; color: #ffe9a8; margin-top: 1px;

@@ -36,9 +36,9 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
     <header className="fm-header">
       <div className="fm-header-inner">
         <Link to="/" className="fm-brand" aria-label="FoodMela home">
-          <span className="fm-mark" aria-hidden="true">F</span>
-          <span>
-            FoodMela
+          <img src="/foodmela-f-logo.webp" alt="FoodMela" className="fm-mark-img" width={46} height={46} />
+          <span className="fm-word">
+            <span className="fm-w-food">Food</span><span className="fm-w-mela">Mela</span>
             <small>
               LOCAL · <b>FRESH</b> · FAST
             </small>
@@ -113,9 +113,9 @@ export default function Header({ onCartOpen }: { onCartOpen: () => void }) {
           <div className="fm-side-menu-drawer" role="dialog" aria-modal="true" aria-label="Main menu">
             <div className="fm-side-menu-head">
               <div className="fm-side-brand">
-                <span className="fm-mark" aria-hidden="true">F</span>
+                <img src="/foodmela-f-logo.webp" alt="FoodMela" className="fm-mark-img" width={42} height={42} />
                 <div>
-                  <div className="fm-side-title">FoodMela</div>
+                  <div className="fm-side-title"><span className="fm-w-food">Food</span><span className="fm-w-mela">Mela</span></div>
                   <div className="fm-side-subtitle">Daily Essentials. Delivered Happier.</div>
                 </div>
               </div>

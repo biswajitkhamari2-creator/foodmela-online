@@ -114,7 +114,7 @@ export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder |
           {/* Header */}
           <div className="inv-header">
             <div className="inv-brand-box">
-              <img src="/foodmela-logo.webp" alt="FoodMela — Good Food Happy People" className="inv-logo-img" />
+              <img src="/foodmela-f-logo.webp" alt="FoodMela — Good Food Happy People" className="inv-logo-img" />
               <div>
                 <h2 className="inv-company">FoodMela</h2>
                 <div className="inv-tagline">Local · Fresh · Fast</div>

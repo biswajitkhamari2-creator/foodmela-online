@@ -223,6 +223,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
         <div className="drawer-body">
           {lines.length === 0 ? (
             <div className="drawer-empty">
+              <img src="/foodmela-f-logo.webp" alt="FoodMela" className="mela-empty-logo" width={64} height={64} />
               <span className="empty-ic" aria-hidden="true">🧺</span>
               <h4>Your mela bag is empty</h4>
               <p>Explore Birmaharajpur favourites and fill your thali today!</p>

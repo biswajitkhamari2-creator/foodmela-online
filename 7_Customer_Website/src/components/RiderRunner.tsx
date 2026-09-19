@@ -53,7 +53,7 @@ export default function RiderRunner() {
             {/* rear rack + FoodMela bag */}
             <div className="b-rack">
               <div className="b-bag">
-                <span className="b-badge">F</span>
+                <img src="/foodmela-f-logo.webp" alt="" className="b-badge-img" />
                 <em>FOODMELA</em>
               </div>
             </div>
@@ -65,7 +65,7 @@ export default function RiderRunner() {
                 <div className="r-thigh front" /><div className="r-shin front" /><div className="r-foot front" />
               </div>
               <div className="r-torso">
-                <div className="r-jersey"><span className="r-logo">F</span></div>
+                <div className="r-jersey"><img src="/foodmela-f-logo.webp" alt="" className="r-logo-img" /></div>
                 <div className="r-arms">
                   <div className="r-upper rear" /><div className="r-fore rear" /><div className="r-hand rear" />
                   <div className="r-upper front" /><div className="r-fore front" /><div className="r-hand front" />
