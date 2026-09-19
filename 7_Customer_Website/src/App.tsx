@@ -6,7 +6,6 @@ import Header from './components/Header';
 import Footer, { BottomNav } from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import LocationModal from './components/LocationModal';
-import RiderRunner from './components/RiderRunner';
 import Home from './pages/Home';
 import Grocery from './pages/Grocery';
 import Offers from './pages/Offers';
@@ -89,7 +88,6 @@ function Shell() {
       )}
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <LocationModal />
-      <RiderRunner />
     </>
   );
 }
