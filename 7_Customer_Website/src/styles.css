@@ -2537,6 +2537,48 @@ img { display: block; max-width: 100%; }
   font-size: 24px;
   box-shadow: 0 4px 12px rgba(14, 159, 78, 0.25);
 }
+/* Brand logo image (replaces the "F" tile) — black badge blends with header */
+.inv-logo-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: #000;
+}
+/* Authorized signature row — handwritten-style sign-off */
+.inv-sign-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 18px;
+  padding-top: 12px;
+}
+.inv-sign-left {
+  font-size: 11px;
+  color: #6b7280;
+}
+.inv-sign-right {
+  text-align: right;
+}
+.inv-sign-name {
+  font-family: 'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive;
+  font-size: 30px;
+  font-weight: 700;
+  color: #1e3a8a;
+  line-height: 1.1;
+  transform: rotate(-4deg);
+}
+.inv-sign-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6b7280;
+  border-top: 1px solid #9ca3af;
+  padding-top: 4px;
+  margin-top: 2px;
+}
 .inv-company {
   font-size: 20px;
   font-weight: 800;
@@ -2731,7 +2773,8 @@ img { display: block; max-width: 100%; }
     display: none !important;
   }
   .invoice-print-area { padding: 0 !important; font-size: 12px !important; }
-  .inv-header, .inv-grid-2, .inv-summary-wrap, .inv-footer-note { break-inside: avoid !important; }
+  .inv-header, .inv-grid-2, .inv-summary-wrap, .inv-footer-note, .inv-sign-row { break-inside: avoid !important; }
+  .inv-sign-name { font-size: 26px !important; }
   .inv-table tr { break-inside: avoid !important; }
   .inv-footer-note { font-size: 9px !important; padding: 8px 10px !important; margin-top: 8px !important; }
   .inv-table th, .inv-table td { padding: 5px 8px !important; font-size: 12px !important; }

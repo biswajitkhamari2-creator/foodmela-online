@@ -114,7 +114,7 @@ export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder |
           {/* Header */}
           <div className="inv-header">
             <div className="inv-brand-box">
-              <div className="inv-logo">F</div>
+              <img src="/foodmela-logo.webp" alt="FoodMela — Good Food Happy People" className="inv-logo-img" />
               <div>
                 <h2 className="inv-company">FoodMela</h2>
                 <div className="inv-tagline">Local · Fresh · Fast</div>
@@ -216,9 +216,16 @@ export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder |
             <p>
               <strong>Statutory Disclosure (IT Act 2000 &amp; FSSA 2006):</strong> FoodMela operates strictly as an intermediary technology aggregator connecting buyers with independent licensed restaurant Food Business Operators (FBOs) and logistics delivery partners. Food preparation and packaging liability rests solely with the merchant kitchen. Platform Fee is charged for platform maintenance, technology hosting, and real-time tracking services.
             </p>
-            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
-              <span>Grievance Officer: Jitendriya Amat (+91 8144503650)</span>
+          </div>
+
+          {/* Authorized Signature */}
+          <div className="inv-sign-row">
+            <div className="inv-sign-left">
               <span>Birmaharajpur, Subarnapur, Odisha - 767018</span>
+            </div>
+            <div className="inv-sign-right">
+              <div className="inv-sign-name">Guruudev</div>
+              <div className="inv-sign-label">Authorized Signature</div>
             </div>
           </div>
         </div>
