@@ -1311,10 +1311,89 @@ async function createPaidOrder({ txnid, customerName, phone, address, items, tot
       await writeUser(phone, user);
     } catch (e) { console.error('paid order history notice:', e.message); }
   }
+  // Payment ledger — every gateway transition lands here so the admin
+  // Payments page shows the full trail without any gateway login.
+  try { await logPayment({ ...newOrder, payStatus: 'PAID' }); } catch (e) { console.error('pay ledger notice:', e.message); }
   pushNewOrderToRiders(newOrder);
   mirrorOrderToFirestore(newOrder);
   return { order: newOrder, duplicate: false };
 }
+
+// ─── PAYMENT LEDGER (admin Payments page — no gateway login needed) ─────────
+// Append-only Redis list (capped). Every initiate attempt + every verified
+// outcome (PAID / FAILED / PENDING) is recorded. Existing order/cart/payment
+// logic untouched — this only observes.
+const PAYMENTS_KEY = 'fm_payments_v1';
+const PAYMENTS_CAP = 500;
+async function logPayment(entry) {
+  try {
+    const rec = {
+      id: String(entry.id || entry.orderId || `FM${Date.now()}`),
+      orderId: String(entry.orderId || entry.id || ''),
+      customerName: entry.customerName || 'Customer',
+      phone: String(entry.phone || entry.customerPhone || ''),
+      amount: Number(entry.amountValue ?? entry.totalAmount ?? entry.amount ?? 0),
+      gateway: String(entry.paymentGateway || entry.gateway || 'COD'),
+      payStatus: String(entry.payStatus || entry.paymentStatus || 'PENDING'),
+      gatewayRef: String(entry.payuTxnId || entry.gatewayRef || ''),
+      at: new Date().toISOString(),
+    };
+    const raw = await upstashCommand(['GET', PAYMENTS_KEY]);
+    let list = [];
+    try {
+      if (raw.result && raw.result !== 'nil' && raw.result !== null) list = JSON.parse(raw.result);
+      if (!Array.isArray(list)) list = [];
+    } catch (_) { list = []; }
+    list.unshift(rec);
+    if (list.length > PAYMENTS_CAP) list = list.slice(0, PAYMENTS_CAP);
+    await upstashCommand(['SET', PAYMENTS_KEY, JSON.stringify(list)]);
+  } catch (e) { console.error('logPayment notice:', e.message); }
+}
+async function readPayments() {
+  try {
+    const raw = await upstashCommand(['GET', PAYMENTS_KEY]);
+    if (raw.result && raw.result !== 'nil' && raw.result !== null) {
+      const list = JSON.parse(raw.result);
+      if (Array.isArray(list)) return list;
+    }
+  } catch (e) { console.error('readPayments notice:', e.message); }
+  return [];
+}
+// Admin-only payment trail. Same admin apiToken guard as other admin reads.
+app.get('/api/admin/payments', async (req, res) => {
+  try {
+    const viewer = viewerFrom(req);
+    if (!viewer || viewer.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+    const limit = Math.min(200, Math.max(1, Number(req.query.limit || 100)));
+    const list = await readPayments();
+    res.json({ success: true, payments: list.slice(0, limit), total: list.length });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+// Admin-only live verify — hits PhonePe status with server keys, so the admin
+// never logs into the gateway. Login + admin role required (no oracle).
+app.get('/api/admin/payments/verify/:txnid', async (req, res) => {
+  try {
+    const viewer = viewerFrom(req);
+    if (!viewer || viewer.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Admin only' });
+    }
+    if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
+      return res.status(500).json({ success: false, error: 'PhonePe not configured' });
+    }
+    const { json } = await phonepeOrderStatus(req.params.txnid);
+    const state = String(json.state || json?.data?.state || json.status || '').toUpperCase();
+    try {
+      await logPayment({ id: req.params.txnid, orderId: req.params.txnid, gateway: 'PhonePe', payStatus: state, amount: 0 });
+    } catch (_) { /* ledger best-effort */ }
+    res.json({ success: true, state, detail: json });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
 
 // 1. INITIATE — returns the PhonePe checkout redirect URL (website navigates,
 // app opens it in the payment WebView). Draft saved for callback reconstruction.
@@ -1362,8 +1441,14 @@ app.post('/api/phonepe/initiate', async (req, res) => {
     const redirect = json.redirectUrl || json?.data?.redirectUrl;
     if (status !== 200 || !redirect) {
       console.error('PhonePe pay failed:', status, JSON.stringify(json).slice(0, 300));
+      try {
+        await logPayment({ id: txnid, orderId: txnid, customerName, phone, amount: amountNum, gateway: 'PhonePe', payStatus: 'INIT_FAILED' });
+      } catch (_) { /* ledger best-effort */ }
       return res.status(502).json({ success: false, error: 'PhonePe could not start payment — try again' });
     }
+    try {
+      await logPayment({ id: txnid, orderId: txnid, customerName, phone, amount: amountNum, gateway: 'PhonePe', payStatus: 'INITIATED' });
+    } catch (_) { /* ledger best-effort */ }
     return res.json({ success: true, orderId: txnid, redirectUrl: redirect, gateway: 'phonepe' });
   } catch (err) {
     console.error('PhonePe initiate exception:', err.message);
@@ -1402,6 +1487,9 @@ app.get('/api/phonepe/return', async (req, res) => {
       console.log(`✅ PAID ORDER via PhonePe: ${txnid} by ${order.customerName}`);
       return res.redirect(303, `https://foodmela.online/track/${encodeURIComponent(txnid)}?paid=1`);
     }
+    try {
+      await logPayment({ id: txnid, orderId: txnid, gateway: 'PhonePe', payStatus: state || 'FAILED' });
+    } catch (_) { /* ledger best-effort */ }
     return res.redirect(303, `https://foodmela.online/?payment_error=${encodeURIComponent(state === 'PENDING' ? 'Payment pending — check My Orders in a minute' : 'Payment Failed')}&orderId=${encodeURIComponent(txnid)}`);
   } catch (err) {
     console.error('PhonePe return exception:', err.message);

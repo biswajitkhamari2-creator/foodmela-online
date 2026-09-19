@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Invoices from './pages/Invoices';
+import Payments from './pages/Payments';
 import Products from './pages/Products';
 import Banners from './pages/Banners';
 import Promos from './pages/Promos';
@@ -69,6 +70,7 @@ function AdminLayout() {
     '/': { title: 'Dashboard', subtitle: 'Real-time operations overview' },
     '/orders': { title: 'Orders', subtitle: 'Orders overview' },
     '/invoices': { title: 'Invoices', subtitle: 'Billing tracking — collected, pending, COD vs prepaid' },
+    '/payments': { title: 'Payments', subtitle: 'Every gateway transaction — PhonePe / PayU / COD, no gateway login needed' },
     '/products': { title: 'Product Prices', subtitle: 'Dynamic pricing — updates the customer app on refresh' },
     '/banners': { title: 'Festival Banners', subtitle: 'Home-screen campaigns — no app update needed' },
     '/promos': { title: 'Promo Codes', subtitle: 'Discount coupons — live on customer site instantly' },
@@ -127,6 +129,7 @@ function AdminLayout() {
             <Route path="/orders" element={<Orders globalSearch={globalSearch} />} />
             <Route path="/orders/:orderId" element={<OrderDetail />} />
             <Route path="/invoices" element={<Invoices globalSearch={globalSearch} />} />
+            <Route path="/payments" element={<Payments globalSearch={globalSearch} />} />
             <Route path="/products" element={<Products globalSearch={globalSearch} />} />
             <Route path="/banners" element={<Banners globalSearch={globalSearch} />} />
             <Route path="/promos" element={<Promos globalSearch={globalSearch} />} />
