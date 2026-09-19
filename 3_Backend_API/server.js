@@ -650,16 +650,16 @@ function adminDb() {
   try {
     const sa = fcmServiceAccount();
     if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) return null;
-    // firebase-admin v14+: modular API — admin.apps / app.firestore() no longer
-    // exist on the top-level export (was crashing every admin call).
-    const { initializeApp, getApps, cert } = require('firebase-admin/app');
-    const { getFirestore } = require('firebase-admin/firestore');
+    // firebase-admin v12 (pinned): classic namespace API — admin.apps,
+    // admin.initializeApp, app.firestore(). (v14 removed these AND pulls an
+    // ESM-only jose chain that crashes under Vercel CJS — do NOT upgrade.)
+    const admin = require('firebase-admin');
     if (!_adminApp) {
-      _adminApp = getApps().length
-        ? getApps()[0]
-        : initializeApp({ credential: cert(sa), projectId: sa.project_id });
+      _adminApp = admin.apps.length
+        ? admin.app()
+        : admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.project_id });
     }
-    return getFirestore(_adminApp);
+    return _adminApp.firestore();
   } catch (e) {
     console.error('adminDb init notice:', e.message);
     return null;
@@ -698,17 +698,15 @@ function mirrorOrderToFirestore(o) {
 }
 function adminAuth() {
   try {
-    // firebase-admin v14+: modular API (see adminDb above).
-    const { initializeApp, getApps, cert } = require('firebase-admin/app');
-    const { getAuth } = require('firebase-admin/auth');
-    if (!_adminApp) {
-      const sa = fcmServiceAccount();
-      if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) return null;
-      _adminApp = getApps().length
-        ? getApps()[0]
-        : initializeApp({ credential: cert(sa), projectId: sa.project_id });
-    }
-    return getAuth(_adminApp);
+    // firebase-admin v12 (pinned): classic namespace API (see adminDb above).
+    if (_adminApp) return _adminApp.auth();
+    const sa = fcmServiceAccount();
+    if (!sa || !sa.private_key || !sa.client_email || !sa.project_id) return null;
+    const admin = require('firebase-admin');
+    _adminApp = admin.apps.length
+      ? admin.app()
+      : admin.initializeApp({ credential: admin.credential.cert(sa), projectId: sa.project_id });
+    return _adminApp.auth();
   } catch (e) {
     console.error('adminAuth init notice:', e.message);
     return null;
