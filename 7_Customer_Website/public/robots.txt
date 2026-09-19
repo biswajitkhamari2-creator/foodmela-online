@@ -1,0 +1,22 @@
+# FoodMela Robots.txt
+# Allows search engine crawlers (Google, Bing, etc.) to discover and index FoodMela
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /orders
+Disallow: /track
+Disallow: /profile
+
+# Explicit allowance for Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /orders
+Disallow: /track
+Disallow: /profile
+
+# XML Sitemap location
+Sitemap: https://foodmela.online/sitemap.xml
