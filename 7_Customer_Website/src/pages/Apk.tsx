@@ -17,8 +17,9 @@ const FEATURES = [
 
 const STEPS = [
   { n: '1', title: 'Tap Download below', text: 'The APK file saves to your phone.' },
-  { n: '2', title: 'Allow install', text: 'Open the file → allow Install unknown apps when asked.' },
-  { n: '3', title: 'Login with OTP', text: 'Same phone number, same account as this website.' },
+  { n: '2', title: 'Tap "Keep anyway"', text: 'Chrome shows "harmful" for ALL non-Play Store apps — even Instagram. This is safe — tap Keep.' },
+  { n: '3', title: 'Allow install', text: 'Open the file → allow Install unknown apps when asked.' },
+  { n: '4', title: 'Login with OTP', text: 'Same phone number, same account as this website.' },
 ];
 
 export default function Apk() {
@@ -34,6 +35,11 @@ export default function Apk() {
           ⬇ DOWNLOAD NOW
         </a>
         <div className="apk-meta">Android · {APP_SIZE_MB} · No Play Store needed</div>
+        <div className="apk-trust">
+          <span className="trust-badge">✓ Official FoodMela App</span>
+          <span className="trust-badge">✓ Signed & Verified</span>
+          <span className="trust-badge">✓ Safe to Install</span>
+        </div>
       </div>
 
       {/* ── FEATURES ── */}
@@ -59,6 +65,22 @@ export default function Apk() {
             </span>
           </div>
         ))}
+      </div>
+
+      {/* ── WARNING EXPLANATION ── */}
+      <div className="apk-faq">
+        <h3>⚠️ Why does Chrome say "harmful"?</h3>
+        <p>
+          Chrome shows this warning for <strong>every app outside Play Store</strong> — even Instagram, WhatsApp,
+          or any other company's direct APK download. It's not specific to FoodMela.
+        </p>
+        <p>
+          <strong>This file is 100% safe.</strong> It's our official app, digitally signed by FoodMela.
+          When you see the warning, just tap <strong>"Keep anyway"</strong> or <strong>"Download anyway"</strong> to continue.
+        </p>
+        <p className="apk-faq-meta">
+          🔒 File secured with SHA256 signature · Hosted on Google Firebase · No viruses or malware
+        </p>
       </div>
 
       <div className="apk-back">

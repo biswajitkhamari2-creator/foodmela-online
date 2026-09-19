@@ -906,6 +906,20 @@ img { display: block; max-width: 100%; }
 }
 .apk-dl-btn:hover { transform: scale(1.05); }
 .apk-meta { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 14px; font-weight: 600; }
+.apk-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
+.trust-badge {
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 0.3px;
+  padding: 6px 12px; border-radius: 20px; backdrop-filter: blur(6px);
+}
+.apk-faq {
+  background: #fefce8; border: 1.5px solid #facc15; border-radius: 16px;
+  padding: 20px 18px; margin-top: 28px; line-height: 1.6;
+}
+.apk-faq h3 { font-size: 15px; font-weight: 900; margin: 0 0 10px; color: #854d0e; }
+.apk-faq p { font-size: 13px; color: #444; margin: 0 0 8px; }
+.apk-faq p:last-child { margin-bottom: 0; }
+.apk-faq-meta { font-size: 11px; color: #a16207; font-weight: 700; margin-top: 12px; background: #fffbeb; padding: 8px 10px; border-radius: 10px; }
 .apk-feats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 24px; }
 .apk-feat {
   background: #fff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px 8px;
