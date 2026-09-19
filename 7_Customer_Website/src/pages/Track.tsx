@@ -89,15 +89,33 @@ export default function Track() {
   const cancelOrder = async () => {
     if (!confirm('Cancel this order?')) return;
     setCancelling(true);
+    setErr('');
     try {
-      await api.cancelOrder(orderId).catch(() => null);
+      // Backend flips all three copies (Redis + history + Firestore mirror).
+      // Direct Firestore write is best-effort only — rules may deny it, which
+      // is fine because the backend mirror covers it.
+      const res = await api.cancelOrder(orderId).catch((e: unknown) => {
+        throw e instanceof Error ? e : new Error('Cancel failed');
+      });
+      if (!res.success) throw new Error('Cancel failed');
       try {
         await updateDoc(doc(db, 'orders', orderId), {
           stage: -1,
           status: 'Cancelled by Customer',
           cancelledAt: serverTimestamp(),
         });
-      } catch { /* backend already handled it */ }
+      } catch { /* backend mirror already handled it */ }
+      // Optimistic UI — the live listener confirms within seconds.
+      setOrder((prev) => (prev ? { ...prev, stage: -1, status: 'Cancelled by Customer' } : prev));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      setErr(
+        msg.includes('Too late') ? 'Too late to cancel — the rider is already on the way. Call 8144503650 for help.'
+        : msg.includes('Not your order') ? 'This order belongs to a different number — please login with the number used to order.'
+        : msg.includes('Session expired') ? 'Session expired — please login again, then cancel.'
+        : msg.includes('Order not found') ? 'Order not found on the server — it may have already been removed. Call 8144503650 for help.'
+        : 'Could not cancel — check your internet and try again.',
+      );
     } finally {
       setCancelling(false);
     }

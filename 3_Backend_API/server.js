@@ -1457,6 +1457,9 @@ app.post('/api/orders/accept', requireRider, async (req, res) => {
 // Cancel Order – OWNER ONLY. Token phone must match the order phone, so
 // nobody can cancel someone else's order. Unknown IDs 404 (previously a
 // phantom cancelled record was written for ANY id — free DB write).
+// Website orders live in Redis; app orders live ONLY in Firestore — so check
+// Redis first, then Firestore via Admin SDK. All three copies (Redis global,
+// per-user history, Firestore mirror) are flipped to stage -1 together.
 app.post('/api/orders/cancel', async (req, res) => {
   try {
     const viewer = viewerFrom(req);
@@ -1465,28 +1468,82 @@ app.post('/api/orders/cancel', async (req, res) => {
     if (!orderId) return res.status(400).json({ success: false, error: 'orderId required' });
 
     const orders = await readOrders();
-    const idx    = orders.findIndex(o => o.id === orderId);
-    if (idx === -1) return res.status(404).json({ success: false, error: 'Order not found' });
+    let idx = orders.findIndex(o => o.id === orderId || o.orderId === orderId);
+    let fsData = null;
+    if (idx === -1) {
+      try {
+        const db = adminDb();
+        if (db) {
+          const snap = await db.collection('orders').doc(String(orderId)).get();
+          if (snap.exists) fsData = snap.data();
+        }
+      } catch (e) { console.error('cancel fs lookup notice:', e.message); }
+      if (!fsData) return res.status(404).json({ success: false, error: 'Order not found' });
+    }
 
-    const orderPhone = String(orders[idx].phone || orders[idx].customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
+    const cur = idx !== -1 ? orders[idx] : fsData;
+    const orderPhone = String(cur.phone || cur.customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
     if (viewer.role !== 'admin' && viewer.phone !== orderPhone) {
       return res.status(403).json({ success: false, error: 'Not your order' });
     }
-    if (orders[idx].stage >= 2) {
-      return res.status(409).json({ success: false, error: 'Too late to cancel' });
+    const stage = Number(cur.stage ?? 0);
+    if (stage === -1) {
+      return res.json({ success: true, already: true, cancelledOrder: sanitizeOrder(cur, viewer) });
+    }
+    if (stage >= 2) {
+      return res.status(409).json({ success: false, error: 'Too late to cancel — rider is already on the way' });
     }
 
-    orders[idx] = {
-      ...orders[idx],
-      stage:       -1,
-      status:      'CANCELLED BY CUSTOMER 🚨',
-      cancelledAt: new Date().toISOString(),
-      updatedAt:   new Date().toISOString(),
-    };
+    const stamp = new Date().toISOString();
+    let cancelledOrder = null;
 
-    await writeOrders(orders);
+    // 1) Redis global copy (website orders)
+    if (idx !== -1) {
+      orders[idx] = {
+        ...orders[idx],
+        stage:       -1,
+        status:      'CANCELLED BY CUSTOMER 🚨',
+        cancelledAt: stamp,
+        updatedAt:   stamp,
+      };
+      await writeOrders(orders);
+      cancelledOrder = orders[idx];
+    }
+
+    // 2) Per-user history copy (Orders page reads this) — only touch when the
+    // entry exists, never create phantom history on a wrong key.
+    if (orderPhone) {
+      try {
+        const user = await readUser(orderPhone);
+        if (Array.isArray(user.orderHistory)) {
+          let touched = false;
+          user.orderHistory = user.orderHistory.map((h) => {
+            if (h.id === orderId || h.orderId === orderId) {
+              touched = true;
+              return { ...h, stage: -1, status: 'CANCELLED BY CUSTOMER 🚨', orderStatus: 'cancelled', cancelledAt: stamp, updatedAt: stamp };
+            }
+            return h;
+          });
+          if (touched) await writeUser(orderPhone, user);
+        }
+      } catch (e) { console.error('cancel history notice:', e.message); }
+    }
+
+    // 3) Firestore mirror (app + rider + website live sync) — Admin SDK bypasses rules
+    try {
+      const db = adminDb();
+      if (db) {
+        await db.collection('orders').doc(String(orderId)).set({
+          stage: -1,
+          status: 'Cancelled by Customer',
+          cancelledAt: new Date(),
+          updatedAt: new Date(),
+        }, { merge: true });
+      }
+    } catch (e) { console.error('cancel mirror notice:', e.message); }
+
     console.log(`🚨 ORDER ${orderId} CANCELLED by ${viewer.phone}`);
-    res.json({ success: true, cancelledOrder: sanitizeOrder(orders[idx], viewer) });
+    res.json({ success: true, cancelledOrder: sanitizeOrder(cancelledOrder || { ...cur, stage: -1, status: 'CANCELLED BY CUSTOMER 🚨' }, viewer) });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }

@@ -107,6 +107,7 @@ export default function Orders() {
   const [fsOrders, setFsOrders] = useState<FsOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelErr, setCancelErr] = useState<string | null>(null);
   const [reordered, setReordered] = useState<string | null>(null);
   const [invoiceOrder, setInvoiceOrder] = useState<UnifiedOrder | null>(null);
 
@@ -170,9 +171,15 @@ export default function Orders() {
   const cancelOrder = async (oid: string) => {
     if (!confirm('Cancel this order?')) return;
     setCancelling(oid);
+    setCancelErr(null);
     try {
-      // Backend first (Redis + history), Firestore mirror best-effort
-      await api.cancelOrder(oid).catch(() => null);
+      // Backend flips all three copies (Redis + history + Firestore mirror).
+      // Direct Firestore write is best-effort only — rules may deny it, which
+      // is fine because the backend mirror covers it.
+      const res = await api.cancelOrder(oid).catch((e: unknown) => {
+        throw e instanceof Error ? e : new Error('Cancel failed');
+      });
+      if (!res.success) throw new Error('Cancel failed');
       try {
         const { doc, updateDoc, serverTimestamp } = await import('firebase/firestore');
         await updateDoc(doc(db, 'orders', oid), {
@@ -180,7 +187,23 @@ export default function Orders() {
           status: 'Cancelled by Customer',
           cancelledAt: serverTimestamp(),
         });
-      } catch { /* backend already handled it */ }
+      } catch { /* backend mirror already handled it */ }
+      // Optimistic UI — backend history + live listeners confirm within seconds.
+      setBackendOrders((prev) =>
+        prev.map((o) => ((o.orderId ?? o.id) === oid ? { ...o, stage: -1, status: 'CANCELLED BY CUSTOMER 🚨' } : o)),
+      );
+      setFsOrders((prev) =>
+        prev.map((o) => ((o.orderId ?? o.id) === oid ? { ...o, stage: -1, status: 'Cancelled by Customer' } : o)),
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      setCancelErr(
+        msg.includes('Too late') ? 'Too late to cancel — the rider is already on the way. Call 8144503650 for help.'
+        : msg.includes('Not your order') ? 'This order belongs to a different number — please login with the number used to order.'
+        : msg.includes('Session expired') ? 'Session expired — please login again, then cancel.'
+        : msg.includes('Order not found') ? 'Order not found on the server — it may have already been removed. Call 8144503650 for help.'
+        : 'Could not cancel — check your internet and try again.',
+      );
     } finally {
       setCancelling(null);
     }
@@ -218,6 +241,11 @@ export default function Orders() {
       <p style={{ color: '#66707D', fontSize: 13, marginBottom: 18 }}>
         App + website in one place — same number, one history.
       </p>
+      {cancelErr && (
+        <p style={{ color: '#C4271F', background: '#FDECEA', borderRadius: 12, padding: '10px 14px', fontSize: 13, marginBottom: 14, textAlign: 'center' }}>
+          {cancelErr}
+        </p>
+      )}
 
       <div className="tab-row">
         <button className={`tab-btn ${tab === 'active' ? 'on' : ''}`} onClick={() => setTab('active')}>
