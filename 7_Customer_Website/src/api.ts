@@ -99,6 +99,7 @@ export interface BackendOrder {
 
 export const api = {
   placeOrder: async (body: {
+    id?: string;
     customerName: string;
     phone: string;
     address: string;

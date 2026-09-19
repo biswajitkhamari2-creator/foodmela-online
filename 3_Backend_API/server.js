@@ -1141,7 +1141,13 @@ const placeOrderHandler = async (req, res) => {
     if (!amountNum || amountNum <= 0 || amountNum > 50000) {
       return res.status(400).json({ success: false, error: 'Valid totalAmount required' });
     }
-    const orderId = req.body.id || `FM-${Math.floor(1000 + Math.random() * 9000)}`;
+    let rawId = String(req.body.id || req.body.orderId || '').trim();
+    if (!rawId) {
+      rawId = `FM-${Math.floor(1000 + Math.random() * 9000)}`;
+    } else if (!rawId.startsWith('FM-')) {
+      rawId = `FM-${rawId.replace(/^FM/i, '')}`;
+    }
+    const orderId = rawId;
 
     const orders = await readOrders();
 
@@ -1309,12 +1315,16 @@ async function phonepeOrderStatus(merchantOrderId) {
 }
 // Shared paid-order writer — same shape as PayU callback (COD/cart/rider/admin untouched).
 async function createPaidOrder({ txnid, customerName, phone, address, items, totalAmount, gatewayRef, gateway }) {
+  let normalizedTxnid = String(txnid || '').trim();
+  if (!normalizedTxnid.startsWith('FM-')) {
+    normalizedTxnid = `FM-${normalizedTxnid.replace(/^FM/i, '')}`;
+  }
   const orders = await readOrders();
-  const existing = orders.find(o => o.id === txnid || o.orderId === txnid);
+  const existing = orders.find(o => o.id === normalizedTxnid || o.orderId === normalizedTxnid || o.id === txnid || o.orderId === txnid);
   if (existing) return { order: existing, duplicate: true };
   const cleanPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
   const newOrder = {
-    id: txnid,
+    id: normalizedTxnid,
     customerName: customerName || 'Customer',
     phone: cleanPhone || phone || 'unknown',
     customerPhone: cleanPhone || phone || 'unknown',
@@ -1602,7 +1612,12 @@ app.post('/api/phonepe/initiate', async (req, res) => {
     if (viewer.role !== 'admin' && viewer.phone !== orderPhone) {
       return res.status(403).json({ success: false, error: 'Phone must be your own number' });
     }
-    const txnid = req.body.orderId || `FM${Date.now().toString().slice(-8)}`;
+    let txnid = String(req.body.orderId || req.body.id || '').trim();
+    if (!txnid) {
+      txnid = `FM-${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 900)}`;
+    } else if (!txnid.startsWith('FM-')) {
+      txnid = `FM-${txnid.replace(/^FM/i, '')}`;
+    }
     const amountPaise = Math.round(amountNum * 100);
     await saveDraftOrder(txnid, {
       orderId: txnid,

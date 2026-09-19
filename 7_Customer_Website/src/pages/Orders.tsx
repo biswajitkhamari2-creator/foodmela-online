@@ -280,7 +280,7 @@ export default function Orders() {
             <div key={o.oid} className="journey-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <Link to={`/track/${encodeURIComponent(o.oid)}`} style={{ fontWeight: 800, color: '#1E2A24', fontSize: 15 }}>
-                  #{o.oid.replace(/^FM-/, '')}
+                  {o.oid.startsWith('FM-') ? o.oid : `FM-${o.oid}`}
                 </Link>
                 <span style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   {o.source === 'app' && (

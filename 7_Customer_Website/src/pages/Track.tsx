@@ -136,7 +136,7 @@ export default function Track() {
   return (
     <div className="section page-enter" style={{ maxWidth: 720 }}>
       <Link to="/orders" style={{ color: '#0e9f4e', fontWeight: 700, fontSize: 14 }}>← My Orders</Link>
-      <h2 style={{ margin: '12px 0 4px' }}>Order #{orderId.replace(/^FM-/, '')}</h2>
+      <h2 style={{ margin: '12px 0 4px' }}>Order {orderId.startsWith('FM-') ? orderId : `FM-${orderId}`}</h2>
       <p style={{ color: '#66707D', fontSize: 13 }}>Live status — updates instantly, no refresh needed</p>
 
       <div className="track-card" style={{ marginTop: 18 }}>

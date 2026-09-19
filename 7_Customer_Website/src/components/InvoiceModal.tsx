@@ -1,3 +1,5 @@
+import { createPortal } from 'react-dom';
+
 export interface InvoiceItem {
   name: string;
   quantity: number;
@@ -85,7 +87,8 @@ function formatInvoiceDate(createdAt: unknown, placedAt?: string): string {
 export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder | null; onClose: () => void }) {
   if (!order) return null;
 
-  const oid = order.oid ?? order.orderId ?? 'FM-ORDER';
+  const rawOid = order.oid ?? order.orderId ?? 'FM-ORDER';
+  const oid = rawOid.startsWith('FM-') ? rawOid : `FM-${rawOid}`;
   const cleanId = oid.replace(/^FM-/, '');
   const items = parseItems(order.items, order.itemsSummary);
 
@@ -106,7 +109,7 @@ export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder |
     window.print();
   };
 
-  return (
+  const modalContent = (
     <div className="invoice-modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div className="invoice-modal-card" onClick={(e) => e.stopPropagation()}>
         {/* Printable Invoice Sheet */}
@@ -124,7 +127,7 @@ export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder |
             <div className="inv-meta-right">
               <span className="inv-badge">TAX INVOICE / RECEIPT</span>
               <div className="inv-meta-line"><strong>Invoice #:</strong> INV-{cleanId}</div>
-              <div className="inv-meta-line"><strong>Order ID:</strong> #{cleanId}</div>
+              <div className="inv-meta-line"><strong>Order ID:</strong> {oid}</div>
               <div className="inv-meta-line"><strong>Date:</strong> {dateStr}</div>
             </div>
           </div>
@@ -242,4 +245,6 @@ export default function InvoiceModal({ order, onClose }: { order: InvoiceOrder |
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }

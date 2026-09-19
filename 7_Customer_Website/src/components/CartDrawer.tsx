@@ -125,6 +125,8 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     setPlacing(true);
     setErr('');
 
+    const generatedOrderId = `FM-${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 900)}`;
+
     // If PREPAID, start PhonePe checkout and navigate to its payment page
     if (effectiveMode === 'PREPAID') {
       try {
@@ -140,6 +142,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             ...(ppToken ? { 'Authorization': `Bearer ${ppToken}` } : {}),
           },
           body: JSON.stringify({
+            orderId: generatedOrderId,
             customerName: user.name,
             phone: user.phone,
             email: `${String(user.phone).replace(/[^0-9]/g, '')}@foodmela.online`,
@@ -174,6 +177,7 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
 
     try {
       const res = await api.placeOrder({
+        id: generatedOrderId,
         customerName: user.name,
         phone: user.phone,
         address: effectiveCoupon
