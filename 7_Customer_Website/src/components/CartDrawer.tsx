@@ -125,19 +125,19 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
     setPlacing(true);
     setErr('');
 
-    // If PREPAID, redirect to PayU payment page via auto-submit form
+    // If PREPAID, start PhonePe checkout and navigate to its payment page
     if (effectiveMode === 'PREPAID') {
       try {
         const orderAddr = effectiveCoupon
           ? `${addr} [PREPAID] [Coupon: ${effectiveCoupon.code} (-₹${discountAmount})]`
           : `${addr} [PREPAID]`;
 
-        const payuToken = getApiToken();
-        const initResp = await fetch('/api/payu/initiate', {
+        const ppToken = getApiToken();
+        const initResp = await fetch('/api/phonepe/initiate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(payuToken ? { 'Authorization': `Bearer ${payuToken}` } : {}),
+            ...(ppToken ? { 'Authorization': `Bearer ${ppToken}` } : {}),
           },
           body: JSON.stringify({
             customerName: user.name,
@@ -157,26 +157,15 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
 
         const initData = await initResp.json();
 
-        if (initData.success && initData.payuUrl && initData.fields) {
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = initData.payuUrl;
-          for (const [k, v] of Object.entries(initData.fields as Record<string, string>)) {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = k;
-            input.value = v ?? '';
-            form.appendChild(input);
-          }
-          document.body.appendChild(form);
-          form.submit();
+        if (initData.success && initData.redirectUrl) {
+          window.location.href = initData.redirectUrl as string;
           return;
         }
         setErr(initData.error || 'Payment gateway unavailable — try COD (≤ ₹100)');
         setPlacing(false);
         return;
       } catch (e) {
-        console.warn('PayU initiate error:', e);
+        console.warn('PhonePe initiate error:', e);
         setErr('Payment gateway unreachable — try again or use COD (≤ ₹100)');
         setPlacing(false);
         return;
