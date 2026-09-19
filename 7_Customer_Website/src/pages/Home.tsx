@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CATEGORIES,
@@ -33,8 +33,19 @@ export default function Home() {
     () => [...livePromos, ...PROMO_OFFERS.filter((s) => !livePromos.some((l) => l.code === s.code))],
     [livePromos],
   );
-  const { city } = useDeliveryLocation();
+  const { city, area, setLocOpen } = useDeliveryLocation();
   const nav = useNavigate();
+  const [heroQ, setHeroQ] = useState('');
+
+  const submitHeroSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      nav('/login');
+      return;
+    }
+    const query = heroQ.trim();
+    nav(query ? `/grocery?q=${encodeURIComponent(query)}` : '/grocery');
+  };
 
   // ── Discovery rails — all computed from REAL catalog + live prices ──
   // Prepared-food menu items are excluded from every display rail (frontend only).
@@ -106,8 +117,75 @@ export default function Home() {
     return m;
   }, [allItems]);
 
+  // Screenshot-style category tiles — every tile routes to REAL catalog
+  // categories via the existing /grocery?cat= filter. No backend change.
+  const shotCats = [
+    { key: 'all', label: 'Meals', emoji: '🍛' },
+    { key: 'vegetables', label: 'Vegetables', emoji: '🥬' },
+    { key: 'grocery', label: 'Groceries', emoji: '🛒' },
+    { key: 'dairy', label: 'Beverages', emoji: '🥤' },
+  ];
+
   return (
     <div className="page-enter">
+      {/* ── SCREENSHOT HERO — "Good Food Brighter Days" ── */}
+      <section className="fms-hero" aria-label="FoodMela hero">
+        <div className="fms-hero-inner">
+          <div className="fms-hero-left">
+            <p className="fms-script">From Our Kitchen to Your Home</p>
+            <h1>
+              Good Food<br />
+              <span className="fms-hi">Brighter Days</span>
+            </h1>
+            <p className="fms-hero-sub">
+              Fresh, healthy meals delivered to your doorstep — local, fresh &amp; trusted.
+            </p>
+            <form className="fms-hero-search" onSubmit={submitHeroSearch} role="search">
+              <span className="fms-pin" aria-hidden="true">📍</span>
+              <button type="button" className="fms-area" onClick={() => setLocOpen(true)} aria-label={`Delivery area: ${area}, ${city}. Change area`}>
+                {area}, {city} ▾
+              </button>
+              <span className="fms-div" aria-hidden="true" />
+              <input
+                value={heroQ}
+                onChange={(e) => setHeroQ(e.target.value)}
+                placeholder="Search for meals, vegetables..."
+                aria-label="Search for meals, vegetables"
+              />
+              <button type="submit" className="fms-go" aria-label="Search">🔍</button>
+            </form>
+            <div className="fms-cat-row" role="list" aria-label="Shop by category">
+              {shotCats.map((c) => (
+                <button
+                  key={c.key}
+                  role="listitem"
+                  className="fms-cat"
+                  onClick={() => {
+                    if (!user) { nav('/login'); return; }
+                    nav(c.key === 'all' ? '/grocery' : `/grocery?cat=${c.key}`);
+                  }}
+                >
+                  <span className="fms-cat-ico" aria-hidden="true">{c.emoji}</span>
+                  <span>{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="fms-hero-right" aria-hidden="true">
+            <div className="fms-blob" />
+            <img src="/hero-rider.jpg" alt="" className="fms-rider" loading="eager" />
+            <div className="fms-float fms-f1">⚡ 15–25 min delivery</div>
+            <div className="fms-float fms-f2">🥬 Farm fresh daily</div>
+          </div>
+        </div>
+        <div className="fms-trust" role="list" aria-label="Why FoodMela">
+          <div role="listitem"><span aria-hidden="true">🍽️</span><strong>Wide Variety</strong></div>
+          <div role="listitem"><span aria-hidden="true">🥬</span><strong>Fresh &amp; Quality</strong></div>
+          <div role="listitem"><span aria-hidden="true">🛵</span><strong>Fast Delivery</strong></div>
+          <div role="listitem"><span aria-hidden="true">🛡️</span><strong>Safe &amp; Secure</strong></div>
+        </div>
+      </section>
+
       <div className="section" style={{ paddingTop: 14, paddingBottom: 6 }}>
         {/* ── LIVE ANIMATED RUNNING TICKER (2D) ── */}
         <div className="live-ticker-wrap" aria-label="Live announcements">
@@ -357,21 +435,40 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── WHY FOODMELA ── */}
+      {/* ── HOW FOODMELA WORKS (screenshot band) ── */}
       <div className="section">
-        <div className="section-head">
-          <div>
-            <h2>Why order with <span className="accent">FoodMela?</span></h2>
-          </div>
-        </div>
-        <div className="benefit-grid">
-          {BENEFITS.map((b) => (
-            <div key={b.title} className="benefit-card">
-              <div className="b-ico" style={{ background: b.bg }} aria-hidden="true">{b.emoji}</div>
-              <strong>{b.title}</strong>
-              <small>{b.text}</small>
+        <div className="fms-how">
+          <h2>How FoodMela Works</h2>
+          <p className="fms-how-sub">Delicious food is just a few clicks away.</p>
+          <div className="fms-steps" role="list">
+            <div className="fms-step" role="listitem">
+              <span className="fms-step-n">1</span>
+              <span className="fms-step-ico" aria-hidden="true">📍</span>
+              <strong>Choose your area</strong>
+              <small>Pick {area}, {city} &amp; browse fresh picks</small>
             </div>
-          ))}
+            <div className="fms-step" role="listitem">
+              <span className="fms-step-n">2</span>
+              <span className="fms-step-ico" aria-hidden="true">🛒</span>
+              <strong>Place your order</strong>
+              <small>Few clicks, COD &amp; UPI accepted</small>
+            </div>
+            <div className="fms-step" role="listitem">
+              <span className="fms-step-n">3</span>
+              <span className="fms-step-ico" aria-hidden="true">🛵</span>
+              <strong>Fast doorstep delivery</strong>
+              <small>Hot &amp; fresh in 15–25 mins</small>
+            </div>
+          </div>
+          <div className="benefit-grid" style={{ marginTop: 18 }}>
+            {BENEFITS.map((b) => (
+              <div key={b.title} className="benefit-card">
+                <div className="b-ico" style={{ background: b.bg }} aria-hidden="true">{b.emoji}</div>
+                <strong>{b.title}</strong>
+                <small>{b.text}</small>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
