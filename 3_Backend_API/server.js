@@ -821,11 +821,18 @@ app.post('/api/auth/admin/token', async (req, res) => {
   try {
     const authHeader = String(req.headers.authorization || '');
     const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : String(req.body.idToken || '');
-    if (!(await isAdminCaller(idToken))) {
+    if (!idToken) {
+      console.error('admin-token: no ID token in request');
+      return res.status(403).json({ success: false, error: 'admin only' });
+    }
+    const ok = await isAdminCaller(idToken);
+    if (!ok) {
+      console.error('admin-token: verify failed (FCM key loaded:', !!process.env.FCM_SERVICE_ACCOUNT, ')');
       return res.status(403).json({ success: false, error: 'admin only' });
     }
     res.json({ success: true, apiToken: mintApiToken('0000000000', 'admin') });
   } catch (e) {
+    console.error('admin-token exception:', e.message);
     res.status(500).json({ success: false, error: 'token mint failed' });
   }
 });

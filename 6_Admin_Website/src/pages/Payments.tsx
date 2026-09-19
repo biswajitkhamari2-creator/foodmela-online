@@ -67,7 +67,12 @@ export default function Payments({ globalSearch }: { globalSearch?: string }) {
     try {
       const res = await adminFetch('/api/admin/payments?limit=200');
       const data = (await res.json()) as { success: boolean; payments?: PayRec[]; error?: string };
-      if (!res.ok || !data.success) throw new Error(data.error || `Server ${res.status}`);
+      if (!res.ok || !data.success) {
+        const hint = res.status === 403
+          ? ' (admin token nahi bana — ek baar logout karke dobara login karo; phir bhi aaye to backend me FCM key check karni padegi)'
+          : '';
+        throw new Error(`${data.error || `Server ${res.status}`}${hint}`);
+      }
       setRows(Array.isArray(data.payments) ? data.payments : []);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not load payments');
