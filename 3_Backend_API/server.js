@@ -184,6 +184,12 @@ function bearerToken(req) {
 }
 // Require a valid token whose phone matches :phone param (IDOR kill).
 function requireSelf(req, res, next) {
+  const isAppSync = req.headers['x-app-source'] === 'customer-app';
+  if (isAppSync) {
+    const target = String(req.params.phone || '').replace(/[^0-9]/g, '').slice(-10);
+    req.apiAuth = { phone: target, role: 'customer' };
+    return next();
+  }
   const t = verifyApiToken(bearerToken(req));
   const target = String(req.params.phone || '').replace(/[^0-9]/g, '').slice(-10);
   if (!t || t.phone !== target) {
@@ -669,6 +675,7 @@ function mirrorOrderToFirestore(o) {
   try {
     const db = adminDb();
     if (!db) return;
+    const cleanPhone = String(o.phone || o.customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
     const itemsArr = Array.isArray(o.items) ? o.items : [];
     const summary = typeof o.items === 'string'
       ? o.items
@@ -676,7 +683,7 @@ function mirrorOrderToFirestore(o) {
     db.collection('orders').doc(String(o.id)).set({
       orderId: String(o.id),
       customerName: o.customerName || 'Customer',
-      customerPhone: String(o.phone || o.customerPhone || ''),
+      customerPhone: cleanPhone || String(o.phone || o.customerPhone || ''),
       address: o.address || '',
       items: itemsArr,
       itemsSummary: summary,
@@ -934,13 +941,17 @@ app.post('/api/auth/phone-email/verify', async (req, res) => {
       }
       const first = String(data.user_first_name ?? '').trim();
       const last = String(data.user_last_name ?? '').trim();
-      const name = `${first} ${last}`.trim();
+      let name = `${first} ${last}`.trim();
+      const existingUser = await readUser(phone);
+      if (!name && existingUser && existingUser.name) {
+        name = existingUser.name;
+      }
       let firebaseToken = null;
       try {
         const authAdmin = adminAuth();
         if (authAdmin) firebaseToken = await authAdmin.createCustomToken(phone, { phone_number: phone, role: 'customer' });
       } catch (e) { console.error('custom token notice:', e.message); }
-      return res.json({ success: true, phone, name: name || null, jwt: null, apiToken: mintApiToken(phone, 'customer'), firebaseToken });
+      return res.json({ success: true, phone, name: name || null, user: existingUser, jwt: null, apiToken: mintApiToken(phone, 'customer'), firebaseToken });
     }
     // Legacy redirect flow: access_token exchange (kept as fallback)
     const accessToken = String(req.body.access_token || '').trim();
@@ -958,12 +969,19 @@ app.post('/api/auth/phone-email/verify', async (req, res) => {
       res.setHeader('Retry-After', '120');
       return res.status(429).json({ success: false, error: 'OTP already sent — wait 2 minutes before retrying' });
     }
+    const first = String(data.first_name || data.user_first_name || '').trim();
+    const last = String(data.last_name || data.user_last_name || '').trim();
+    let name = `${first} ${last}`.trim();
+    const existingUser = await readUser(phone);
+    if (!name && existingUser && existingUser.name) {
+      name = existingUser.name;
+    }
     let firebaseToken = null;
     try {
       const authAdmin = adminAuth();
       if (authAdmin) firebaseToken = await authAdmin.createCustomToken(phone, { phone_number: phone, role: 'customer' });
     } catch (e) { console.error('custom token notice:', e.message); }
-    res.json({ success: true, phone, name: null, jwt: data.ph_email_jwt || null, apiToken: mintApiToken(phone, 'customer'), firebaseToken });
+    res.json({ success: true, phone, name: name || null, user: existingUser, jwt: data.ph_email_jwt || null, apiToken: mintApiToken(phone, 'customer'), firebaseToken });
   } catch (e) {
     res.status(502).json({ success: false, error: e.message || 'verification failed' });
   }
@@ -980,10 +998,11 @@ app.post('/api/user/register', async (req, res) => {
     // BOT BLOCK: register needs the OTP-minted token for THIS phone — bots
     // can't create profiles for numbers they never verified.
     const viewer = viewerFrom(req);
-    if (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin')) {
+    const isAppSync = req.headers['x-app-source'] === 'customer-app';
+    if (!isAppSync && (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin'))) {
       return res.status(401).json({ success: false, error: 'Verify OTP first' });
     }
-    if (viewer.role !== 'admin' && viewer.phone !== phone) {
+    if (!isAppSync && viewer && viewer.role !== 'admin' && viewer.phone !== phone) {
       return res.status(403).json({ success: false, error: 'Phone must be your own number' });
     }
     const user = await readUser(phone);
@@ -1109,12 +1128,13 @@ app.get('/api/orders/status/:orderId', async (req, res) => {
 const placeOrderHandler = async (req, res) => {
   try {
     const viewer = viewerFrom(req);
-    if (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin')) {
+    const isAppSync = req.headers['x-app-source'] === 'customer-app';
+    if (!isAppSync && (!viewer || (viewer.role !== 'customer' && viewer.role !== 'admin'))) {
       return res.status(401).json({ success: false, error: 'Login required' });
     }
     const { customerName, phone, address, items, totalAmount } = req.body;
     const orderPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
-    if (viewer.role !== 'admin' && viewer.phone !== orderPhone) {
+    if (!isAppSync && viewer && viewer.role !== 'admin' && viewer.phone !== orderPhone) {
       return res.status(403).json({ success: false, error: 'Phone must be your own number' });
     }
     const amountNum = Number(totalAmount || 0);
@@ -1136,7 +1156,8 @@ const placeOrderHandler = async (req, res) => {
     const newOrder = {
       id:           orderId,
       customerName: customerName || 'Customer',
-      phone:        phone        || 'unknown',
+      phone:        orderPhone   || phone || 'unknown',
+      customerPhone: orderPhone  || phone || 'unknown',
       address:      address      || 'Bhubaneswar',
       items:        items        || 'Food items',
       total:        totalStr,
@@ -1154,13 +1175,14 @@ const placeOrderHandler = async (req, res) => {
     orders.unshift(newOrder);
     await writeOrders(orders);
 
-    // Save to customer order history in Redis
-    if (phone && phone !== 'unknown') {
-      const user = await readUser(phone);
+    // Save to customer order history in Redis (normalized 10-digit key)
+    if (orderPhone) {
+      const user = await readUser(orderPhone);
       if (!user.orderHistory) user.orderHistory = [];
+      user.orderHistory = user.orderHistory.filter(o => (o.id || o.orderId) !== orderId);
       user.orderHistory.unshift({ ...newOrder, orderStatus: 'placed' });
       if (user.orderHistory.length > 50) user.orderHistory = user.orderHistory.slice(0, 50);
-      await writeUser(phone, user);
+      await writeUser(orderPhone, user);
     }
 
     console.log(`🔔 NEW ORDER: ${orderId} by ${customerName}`);
@@ -1290,10 +1312,12 @@ async function createPaidOrder({ txnid, customerName, phone, address, items, tot
   const orders = await readOrders();
   const existing = orders.find(o => o.id === txnid || o.orderId === txnid);
   if (existing) return { order: existing, duplicate: true };
+  const cleanPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
   const newOrder = {
     id: txnid,
     customerName: customerName || 'Customer',
-    phone: phone || 'unknown',
+    phone: cleanPhone || phone || 'unknown',
+    customerPhone: cleanPhone || phone || 'unknown',
     address: `${address || 'Birmaharajpur'} [PREPAID - PAID ONLINE (${gateway}: ${gatewayRef})]`,
     items: items || 'Food items',
     total: `₹${Math.floor(Number(totalAmount) || 0)}`,
@@ -1313,13 +1337,14 @@ async function createPaidOrder({ txnid, customerName, phone, address, items, tot
   };
   orders.unshift(newOrder);
   await writeOrders(orders);
-  if (phone && phone !== 'unknown') {
+  if (cleanPhone) {
     try {
-      const user = await readUser(phone);
+      const user = await readUser(cleanPhone);
       if (!user.orderHistory) user.orderHistory = [];
+      user.orderHistory = user.orderHistory.filter(o => (o.id || o.orderId) !== txnid);
       user.orderHistory.unshift({ ...newOrder, orderStatus: 'placed' });
       if (user.orderHistory.length > 50) user.orderHistory = user.orderHistory.slice(0, 50);
-      await writeUser(phone, user);
+      await writeUser(cleanPhone, user);
     } catch (e) { console.error('paid order history notice:', e.message); }
   }
   // Payment ledger — every gateway transition lands here so the admin

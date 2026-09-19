@@ -141,7 +141,7 @@ export const api = {
   // firebaseToken on success — callers must persist both via setApiToken
   // and signIntoFirestore.
   verifyPhoneEmail: (body: { user_json_url: string } | { access_token: string }) =>
-    req<{ success: boolean; phone: string; name: string | null; jwt: string | null; apiToken?: string; firebaseToken?: string }>('/api/auth/phone-email/verify', {
+    req<{ success: boolean; phone: string; name: string | null; user?: Record<string, any>; jwt: string | null; apiToken?: string; firebaseToken?: string }>('/api/auth/phone-email/verify', {
       method: 'POST',
       body: JSON.stringify(body),
     }),

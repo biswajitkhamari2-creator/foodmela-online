@@ -128,6 +128,21 @@ export default function Login() {
         if (data.apiToken) setApiToken(data.apiToken);
         await signIntoFirestore(data.firebaseToken ?? null);
       } catch { /* backend API still works without Firestore auth */ }
+
+      // Check if backend verification already returned a registered user profile
+      const returnedUser = data.user as Record<string, unknown> | undefined;
+      const verifiedName = String(data.name ?? returnedUser?.fullName ?? returnedUser?.name ?? '').trim();
+      if (verifiedName && !['customer', 'user', 'food mela user', '—', '-'].includes(verifiedName.toLowerCase())) {
+        const addrs = Array.isArray(returnedUser?.addresses) ? (returnedUser?.addresses as Record<string, unknown>[]) : [];
+        const addr = String(addrs[0]?.address ?? returnedUser?.address ?? '').trim();
+        try {
+          sessionStorage.removeItem('fm_pe_phone');
+          sessionStorage.removeItem('fm_pe_name');
+        } catch { /* ignore */ }
+        setUser({ name: verifiedName, phone, address: addr });
+        nav('/');
+        return;
+      }
     } catch {
       setErr('Could not reach verification server. Check your internet and try again.');
       setBusy(false);
