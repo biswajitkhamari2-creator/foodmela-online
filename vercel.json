@@ -28,8 +28,8 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/[...all]" },
     { "source": "/admin/:path*", "destination": "/admin/index.html" },
-    { "source": "/rider-app/:path*", "destination": "/rider-app/index.html" },
+    { "source": "/rider", "destination": "/rider-app/index.html" },
     { "source": "/sitemap.xml", "destination": "/api/[...all]" },
-    { "source": "/((?!api|admin|rider-app|.*\\..*).*)", "destination": "/index.html" }
+    { "source": "/((?!api|admin|rider|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
