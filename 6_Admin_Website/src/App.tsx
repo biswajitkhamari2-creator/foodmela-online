@@ -95,31 +95,38 @@ function AdminLayout() {
       <div className="main-wrap">
         <div className="topbar">
           <div className="topbar-left">
-            <button className="menu-btn" onClick={() => setMobileOpen(!mobileOpen)}>☰</button>
-            <div>
-              <h1 className="topbar-title">{current.title}</h1>
+            <button className="menu-btn" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Toggle menu">☰</button>
+            <div className="topbar-heading">
+              <div className="topbar-title-row">
+                <h1 className="topbar-title">{current.title}</h1>
+                <span className="topbar-env-pill">Console</span>
+              </div>
               <p className="topbar-subtitle">{current.subtitle}</p>
             </div>
           </div>
           <div className="topbar-right">
             <div className="global-search">
-              <span>🔍</span>
+              <span className="search-icon">🔍</span>
               <input
                 id="global-search-input"
-                placeholder="Search by 4-digit ID, orders, customers, partners..."
+                placeholder="Search orders, customers, partners..."
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
               />
               {globalSearch ? (
                 <button className="search-clear" onClick={() => setGlobalSearch('')} title="Clear search">✕</button>
               ) : (
-                <kbd className="search-hint">/</kbd>
+                <kbd className="search-hint">⌘K</kbd>
               )}
             </div>
-            <span className="topbar-clock" title={now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}>
-              {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
-            </span>
-            <span className="live-badge"><span className="live-dot-sm" /> LIVE</span>
+            <div className="topbar-clock" title={now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}>
+              <span className="clock-icon">🕒</span>
+              <span>{now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}</span>
+            </div>
+            <div className="live-badge">
+              <span className="live-dot-sm" />
+              <span>LIVE</span>
+            </div>
           </div>
         </div>
         <div className="content">
