@@ -34,8 +34,6 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/[...all]" },
     { "source": "/admin/:path*", "destination": "/admin/index.html" },
-    { "source": "/robots.txt", "destination": "/robots.txt" },
-    { "source": "/sitemap.xml", "destination": "/sitemap.xml" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api|admin|.*\\..*).*)", "destination": "/index.html" }
   ]
 }
