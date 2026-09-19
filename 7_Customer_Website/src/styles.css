@@ -21,6 +21,10 @@
   --muted: #64748b;
   --faint: #94a3b8;
   --line: #e2ede5;
+  --border: #e2ede5;
+  --green: #0e9f4e;
+  --green-tint: #eaf7ee;
+  --green-ink: #065427;
   --success: #0e9f4e;
   --r-lg: 20px;
   --r-md: 14px;
@@ -3923,5 +3927,216 @@ img { display: block; max-width: 100%; }
     margin: 0 auto 16px;
   }
 }
+
+/* ── Premium Payment Method Selector (CartDrawer) ── */
+.pay-opt-box {
+  margin: 12px 0 16px;
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1.5px solid #e2ede5;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.pay-opt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.pay-opt-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pay-opt-secure-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0e9f4e;
+  background: #ecfdf5;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pay-methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pay-method-card {
+  position: relative;
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  cursor: pointer;
+  text-align: left;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #1e293b;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 86px;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+}
+
+.pay-method-card:hover:not(:disabled):not(.active) {
+  border-color: #86efac;
+  background: #fcfdfc;
+  transform: translateY(-1px);
+}
+
+/* 🟢 ACTIVE / SELECTED STATE: VIBRANT EMERALD GREEN */
+.pay-method-card.active {
+  border: 2px solid #0e9f4e !important;
+  background: linear-gradient(145deg, #f0fdf4 0%, #e6f7ec 100%) !important;
+  color: #065427 !important;
+  box-shadow: 0 4px 14px rgba(14, 159, 78, 0.22), 0 0 0 1px #0e9f4e !important;
+  transform: translateY(-1px);
+}
+
+/* Radio circle selector */
+.pay-method-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pay-method-card.active .pay-method-radio {
+  border-color: #0e9f4e;
+  background: #0e9f4e;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(14, 159, 78, 0.4);
+}
+
+.pay-method-radio svg {
+  width: 11px;
+  height: 11px;
+  stroke-width: 3.5;
+}
+
+.pay-method-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.pay-method-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.pay-method-card.active .pay-method-icon-title {
+  color: #065427;
+}
+
+.pay-method-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.pay-method-card.active .pay-method-sub {
+  color: #097337;
+  font-weight: 700;
+}
+
+.pay-method-badge {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  margin-top: 6px;
+  align-self: flex-start;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.pay-method-card.active .pay-method-badge {
+  background: #0e9f4e;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(14, 159, 78, 0.3);
+}
+
+.pay-method-badge.badge-neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.pay-method-badge.badge-danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Disabled COD Card */
+.pay-method-card.disabled {
+  opacity: 0.65;
+  background: #f8fafc !important;
+  border: 1.5px dashed #cbd5e1 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.pay-method-card.disabled .pay-method-icon-title {
+  color: #94a3b8;
+}
+
+.pay-method-card.disabled .pay-method-sub {
+  color: #94a3b8;
+}
+
+/* Mobile specific responsive adjustments */
+@media (max-width: 420px) {
+  .pay-methods-grid {
+    gap: 8px;
+  }
+  .pay-method-card {
+    padding: 10px 8px 8px;
+    min-height: 80px;
+  }
+  .pay-method-icon-title {
+    font-size: 11px;
+    gap: 4px;
+  }
+  .pay-method-sub {
+    font-size: 9.5px;
+  }
+  .pay-method-badge {
+    font-size: 8.5px;
+    padding: 2px 5px;
+  }
+}
+
 
 

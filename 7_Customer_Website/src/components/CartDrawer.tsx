@@ -531,65 +531,85 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               </div>
 
               {/* Payment Method Section */}
-              <div className="pay-opt-box" style={{ margin: '10px 0 14px', background: '#f7f9f6', padding: '12px', borderRadius: '14px', border: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#66707D', marginBottom: '8px' }}>
-                  Payment Method
+              <div className="pay-opt-box">
+                <div className="pay-opt-header">
+                  <div className="pay-opt-title">
+                    <span>💳 Payment Method</span>
+                  </div>
+                  <span className="pay-opt-secure-badge">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    100% Safe Checkout
+                  </span>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+
+                <div className="pay-methods-grid">
+                  {/* Cash on Delivery Card */}
                   <button
                     type="button"
                     onClick={() => isCodAllowed && setPaymentMode('cod')}
                     disabled={!isCodAllowed}
-                    style={{
-                      padding: '8px 6px',
-                      borderRadius: '10px',
-                      border: `1.5px solid ${paymentMode === 'cod' && isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
-                      background: paymentMode === 'cod' && isCodAllowed ? 'var(--green-tint)' : isCodAllowed ? '#fff' : '#f1f3f0',
-                      color: !isCodAllowed ? '#9AA3AF' : paymentMode === 'cod' ? 'var(--green-ink)' : '#2B323B',
-                      cursor: isCodAllowed ? 'pointer' : 'not-allowed',
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      fontFamily: 'inherit',
-                    }}
+                    className={`pay-method-card ${paymentMode === 'cod' && isCodAllowed ? 'active' : ''} ${!isCodAllowed ? 'disabled' : ''}`}
+                    aria-pressed={paymentMode === 'cod' && isCodAllowed}
                   >
-                    💵 Cash on Delivery
-                    <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: isCodAllowed ? 'var(--green-ink)' : '#C4271F', marginTop: '2px' }}>
+                    <div className="pay-method-top">
+                      <div className="pay-method-icon-title">
+                        <span>💵</span>
+                        <span>Cash On Delivery</span>
+                      </div>
+                      <div className="pay-method-radio">
+                        {paymentMode === 'cod' && isCodAllowed && (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="pay-method-sub">
+                      Pay cash at doorstep
+                    </div>
+                    <span className={`pay-method-badge ${paymentMode === 'cod' && isCodAllowed ? '' : isCodAllowed ? 'badge-neutral' : 'badge-danger'}`}>
                       {isCodAllowed ? 'Available (≤ ₹100)' : 'Unavailable (> ₹100)'}
                     </span>
                   </button>
 
+                  {/* Online / Prepaid Card */}
                   <button
                     type="button"
                     onClick={() => setPaymentMode('prepaid')}
-                    style={{
-                      padding: '8px 6px',
-                      borderRadius: '10px',
-                      border: `1.5px solid ${paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green)' : '#D8DED6'}`,
-                      background: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-tint)' : '#fff',
-                      color: paymentMode === 'prepaid' || !isCodAllowed ? 'var(--green-ink)' : '#2B323B',
-                      cursor: 'pointer',
-                      fontSize: '11.5px',
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      fontFamily: 'inherit',
-                    }}
+                    className={`pay-method-card ${paymentMode === 'prepaid' ? 'active' : ''}`}
+                    aria-pressed={paymentMode === 'prepaid'}
                   >
-                    📱 Online / Prepaid
-                    <span style={{ display: 'block', fontSize: '10px', fontWeight: 600, color: 'var(--green-ink)', marginTop: '2px' }}>
-                      UPI / QR Transfer
+                    <div className="pay-method-top">
+                      <div className="pay-method-icon-title">
+                        <span>⚡</span>
+                        <span>Online / UPI</span>
+                      </div>
+                      <div className="pay-method-radio">
+                        {paymentMode === 'prepaid' && (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                    <div className="pay-method-sub">
+                      PhonePe, GPay, Cards
+                    </div>
+                    <span className={`pay-method-badge ${paymentMode === 'prepaid' ? '' : 'badge-neutral'}`}>
+                      {paymentMode === 'prepaid' ? '✓ Instant & Safe' : 'Instant & Safe'}
                     </span>
                   </button>
                 </div>
 
                 {!isCodAllowed && (
-                  <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '8px', background: '#FEF2F2', padding: '6px 8px', borderRadius: '8px', lineHeight: '1.4' }}>
-                    ℹ️ Orders above ₹100 must be Prepaid. COD is capped at ₹100.
+                  <div style={{ fontSize: '11px', color: '#B91C1C', marginTop: '10px', background: '#FEF2F2', padding: '7px 10px', borderRadius: '8px', lineHeight: '1.4', border: '1px solid #FECACA', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>ℹ️</span>
+                    <span>Orders above ₹100 must be Prepaid. COD is available only for orders up to ₹100.</span>
                   </div>
                 )}
 
-                <div style={{ fontSize: '10.5px', color: '#56606D', marginTop: '8px', textAlign: 'center', lineHeight: '1.4' }}>
-                  🔒 <strong>100% Sealed Delivery:</strong> Orders are picked up sealed from partner stores. Report transit issues within 60 mins. Helpline: <a href="tel:8144503650" style={{ color: 'var(--green)', fontWeight: 700 }}>8144503650</a>
+                <div style={{ fontSize: '10.5px', color: '#64748B', marginTop: '10px', textAlign: 'center', lineHeight: '1.4', background: '#F8FAFC', padding: '7px 10px', borderRadius: '8px' }}>
+                  🔒 <strong>100% Sealed Delivery:</strong> Orders are picked up sealed from partner stores. Report transit issues within 60 mins. Helpline: <a href="tel:8144503650" style={{ color: '#0E9F4E', fontWeight: 700 }}>8144503650</a>
                 </div>
               </div>
             </>
@@ -604,8 +624,9 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div>
-                <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  To Pay ({effectiveMode})
+                <div style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>To Pay</span>
+                  <span style={{ fontSize: '9.5px', background: '#ecfdf5', color: '#0e9f4e', border: '1px solid #bbf7d0', padding: '1px 6px', borderRadius: '6px', fontWeight: 800 }}>{effectiveMode}</span>
                 </div>
                 <div style={{ fontSize: '20px', fontWeight: 900, color: 'var(--ink)', lineHeight: '1.2' }}>
                   ₹{grand}
