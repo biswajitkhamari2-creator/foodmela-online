@@ -596,6 +596,35 @@ async function writeOrders(orders) {
   }
 }
 
+// ─── ORDER STATUS AUTHORITY (server-side source of truth) ────────────────────
+// ONE ORDER → ONE SERVER STATE → ALL CLIENTS SEE THE SAME STATE.
+// Every mutation goes through applyStatusTransition(): it re-reads the latest
+// persisted record, validates the transition against the CURRENT server state
+// (never the caller's claimed state), bumps a monotonic version, appends a
+// history entry, and returns the confirmed record. Clients must render ONLY
+// the `order` object returned by the API — never their local guess.
+const FINAL_STAGES = [3, -1];
+function isFinalStage(s) { return FINAL_STAGES.includes(Number(s)); }
+// Allowed forward transitions only. Cancel (-1) is handled by /cancel.
+const ALLOWED_TRANSITIONS = { 0: [1], 1: [2], 2: [3] };
+function transitionAllowed(from, to) {
+  return (ALLOWED_TRANSITIONS[Number(from)] || []).includes(Number(to));
+}
+function appendStatusHistory(order, { from, to, fromStatus, toStatus, actor, actorName, opId }) {
+  const hist = Array.isArray(order.statusHistory) ? order.statusHistory.slice(-49) : [];
+  hist.push({
+    from, to, fromStatus: fromStatus || null, toStatus: toStatus || null,
+    actor: actor || null, actorName: actorName || null, opId: opId || null,
+    at: new Date().toISOString(),
+  });
+  return hist;
+}
+// Idempotency: same opId replayed → return current server state, no duplicate write.
+function findOrderByOpId(orders, opId) {
+  if (!opId) return -1;
+  return orders.findIndex(o => Array.isArray(o.statusHistory) && o.statusHistory.some(h => h.opId === opId));
+}
+
 // ─── ROOT HEALTH CHECK ────────────────────────────────────────────────────────
 app.get('/', async (req, res) => {
   const orders = await readOrders();
@@ -1123,8 +1152,24 @@ app.get('/api/user/:phone/orders', requireSelf, async (req, res) => {
 // strangers (no OTP/FCM tokens); full view for owner or rider/admin.
 app.get('/api/orders/status/:orderId', async (req, res) => {
   try {
+    const rawOid = String(req.params.orderId || '').trim();
+    const cleanOid = rawOid.startsWith('FM-') ? rawOid : `FM-${rawOid.replace(/^FM/i, '')}`;
     const orders = await readOrders();
-    const order  = orders.find(o => o.id === req.params.orderId);
+    let order = orders.find(o => o.id === rawOid || o.orderId === rawOid || o.id === cleanOid || o.orderId === cleanOid);
+    if (!order) {
+      try {
+        const db = adminDb();
+        if (db) {
+          let snap = await db.collection('orders').doc(rawOid).get();
+          if (!snap.exists && cleanOid !== rawOid) {
+            snap = await db.collection('orders').doc(cleanOid).get();
+          }
+          if (snap.exists) {
+            order = { id: snap.id, ...snap.data() };
+          }
+        }
+      } catch (e) { console.error('fs order status lookup error:', e.message); }
+    }
     if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
     res.json({ success: true, order: sanitizeOrder(order, viewerFrom(req)) });
   } catch (e) {
@@ -1655,6 +1700,15 @@ app.post('/api/phonepe/initiate', async (req, res) => {
         type: 'PG_CHECKOUT',
         message: 'FoodMela Order Payment',
         merchantUrls: { redirectUrl },
+        paymentModeConfig: {
+          version: 'V2',
+          disabledPaymentModes: [
+            {
+              type: 'UPI',
+              flows: ['QR'],
+            },
+          ],
+        },
       },
     }, token);
     const redirect = json.redirectUrl || json?.data?.redirectUrl;
@@ -1821,10 +1875,11 @@ app.get('/api/payu/status/:txnid', async (req, res) => {
 // blocking/approval enforced via Upstash user record.
 app.post('/api/orders/accept', requireRider, async (req, res) => {
   try {
-    const { orderId } = req.body;
+    const rawOrderId = String(req.body.orderId || '').trim();
     const driverId = req.apiAuth.phone;
     const driverName = String(req.body.driverName || '').slice(0, 60) || 'Delivery Partner';
-    if (!orderId) return res.status(400).json({ success: false, error: 'orderId required' });
+    if (!rawOrderId) return res.status(400).json({ success: false, error: 'orderId required' });
+    const orderId = rawOrderId.startsWith('FM-') ? rawOrderId : `FM-${rawOrderId.replace(/^FM/i, '')}`;
 
     // ── Enforce partner blocking/approval via Upstash user record ──────────
     if (driverId) {
@@ -1856,37 +1911,97 @@ app.post('/api/orders/accept', requireRider, async (req, res) => {
       }
     }
 
-    const orders = await readOrders();
-    const idx    = orders.findIndex(o => o.id === orderId);
+    let orders = await readOrders();
+    let idx = orders.findIndex(o => o.id === rawOrderId || o.orderId === rawOrderId || o.id === orderId || o.orderId === orderId);
+    let fsOrder = null;
 
     if (idx === -1) {
-      return res.status(409).json({ success: false, error: 'Order already accepted by another driver' });
+      try {
+        const db = adminDb();
+        if (db) {
+          let snap = await db.collection('orders').doc(rawOrderId).get();
+          if (!snap.exists && rawOrderId !== orderId) {
+            snap = await db.collection('orders').doc(orderId).get();
+          }
+          if (snap.exists) fsOrder = snap.data();
+        }
+      } catch (e) { console.error('accept fs lookup error:', e.message); }
+      if (!fsOrder) {
+        return res.status(404).json({ success: false, error: 'Order not found' });
+      }
     }
 
-    const order = orders[idx];
-
-    // Already accepted by a DIFFERENT driver → reject
-    if (order.acceptedBy && order.acceptedBy !== driverId) {
+    const cur = idx !== -1 ? orders[idx] : fsOrder;
+    if (cur.acceptedBy && cur.acceptedBy !== driverId) {
       return res.status(409).json({
         success: false,
-        error: `Order already accepted by ${order.acceptedByName || order.acceptedBy}`,
+        error: `Order already accepted by ${cur.acceptedByName || cur.acceptedBy}`,
       });
     }
 
-    // Accept it
-    orders[idx] = {
-      ...order,
-      stage:          1,
-      status:         'Preparing in Kitchen 🍳',
-      acceptedBy:     driverId    || 'driver',
-      acceptedByName: driverName  || 'Delivery Partner',
-      acceptedAt:     new Date().toISOString(),
-      updatedAt:      new Date().toISOString(),
+    // Re-read latest state: first-rider-wins is decided against CURRENT server
+    // state, and final/cancelled orders can never be (re-)accepted.
+    orders = await readOrders();
+    idx = orders.findIndex(o => o.id === rawOrderId || o.orderId === rawOrderId || o.id === orderId || o.orderId === orderId);
+    const latest = idx !== -1 ? orders[idx] : fsOrder;
+    if (latest.acceptedBy && latest.acceptedBy !== driverId) {
+      return res.status(409).json({
+        success: false,
+        error: `Order already accepted by ${latest.acceptedByName || latest.acceptedBy}`,
+        order: latest,
+      });
+    }
+    if (isFinalStage(latest.stage)) {
+      return res.status(409).json({ success: false, error: 'Order is already final and cannot be accepted', order: latest });
+    }
+    if (Number(latest.stage ?? 0) >= 1) {
+      return res.status(409).json({ success: false, error: 'Order already accepted', order: latest });
+    }
+
+    const stamp = new Date().toISOString();
+    const curVersion = Number(latest.statusVersion ?? 0);
+    const updatedOrder = {
+      ...latest,
+      stage: 1,
+      status: 'Order Accepted ✅',
+      statusVersion: curVersion + 1,
+      statusHistory: appendStatusHistory(latest, { from: Number(latest.stage ?? 0), to: 1, fromStatus: latest.status || null, toStatus: 'Order Accepted ✅', actor: driverId || null, actorName: driverName || null, opId: req.body.opId ? String(req.body.opId) : null }),
+      acceptedBy: driverId || 'driver',
+      acceptedByName: driverName || 'Delivery Partner',
+      riderName: driverName || 'Delivery Partner',
+      riderId: driverId || 'driver',
+      riderPhone: driverId || '',
+      acceptedAt: stamp,
+      updatedAt: stamp,
     };
 
-    await writeOrders(orders);
+    if (idx !== -1) {
+      orders[idx] = updatedOrder;
+      await writeOrders(orders);
+    }
+
+    // Mirror to Firestore (Admin SDK bypasses rules)
+    try {
+      const db = adminDb();
+      if (db) {
+        await db.collection('orders').doc(orderId).set({
+          stage: 1,
+          status: 'Order Accepted ✅',
+          statusVersion: curVersion + 1,
+          statusHistory: updatedOrder.statusHistory,
+          riderName: driverName || 'Delivery Partner',
+          acceptedByName: driverName || 'Delivery Partner',
+          riderPhone: driverId || '',
+          acceptedByPhone: driverId || '',
+          riderId: driverId || 'driver',
+          acceptedAt: new Date(),
+          updatedAt: new Date(),
+        }, { merge: true });
+      }
+    } catch (e) { console.error('accept fs mirror error:', e.message); }
+
     console.log(`✅ ORDER ${orderId} ACCEPTED by ${driverName}`);
-    res.json({ success: true, order: orders[idx] });
+    res.json({ success: true, order: updatedOrder });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
@@ -1902,8 +2017,9 @@ app.post('/api/orders/cancel', async (req, res) => {
   try {
     const viewer = viewerFrom(req);
     if (!viewer) return res.status(401).json({ success: false, error: 'Login required' });
-    const { orderId } = req.body;
-    if (!orderId) return res.status(400).json({ success: false, error: 'orderId required' });
+    const rawOrderId = String(req.body.orderId || '').trim();
+    if (!rawOrderId) return res.status(400).json({ success: false, error: 'orderId required' });
+    const orderId = rawOrderId.startsWith('FM-') ? rawOrderId : `FM-${rawOrderId.replace(/^FM/i, '')}`;
 
     const orders = await readOrders();
     let idx = orders.findIndex(o => o.id === orderId || o.orderId === orderId);
@@ -1912,8 +2028,12 @@ app.post('/api/orders/cancel', async (req, res) => {
       try {
         const db = adminDb();
         if (db) {
-          const snap = await db.collection('orders').doc(String(orderId)).get();
-          if (snap.exists) fsData = snap.data();
+          const rawSnap = await db.collection('orders').doc(rawOrderId).get();
+          if (rawSnap.exists) fsData = rawSnap.data();
+          else if (rawOrderId !== orderId) {
+            const normSnap = await db.collection('orders').doc(orderId).get();
+            if (normSnap.exists) fsData = normSnap.data();
+          }
         }
       } catch (e) { console.error('cancel fs lookup notice:', e.message); }
       if (!fsData) return res.status(404).json({ success: false, error: 'Order not found' });
@@ -1952,10 +2072,15 @@ app.post('/api/orders/cancel', async (req, res) => {
 
     // 1) Redis global copy (website orders)
     if (idx !== -1) {
+      if (isFinalStage(orders[idx].stage)) {
+        return res.status(409).json({ success: false, error: 'Order is already final and cannot be cancelled', cancelledOrder: sanitizeOrder(orders[idx], viewer) });
+      }
       orders[idx] = {
         ...orders[idx],
         stage:       -1,
         status:      'CANCELLED BY CUSTOMER 🚨',
+        statusVersion: Number(orders[idx].statusVersion ?? 0) + 1,
+        statusHistory: appendStatusHistory(orders[idx], { from: Number(orders[idx].stage ?? 0), to: -1, fromStatus: orders[idx].status || null, toStatus: 'CANCELLED BY CUSTOMER 🚨', actor: viewer.phone || null, actorName: null, opId: null }),
         cancelledAt: stamp,
         updatedAt:   stamp,
       };
@@ -1989,6 +2114,7 @@ app.post('/api/orders/cancel', async (req, res) => {
         await db.collection('orders').doc(String(orderId)).set({
           stage: -1,
           status: 'Cancelled by Customer',
+          ...(cancelledOrder ? { statusVersion: cancelledOrder.statusVersion, statusHistory: cancelledOrder.statusHistory } : {}),
           cancelledAt: new Date(),
           updatedAt: new Date(),
         }, { merge: true });
@@ -2007,7 +2133,7 @@ app.post('/api/orders/cancel', async (req, res) => {
 app.post('/api/orders/update-stage', requireRider, async (req, res) => {
   try {
     const me = req.apiAuth;
-    const { orderId, newStage } = req.body;
+    const { orderId, newStage, expectedVersion, opId } = req.body;
     if (!orderId || newStage === undefined) {
       return res.status(400).json({ success: false, error: 'orderId and newStage required' });
     }
@@ -2016,17 +2142,55 @@ app.post('/api/orders/update-stage', requireRider, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid stage' });
     }
 
-    const orders = await readOrders();
-    const idx    = orders.findIndex(o => o.id === orderId);
-    if (idx === -1) return res.status(404).json({ success: false, error: 'Order not found' });
+    const normOrderId = String(orderId).trim().startsWith('FM-') ? String(orderId).trim() : `FM-${String(orderId).trim().replace(/^FM/i, '')}`;
+    // Re-read latest persisted state right before mutating (server is the authority).
+    let orders = await readOrders();
+    // Idempotent retry: same opId already applied → return current server state.
+    if (opId) {
+      const dupIdx = findOrderByOpId(orders, String(opId));
+      if (dupIdx !== -1) {
+        return res.json({ success: true, idempotent: true, order: sanitizeOrder(orders[dupIdx], me) });
+      }
+    }
+    let idx = orders.findIndex(o => o.id === orderId || o.orderId === orderId || o.id === normOrderId || o.orderId === normOrderId);
+    let fsOrder = null;
+    if (idx === -1) {
+      try {
+        const db = adminDb();
+        if (db) {
+          const rawSnap = await db.collection('orders').doc(String(orderId).trim()).get();
+          if (rawSnap.exists) { fsOrder = rawSnap.data(); }
+          else {
+            const normSnap = await db.collection('orders').doc(normOrderId).get();
+            if (normSnap.exists) fsOrder = normSnap.data();
+          }
+        }
+      } catch (e) { console.error('update-stage fs lookup error:', e.message); }
+      if (!fsOrder) return res.status(404).json({ success: false, error: 'Order not found' });
+    }
 
+    const cur = idx !== -1 ? orders[idx] : fsOrder;
     if (me.role !== 'admin') {
-      const by = String(orders[idx].acceptedBy || '');
+      const by = String(cur.acceptedBy || cur.riderId || cur.riderPhone || '');
       const mine = by && (by === me.phone || by.replace(/[^0-9]/g, '').slice(-10) === me.phone);
       if (!mine) return res.status(403).json({ success: false, error: 'Only the assigned rider can update this order' });
     }
-    if (stage <= orders[idx].stage) {
-      return res.status(409).json({ success: false, error: 'Order already past this stage' });
+    const curStage = Number(cur.stage ?? 0);
+    const curVersion = Number(cur.statusVersion ?? 0);
+    // Optimistic concurrency: stale client holding an old version loses safely.
+    if (expectedVersion !== undefined && expectedVersion !== null && expectedVersion !== '' && Number(expectedVersion) !== curVersion) {
+      return res.status(409).json({ success: false, stale: true, error: 'Stale state — refresh from server', order: sanitizeOrder(cur, me) });
+    }
+    // Final states are terminal: Delivered/Cancelled can never be rewound.
+    if (isFinalStage(curStage)) {
+      return res.status(409).json({ success: false, error: 'Order is already final and cannot change', order: sanitizeOrder(cur, me) });
+    }
+    // Same-stage label refresh (rider micro-steps like "Reached Store" share one
+    // backend stage): allowed as an idempotent progress note, never a rewind.
+    const reqLabel = typeof req.body.label === 'string' ? req.body.label.slice(0, 80) : '';
+    const isLabelOnly = stage === curStage;
+    if (!isLabelOnly && !transitionAllowed(curStage, stage)) {
+      return res.status(409).json({ success: false, error: 'Order already past this stage', order: sanitizeOrder(cur, me) });
     }
 
     const statusMap = {
@@ -2035,16 +2199,71 @@ app.post('/api/orders/update-stage', requireRider, async (req, res) => {
       3: 'Delivered 🏁',
     };
 
-    orders[idx] = {
-      ...orders[idx],
+    const stamp = new Date().toISOString();
+    const newVersion = curVersion + 1;
+    const effectiveStatus = isLabelOnly && reqLabel ? reqLabel : (statusMap[stage] || 'In Progress');
+    const historyEntry = { from: curStage, to: stage, fromStatus: cur.status || null, toStatus: effectiveStatus, actor: me.phone || null, actorName: me.name || null, opId: opId ? String(opId) : null };
+    const applyPatch = (base) => ({
+      ...base,
       stage,
-      status:    statusMap[stage] || 'In Progress',
-      updatedAt: new Date().toISOString(),
-    };
+      status: effectiveStatus,
+      ...(isLabelOnly && reqLabel ? { statusLabel: reqLabel } : {}),
+      statusVersion: newVersion,
+      statusHistory: appendStatusHistory(base, historyEntry),
+      updatedAt: stamp,
+      ...(stage === 3 ? { deliveredAt: stamp } : {}),
+    });
 
-    await writeOrders(orders);
-    console.log(`🔄 ORDER ${orderId} → Stage ${stage} by ${me.phone}`);
-    res.json({ success: true, order: sanitizeOrder(orders[idx], me) });
+    // Re-read once more just before write to shrink the read-modify-write race
+    // window; if another writer moved the order meanwhile, reject as conflict.
+    orders = await readOrders();
+    const reIdx = orders.findIndex(o => o.id === orderId || o.orderId === orderId || o.id === normOrderId || o.orderId === normOrderId);
+    const latest = reIdx !== -1 ? orders[reIdx] : fsOrder;
+    if (latest && (Number(latest.stage ?? 0) !== curStage || Number(latest.statusVersion ?? 0) !== curVersion)) {
+      return res.status(409).json({ success: false, error: 'Concurrent update — refresh from server', order: sanitizeOrder(latest, me) });
+    }
+    let confirmed;
+    if (reIdx !== -1) {
+      orders[reIdx] = applyPatch(orders[reIdx]);
+      await writeOrders(orders);
+      confirmed = orders[reIdx];
+    } else {
+      confirmed = applyPatch({ id: normOrderId, orderId: normOrderId, ...(fsOrder || {}) });
+      try {
+        const freshOrders = await readOrders();
+        const existingIdx = freshOrders.findIndex(o => o.id === normOrderId || o.orderId === normOrderId);
+        if (existingIdx !== -1) {
+          // Someone else inserted meanwhile — re-validate against THEIR state.
+          if (!transitionAllowed(Number(freshOrders[existingIdx].stage ?? 0), stage) || isFinalStage(freshOrders[existingIdx].stage)) {
+            return res.status(409).json({ success: false, error: 'Concurrent update — refresh from server', order: sanitizeOrder(freshOrders[existingIdx], me) });
+          }
+          freshOrders[existingIdx] = applyPatch(freshOrders[existingIdx]);
+          confirmed = freshOrders[existingIdx];
+        } else {
+          freshOrders.unshift(confirmed);
+        }
+        await writeOrders(freshOrders);
+      } catch (e) { console.error('update-stage fs->redis sync error:', e.message); }
+    }
+
+    // Mirror to Firestore via Admin SDK (mirror only — never authoritative).
+    try {
+      const db = adminDb();
+      if (db) {
+        const patch = {
+          stage,
+          status: effectiveStatus,
+          statusVersion: newVersion,
+          statusHistory: confirmed.statusHistory,
+          updatedAt: new Date(),
+        };
+        if (stage === 3) patch.deliveredAt = new Date();
+        await db.collection('orders').doc(normOrderId).set(patch, { merge: true });
+      }
+    } catch (e) { console.error('update-stage fs mirror error:', e.message); }
+
+    console.log(`🔄 ORDER ${normOrderId} → Stage ${stage} (v${newVersion}) by ${me.phone}`);
+    res.json({ success: true, order: sanitizeOrder(confirmed, me) });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, onSnapshot, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
+import { doc, onSnapshot, serverTimestamp, addDoc, collection } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { adminFetch } from '../utils/adminApi';
 import { tsToDate, fmtDateTime, formatOrderId } from '../utils/helpers';
 import { StageBadge, ConfirmDialog, Toast } from '../components/UI';
 import CallLogsPlayer from '../components/CallLogsPlayer';
@@ -44,22 +45,22 @@ export default function OrderDetail() {
     try {
       const isAccept = confirm === 'accept';
       const isDeliver = confirm === 'deliver';
-      await updateDoc(doc(db, 'orders', order.id), isAccept ? {
-        stage: 1,
-        status: 'Accepted by Admin ✅',
-        acceptedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      } : isDeliver ? {
-        stage: 3,
-        status: 'Delivered by Admin 🏁 (no OTP)',
-        deliveredAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      } : {
-        stage: -1,
-        status: 'Rejected by Admin 🚨',
-        cancelledAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      // Server-authoritative: backend validates, persists, mirrors to
+      // Firestore. The onSnapshot listener below renders the confirmed state.
+      // No direct Firestore stage write — that path bypassed validation.
+      const opId = `${order.id}-${confirm}-${Date.now()}`;
+      const endpoint = isAccept ? '/api/orders/accept'
+        : isDeliver ? '/api/orders/update-stage' : '/api/orders/cancel';
+      const payload = isAccept
+        ? { orderId: order.orderId ?? order.id, driverName: adminName || 'Admin', opId }
+        : isDeliver
+          ? { orderId: order.orderId ?? order.id, newStage: 3, opId }
+          : { orderId: order.orderId ?? order.id };
+      const res = await adminFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (!res.ok || data.success !== true) {
+        throw new Error(data.error || `Server rejected the update (${res.status})`);
+      }
       await addDoc(collection(db, 'admin_audit_logs'), {
         adminPhone: user?.uid ?? 'admin',
         adminName: adminName || 'Admin',
