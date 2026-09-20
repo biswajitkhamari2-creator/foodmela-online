@@ -247,6 +247,16 @@ function registerCallRoutes(app, { readOrders, verifyApiToken }) {
       if (!otherId) return res.status(409).json({ success: false, error: 'No rider assigned yet — cannot call' });
 
       const logs = await readCallLogs();
+      // Dedup: same caller re-ringing the same order within 60s reuses the live
+      // call instead of spawning a duplicate ring on the recipient's phone.
+      const nowMs = Date.now();
+      const live = logs.find((l) => String(l.orderId) === String(orderId)
+        && l.status === 'ringing'
+        && String(l.callerId) === String(me)
+        && (nowMs - new Date(l.createdAt).getTime()) < 60000);
+      if (live) {
+        return res.status(200).json({ success: true, duplicate: true, callId: live.id, channelName: live.channelName, log: live });
+      }
       const log = {
         id: `call_${Date.now()}_${Math.floor(Math.random() * 1e4)}`,
         orderId, channelName: channelFor(orderId),
@@ -353,13 +363,53 @@ function registerCallRoutes(app, { readOrders, verifyApiToken }) {
     }
   });
 
-  // ── POST /api/calls/:orderId/status { callId, status, duration? } (reject/miss/cancel) ──
+  // ── POST /api/calls/:orderId/status { callId, status, duration? } ──
+  // Full lifecycle: accepted | rejected | missed | ended | failed | cancelled.
+  // Terminal states are final — a stale client can never rewind an ended call
+  // back to ringing/accepted. Only order members may transition a call.
+  const TERMINAL_CALL_STATES = ['rejected', 'missed', 'ended', 'failed', 'cancelled'];
   app.post('/api/calls/:orderId/status', async (req, res) => {
     try {
       const { callId, status, duration = 0 } = req.body || {};
-      if (!['rejected', 'missed', 'ended', 'failed'].includes(status)) {
+      if (!['accepted', 'rejected', 'missed', 'ended', 'failed', 'cancelled'].includes(status)) {
         return res.status(400).json({ success: false, error: 'bad status' });
       }
+      const viewer = viewerOf(req);
+      if (!viewer) return res.status(401).json({ success: false, error: 'Login required' });
+      const logs = await readCallLogs();
+      const log = logs.find((l) => l.id === callId);
+      if (!log) return res.status(404).json({ success: false, error: 'Call not found' });
+      if (String(log.orderId) !== String(req.params.orderId)) {
+        return res.status(403).json({ success: false, error: 'Call does not belong to this order' });
+      }
+      const vNorm = normPhone(viewer.phone);
+      const isMember = viewer.role === 'admin'
+        || normPhone(log.callerId) === vNorm
+        || normPhone(log.receiverId) === vNorm;
+      if (!isMember) return res.status(403).json({ success: false, error: 'Not part of this call' });
+      if (TERMINAL_CALL_STATES.includes(log.status)) {
+        return res.status(409).json({ success: false, error: 'Call already ended', log });
+      }
+      if (status === 'accepted' && log.status !== 'ringing') {
+        return res.status(409).json({ success: false, error: 'Call is no longer ringing', log });
+      }
+      log.status = status;
+      if (status === 'accepted') log.startedAt = log.startedAt || new Date().toISOString();
+      if (duration) log.duration = Number(duration);
+      if (TERMINAL_CALL_STATES.includes(status)) log.endedAt = new Date().toISOString();
+      await writeCallLogs(logs);
+      res.json({ success: true, log });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  // ── POST /api/calls/:orderId/timeout { callId } ──
+  // Server-side missed-call sweeper: any caller (or cron) can mark a ringing
+  // call older than 45s as missed, so stale rings never haunt the recipient.
+  app.post('/api/calls/:orderId/timeout', async (req, res) => {
+    try {
+      const { callId } = req.body || {};
       if (!viewerOf(req)) return res.status(401).json({ success: false, error: 'Login required' });
       const logs = await readCallLogs();
       const log = logs.find((l) => l.id === callId);
@@ -367,8 +417,10 @@ function registerCallRoutes(app, { readOrders, verifyApiToken }) {
       if (String(log.orderId) !== String(req.params.orderId)) {
         return res.status(403).json({ success: false, error: 'Call does not belong to this order' });
       }
-      log.status = status;
-      if (duration) log.duration = Number(duration);
+      if (log.status !== 'ringing') return res.json({ success: true, already: true, log });
+      const ageMs = Date.now() - new Date(log.createdAt).getTime();
+      if (ageMs < 45000) return res.json({ success: true, tooEarly: true, log });
+      log.status = 'missed';
       log.endedAt = new Date().toISOString();
       await writeCallLogs(logs);
       res.json({ success: true, log });
