@@ -1022,6 +1022,30 @@ app.post('/api/auth/phone-email/verify', async (req, res) => {
   }
 });
 
+// Session refresh — re-mint apiToken from a live Firebase Auth session.
+// The apps sign into Firebase at login with the backend-minted custom token
+// (uid = verified 10-digit phone). That Firebase session outlives the
+// single-use phone.email access_token, so silent re-mint (calls, order sync)
+// uses THIS endpoint instead of re-posting the dead pe token — no cooldown,
+// no forced logout/login. Abuse is capped by the per-IP rate limiter.
+app.post('/api/auth/refresh', async (req, res) => {
+  try {
+    const authHeader = String(req.headers.authorization || '');
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : String(req.body.idToken || '');
+    if (!idToken) return res.status(401).json({ success: false, error: 'Firebase login required' });
+    const authAdmin = adminAuth();
+    if (!authAdmin) return res.status(500).json({ success: false, error: 'auth service not configured' });
+    let decoded;
+    try { decoded = await authAdmin.verifyIdToken(idToken); }
+    catch { return res.status(401).json({ success: false, error: 'Invalid session — login again' }); }
+    const phone = String(decoded.uid || '').replace(/[^0-9]/g, '').slice(-10);
+    if (phone.length < 10) return res.status(401).json({ success: false, error: 'Invalid session — login again' });
+    return res.json({ success: true, phone, apiToken: mintApiToken(phone, 'customer') });
+  } catch (e) {
+    res.status(502).json({ success: false, error: e.message || 'refresh failed' });
+  }
+});
+
 // Website OTP registration — phone.email verified the number, so create the
 // Redis profile (same store the apps use). Firestore users/{phone} is written
 // by the apps when they next see this number; website never writes Firestore.
