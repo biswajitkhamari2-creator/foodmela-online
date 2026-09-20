@@ -974,10 +974,9 @@ app.post('/api/auth/phone-email/verify', async (req, res) => {
       if (phone.length < 10) {
         return res.status(401).json({ success: false, error: 'verification failed' });
       }
-      if (!otpPhoneAllowed(phone)) {
-        res.setHeader('Retry-After', '120');
-        return res.status(429).json({ success: false, error: 'OTP already sent — wait 2 minutes before retrying' });
-      }
+      // NOTE: no per-phone cooldown here — phone.email already proved
+      // ownership via OTP; throttling verify/mint breaks re-login + silent
+      // re-mint. Abuse is still capped by the per-IP rate limiter above.
       const first = String(data.user_first_name ?? '').trim();
       const last = String(data.user_last_name ?? '').trim();
       let name = `${first} ${last}`.trim();
@@ -1004,10 +1003,7 @@ app.post('/api/auth/phone-email/verify', async (req, res) => {
     if (data.status !== 200 || phone.length < 10) {
       return res.status(401).json({ success: false, error: 'verification failed' });
     }
-    if (!otpPhoneAllowed(phone)) {
-      res.setHeader('Retry-After', '120');
-      return res.status(429).json({ success: false, error: 'OTP already sent — wait 2 minutes before retrying' });
-    }
+    // NOTE: no per-phone cooldown here — same reason as the official flow.
     const first = String(data.first_name || data.user_first_name || '').trim();
     const last = String(data.last_name || data.user_last_name || '').trim();
     let name = `${first} ${last}`.trim();
@@ -1980,6 +1976,36 @@ app.post('/api/orders/accept', requireRider, async (req, res) => {
       await writeOrders(orders);
     }
 
+    // Also update customer history copy in Redis (so GET /api/user/:phone/orders gets rider info)
+    const orderPhone = String(cur.phone || cur.customerPhone || '').replace(/[^0-9]/g, '').slice(-10);
+    if (orderPhone) {
+      try {
+        const user = await readUser(orderPhone);
+        if (Array.isArray(user.orderHistory)) {
+          let touched = false;
+          user.orderHistory = user.orderHistory.map((h) => {
+            if (h.id === orderId || h.orderId === orderId) {
+              touched = true;
+              return {
+                ...h,
+                stage: 1,
+                status: 'Order Accepted ✅',
+                acceptedBy: driverId || 'driver',
+                acceptedByName: driverName || 'Delivery Partner',
+                riderName: driverName || 'Delivery Partner',
+                riderId: driverId || 'driver',
+                riderPhone: driverId || '',
+                acceptedAt: stamp,
+                updatedAt: stamp,
+              };
+            }
+            return h;
+          });
+          if (touched) await writeUser(orderPhone, user);
+        }
+      } catch (e) { console.error('accept user history notice:', e.message); }
+    }
+
     // Mirror to Firestore (Admin SDK bypasses rules)
     try {
       const db = adminDb();
@@ -1994,6 +2020,7 @@ app.post('/api/orders/accept', requireRider, async (req, res) => {
           riderPhone: driverId || '',
           acceptedByPhone: driverId || '',
           riderId: driverId || 'driver',
+          acceptedBy: driverId || 'driver',
           acceptedAt: new Date(),
           updatedAt: new Date(),
         }, { merge: true });
